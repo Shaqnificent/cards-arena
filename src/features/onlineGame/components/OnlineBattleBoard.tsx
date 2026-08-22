@@ -30,6 +30,7 @@ function ResolvedCard({ fighter, oc, imageUrl, side, winner }: { fighter: Resolv
 
 export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdvance }: Props) {
   const [selection, setSelection] = useState<{ type: 'canon' | 'oc'; id: string } | null>(null)
+  const [showFinalResult, setShowFinalResult] = useState(false)
   const yourSelection = state.yourSelection
   const revealed = state.battleState !== 'selecting' ? state.latestRound : null
   const victory = state.matchWinnerId === state.yourPlayerId
@@ -37,9 +38,9 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   const roundWinner = revealed?.winnerPlayerId === state.yourPlayerId ? 'player' : revealed?.winnerPlayerId === state.opponentPlayerId ? 'opponent' : 'draw'
   const yourImage = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character.image_url : null
   const opponentImage = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character.image_url : null
-  const finalRound = state.battleState === 'complete'
+  const finalRound = state.status === 'completed' || state.battleState === 'complete'
 
-  if (state.status === 'completed') {
+  if (state.status === 'completed' && (showFinalResult || !revealed)) {
     return <section className="match-result">
       <p className="eyebrow">Match Complete</p><h1>{draw ? 'Draw' : victory ? 'Victory' : 'Defeat'}</h1>
       <div className="final-score"><span>{state.yourProfile.username} <b>{state.yourScore}</b></span><i>—</i><span><b>{state.opponentScore}</b> {state.opponentProfile.username}</span></div>
@@ -61,7 +62,7 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
         <div className={`versus-result ${roundWinner}`}><span>VS</span><i aria-hidden="true">{roundWinner === 'draw' ? '—' : '♜'}</i><strong>{roundWinner === 'player' ? 'You Win' : roundWinner === 'opponent' ? 'You Lose' : 'Draw'}</strong></div>
         <ResolvedCard fighter={revealed.opponentFighter} oc={revealed.opponentFighter.type === 'oc' ? state.opponentOC : null} imageUrl={opponentImage} side="opponent" winner={roundWinner === 'opponent'} />
       </div>
-      <button className="button button-primary result-continue" disabled={pendingAction !== null} onClick={() => void onAdvance()}>{pendingAction === 'advance' ? 'Advancing...' : finalRound ? 'View Match Result' : 'Next Round'}<span aria-hidden="true">›</span></button>
+      <button className="button button-primary result-continue" disabled={pendingAction !== null} onClick={() => finalRound ? setShowFinalResult(true) : void onAdvance()}>{pendingAction === 'advance' ? 'Advancing...' : finalRound ? 'View Match Result' : 'Next Round'}<span aria-hidden="true">›</span></button>
       <p className="result-helper"><i aria-hidden="true">i</i>{finalRound ? 'See the final score and match outcome.' : 'Continue when you’re ready.'}</p>
     </div> : <>
       <div className="opponent-roster"><h2>Opponent Team</h2><div>{state.opponentTeam.map((item) => <span key={item.id} className={item.used ? 'used' : undefined}>{item.character.name}</span>)}</div></div>
