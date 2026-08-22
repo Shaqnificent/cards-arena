@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GameCard } from '../../game/components/GameCard'
 import type { OnlineBattleAction, OnlineBattleState, ResolvedBattleFighter } from '../battleTypes'
+import { resolveOcImageSrc } from '../../ocs/services/ocImageUrl'
 
 interface Props {
   state: OnlineBattleState
@@ -12,9 +13,10 @@ interface Props {
 }
 
 function ResolvedCard({ fighter, oc, imageUrl, side, winner }: { fighter: ResolvedBattleFighter; oc?: OnlineBattleState['opponentOC']; imageUrl?: string | null; side: 'player' | 'opponent'; winner: boolean }) {
+  const resolvedImageUrl = fighter.type === 'oc' ? resolveOcImageSrc(imageUrl) : imageUrl
   return <article className={`result-fighter-card ${side}${winner ? ' winner' : ''}`}>
     <div className="result-fighter-media">
-      {imageUrl ? <img src={imageUrl} alt="" /> : <span className="result-fighter-fallback" aria-hidden="true">{fighter.name.charAt(0)}</span>}
+      {resolvedImageUrl ? <img src={resolvedImageUrl} alt="" /> : <span className="result-fighter-fallback" aria-hidden="true">{fighter.name.charAt(0)}</span>}
       {fighter.type === 'oc' && <small className="oc-reveal-badge">OC Revealed</small>}
     </div>
     <div className="result-fighter-body">
