@@ -9,6 +9,7 @@ import { Characters } from './pages/Characters'
 import { Leaderboard } from './pages/Leaderboard'
 import { Game } from './pages/Game'
 import { Match } from './pages/Match'
+import { Suggestions } from './pages/Suggestions'
 
 function App() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -40,6 +41,7 @@ function App() {
       />
       <Route path="/characters" element={<Characters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/leaderboard" element={<Leaderboard currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />
+      <Route path="/suggestions" element={profile ? <Suggestions currentUserId={user.id} profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your player profile..." />} />
       <Route path="/play/test" element={profile ? <Game playerName={profile.username} /> : <LoadingScreen message="Loading your player profile..." />} />
       <Route path="/match/:matchId" element={<Match currentUserId={user.id} />} />
       <Route path="*" element={<Navigate to="/" replace />} />

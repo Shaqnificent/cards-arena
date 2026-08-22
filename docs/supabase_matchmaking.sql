@@ -4,7 +4,7 @@ create table public.matches (
   player_one_id uuid not null references public.profiles(id) on delete restrict,
   player_two_id uuid not null references public.profiles(id) on delete restrict,
   status text not null default 'waiting'
-    check (status in ('waiting', 'draft', 'battle', 'completed', 'cancelled')),
+    check (status in ('waiting', 'initiative', 'draft', 'battle', 'completed', 'cancelled')),
   player_one_score integer not null default 0 check (player_one_score >= 0),
   player_two_score integer not null default 0 check (player_two_score >= 0),
   winner_id uuid references public.profiles(id) on delete restrict,
@@ -110,7 +110,7 @@ begin
   end if;
 
   insert into public.matches (player_one_id, player_two_id, status)
-  values (opponent_id, caller_id, 'waiting')
+  values (opponent_id, caller_id, 'initiative')
   returning id into created_match_id;
 
   update public.matchmaking_queue

@@ -1,7 +1,8 @@
 import { supabase } from '../../../lib/supabase'
 import type { Profile } from '../../../types/profile'
 import type { Character } from '../../../types/character'
-import type { OnlineDraftState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
+import type { InitiativeChoice, OnlineDraftState, OnlineInitiativeState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
+import type { MatchStatus } from '../../matchmaking/types'
 
 type MatchRow = Omit<OnlineMatchRecord, 'player_one' | 'player_two'> & {
   player_one: Profile | Profile[]
@@ -26,14 +27,38 @@ export async function initializeOnlineDraft(matchId: string): Promise<void> {
   }
 }
 
-export async function validateMatchParticipant(matchId: string, currentUserId: string): Promise<void> {
+export async function initializeMatchInitiative(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc('initialize_match_initiative', { p_match_id: matchId })
+  if (error) throw error
+}
+
+export async function validateMatchParticipant(matchId: string, currentUserId: string): Promise<MatchStatus> {
   const { data, error } = await supabase
     .from('matches')
-    .select('id, player_one_id, player_two_id')
+    .select('id, player_one_id, player_two_id, status')
     .eq('id', matchId)
     .maybeSingle()
   if (error || !data) throw error ?? new Error('Match unavailable')
   if (![data.player_one_id, data.player_two_id].includes(currentUserId)) throw new Error('Match unavailable')
+  return data.status as MatchStatus
+}
+
+export async function loadMatchInitiative(matchId: string, currentUserId: string): Promise<OnlineInitiativeState> {
+  const { data, error } = await supabase.rpc('get_match_initiative_state', { p_match_id: matchId })
+  if (error) throw error
+  const state = data as OnlineInitiativeState | null
+  if (!state || state.yourPlayerId !== currentUserId) throw new Error('Initiative state unavailable')
+  return state
+}
+
+export async function submitInitiativeChoice(matchId: string, choice: InitiativeChoice): Promise<void> {
+  const { error } = await supabase.rpc('submit_initiative_choice', { p_match_id: matchId, p_choice: choice })
+  if (error) throw error
+}
+
+export async function advanceInitiativeRound(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc('advance_initiative_round', { p_match_id: matchId })
+  if (error) throw error
 }
 
 export async function loadOnlineDraft(matchId: string, currentUserId: string, attempt = 0): Promise<OnlineDraftState> {
@@ -78,7 +103,7 @@ export async function loadOnlineDraft(matchId: string, currentUserId: string, at
     return loadOnlineDraft(matchId, currentUserId, attempt + 1)
   }
 
-  if (match.status === 'waiting' || match.draft_state === 'preparing') {
+  if (match.status === 'waiting' || match.status === 'initiative' || match.draft_state === 'preparing') {
     throw new Error('Draft initialization did not complete')
   }
   if ((playersResult.data ?? []).length !== 2) {

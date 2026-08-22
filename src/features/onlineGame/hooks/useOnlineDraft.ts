@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import {
-  initializeOnlineDraft, loadOnlineDraft, submitDraftBid, submitDraftFold, submitDraftPass, validateMatchParticipant,
+  advanceInitiativeRound, initializeMatchInitiative, initializeOnlineDraft, loadMatchInitiative, loadOnlineDraft, submitDraftBid, submitDraftFold, submitDraftPass, submitInitiativeChoice, validateMatchParticipant,
 } from '../services/onlineDraft'
-import type { OnlineDraftAction, OnlineDraftState, OnlineMatchLoadState } from '../types'
+import type { InitiativeChoice, OnlineDraftAction, OnlineDraftState, OnlineInitiativeState, OnlineMatchLoadState } from '../types'
 
 function setupError(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'PGRST202') {
@@ -14,6 +14,7 @@ function setupError(error: unknown): string {
 
 export function useOnlineDraft(matchId: string, currentUserId: string) {
   const [state, setState] = useState<OnlineDraftState | null>(null)
+  const [initiative, setInitiative] = useState<OnlineInitiativeState | null>(null)
   const [loadState, setLoadState] = useState<OnlineMatchLoadState>('loading-match')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -50,8 +51,19 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
       setMessage(null)
       setLoadState('loading-match')
       if (sessionError || session?.user.id !== currentUserId) throw sessionError ?? new Error('Authentication required')
-      await validateMatchParticipant(matchId, currentUserId)
+      const status = await validateMatchParticipant(matchId, currentUserId)
       if (request !== requestVersion.current) return
+
+      if (status === 'waiting' || status === 'initiative') {
+        setLoadState('determining-initiative')
+        await initializeMatchInitiative(matchId)
+        if (request !== requestVersion.current) return
+        const initiativeState = await loadMatchInitiative(matchId, currentUserId)
+        if (request !== requestVersion.current) return
+        setInitiative(initiativeState)
+        setLoadState('initiative')
+        return
+      }
 
       setLoadState('initializing-draft')
       if (force) initializationPromise.current = null
@@ -71,6 +83,67 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
       initializationPromise.current = null
       setError(setupError(prepareError))
       setLoadState('error')
+    }
+  }, [currentUserId, matchId])
+
+  useEffect(() => {
+    if (loadState !== 'initiative' || initiative?.initiativeState !== 'revealed') return
+    const timer = window.setTimeout(() => {
+      const startDraft = async () => {
+        const request = ++requestVersion.current
+        try {
+          if (initiative.isDraw) {
+            await advanceInitiativeRound(matchId)
+            if (request !== requestVersion.current) return
+            const nextInitiative = await loadMatchInitiative(matchId, currentUserId)
+            if (request !== requestVersion.current) return
+            setInitiative(nextInitiative)
+            return
+          }
+          setLoadState('initializing-draft')
+          await initializeOnlineDraft(matchId)
+          if (request !== requestVersion.current) return
+          setLoadState('loading-draft')
+          const nextState = await loadOnlineDraft(matchId, currentUserId)
+          if (request !== requestVersion.current) return
+          setState(nextState)
+          setInitiative(null)
+          setLoadState('ready')
+        } catch (draftError) {
+          if (request !== requestVersion.current) return
+          console.error('Draft start after initiative failed', draftError)
+          setError(setupError(draftError))
+          setLoadState('error')
+        }
+      }
+      void startDraft()
+    }, 2200)
+    return () => window.clearTimeout(timer)
+  }, [currentUserId, initiative, loadState, matchId])
+
+  useEffect(() => {
+    if (loadState !== 'initiative') return
+    const refreshInitiative = async () => {
+      try { setInitiative(await loadMatchInitiative(matchId, currentUserId)) }
+      catch (initiativeError) { console.error('Initiative state refresh failed', initiativeError) }
+    }
+    const channel = supabase.channel(`match-initiative:${matchId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${matchId}` }, () => { void refreshInitiative() })
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setMessage('Live initiative connection interrupted. Refreshing restores the authoritative state.')
+      })
+    return () => { void supabase.removeChannel(channel) }
+  }, [currentUserId, loadState, matchId])
+
+  const lockInitiative = useCallback(async (choice: InitiativeChoice) => {
+    try {
+      setMessage(null)
+      await submitInitiativeChoice(matchId, choice)
+      setInitiative(await loadMatchInitiative(matchId, currentUserId))
+    } catch (choiceError) {
+      console.error('Initiative choice rejected', choiceError)
+      setMessage('That initiative choice was not accepted. The latest state has been restored.')
+      try { setInitiative(await loadMatchInitiative(matchId, currentUserId)) } catch { /* Retry remains available through refresh. */ }
     }
   }, [currentUserId, matchId])
 
@@ -111,7 +184,8 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
   }, [fetchAuthoritativeState, pendingAction])
 
   return {
-    state, loadState, loading: loadState !== 'ready' && loadState !== 'error', error, message, pendingAction,
+    state, initiative, loadState, loading: loadState !== 'ready' && loadState !== 'initiative' && loadState !== 'error', error, message, pendingAction,
+    lockInitiative,
     bid: (amount: number) => runAction('bid', () => submitDraftBid(matchId, amount)),
     pass: () => runAction('pass', () => submitDraftPass(matchId)),
     fold: () => runAction('fold', () => submitDraftFold(matchId)),

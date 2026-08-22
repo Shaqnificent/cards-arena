@@ -16,6 +16,8 @@ export interface OnlineMatchRecord {
   priority_player_id: string | null
   tie_priority_player_id: string | null
   action_version: number
+  initiative_player_id: string | null
+  initiative_resolved_at: string | null
   player_one: Profile
   player_two: Profile
 }
@@ -47,4 +49,20 @@ export interface OnlineDraftState {
 }
 
 export type OnlineDraftAction = 'bid' | 'pass' | 'fold' | null
-export type OnlineMatchLoadState = 'loading-match' | 'initializing-draft' | 'loading-draft' | 'ready' | 'error'
+export type InitiativeChoice = 'rock' | 'paper' | 'scissors'
+export interface OnlineInitiativeState {
+  matchId: string
+  status: MatchStatus
+  initiativeRound: number
+  initiativeState: 'choosing' | 'revealed'
+  yourPlayerId: string
+  opponentPlayerId: string
+  yourProfile: Profile
+  opponentProfile: Profile
+  yourChoice: InitiativeChoice | null
+  opponentLocked: boolean
+  opponentChoice: InitiativeChoice | null
+  winnerPlayerId: string | null
+  isDraw: boolean
+}
+export type OnlineMatchLoadState = 'loading-match' | 'determining-initiative' | 'initiative' | 'initializing-draft' | 'loading-draft' | 'ready' | 'error'

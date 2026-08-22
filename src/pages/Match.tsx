@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { OnlineDraftBoard } from '../features/onlineGame/components/OnlineDraftBoard'
 import { OnlineBattleBoard } from '../features/onlineGame/components/OnlineBattleBoard'
+import { InitiativeScreen } from '../features/onlineGame/components/InitiativeScreen'
 import { useOnlineBattle } from '../features/onlineGame/hooks/useOnlineBattle'
 import { useOnlineDraft } from '../features/onlineGame/hooks/useOnlineDraft'
 
@@ -15,10 +16,13 @@ export function Match({ currentUserId }: MatchProps) {
 }
 
 function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {
-  const { state, loadState, loading, error, message, pendingAction, bid, pass, fold, retry } = useOnlineDraft(matchId, currentUserId)
+  const { state, initiative, loadState, loading, error, message, pendingAction, lockInitiative, bid, pass, fold, retry } = useOnlineDraft(matchId, currentUserId)
+
+  if (loadState === 'initiative' && initiative) return <InitiativeScreen key={initiative.initiativeRound} initiative={initiative} message={message} onLock={lockInitiative} />
 
   if (loading && !state) {
     const loadingMessage = loadState === 'loading-match' ? 'Loading online match...'
+      : loadState === 'determining-initiative' ? 'Determining initiative...'
       : loadState === 'initializing-draft' ? 'Preparing draft...'
       : 'Loading authoritative draft state...'
     return <LoadingScreen message={loadingMessage} />
