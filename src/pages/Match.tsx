@@ -3,8 +3,11 @@ import { LoadingScreen } from '../components/LoadingScreen'
 import { OnlineDraftBoard } from '../features/onlineGame/components/OnlineDraftBoard'
 import { OnlineBattleBoard } from '../features/onlineGame/components/OnlineBattleBoard'
 import { InitiativeScreen } from '../features/onlineGame/components/InitiativeScreen'
+import { OcSelectionScreen } from '../features/onlineGame/components/OcSelectionScreen'
+import { OcPreparationScreen } from '../features/onlineGame/components/OcPreparationScreen'
 import { useOnlineBattle } from '../features/onlineGame/hooks/useOnlineBattle'
 import { useOnlineDraft } from '../features/onlineGame/hooks/useOnlineDraft'
+import { useOcPreparation } from '../features/onlineGame/hooks/useOcPreparation'
 
 interface MatchProps { currentUserId: string }
 
@@ -16,13 +19,15 @@ export function Match({ currentUserId }: MatchProps) {
 }
 
 function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {
-  const { state, initiative, loadState, loading, error, message, pendingAction, lockInitiative, bid, pass, fold, retry } = useOnlineDraft(matchId, currentUserId)
+  const { state, initiative, ocSelection, loadState, loading, error, message, pendingAction, lockInitiative, lockOcSelection, bid, pass, fold, retry } = useOnlineDraft(matchId, currentUserId)
 
   if (loadState === 'initiative' && initiative) return <InitiativeScreen key={initiative.initiativeRound} initiative={initiative} message={message} onLock={lockInitiative} />
+  if (loadState === 'oc-selection' && ocSelection) return <OcSelectionScreen state={ocSelection} message={message} pending={pendingAction === 'oc-lock'} onLock={lockOcSelection} />
 
   if (loading && !state) {
     const loadingMessage = loadState === 'loading-match' ? 'Loading online match...'
       : loadState === 'determining-initiative' ? 'Determining initiative...'
+      : loadState === 'initializing-oc-selection' ? 'Preparing secret OC selection...'
       : loadState === 'initializing-draft' ? 'Preparing draft...'
       : 'Loading authoritative draft state...'
     return <LoadingScreen message={loadingMessage} />
@@ -32,6 +37,7 @@ function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; curren
   if (state.match.status === 'battle' || state.match.status === 'completed') {
     return <LoadedOnlineBattle matchId={matchId} />
   }
+  if (state.match.status === 'oc_preparation') return <LoadedOcPreparation matchId={matchId} />
 
   return (
     <main className="game-page">
@@ -43,6 +49,13 @@ function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; curren
       />
     </main>
   )
+}
+
+function LoadedOcPreparation({ matchId }: { matchId: string }) {
+  const { state, loading, pending, error, lock, retry } = useOcPreparation(matchId)
+  if (loading && !state) return <LoadingScreen message="Preparing your OC strategy..." />
+  if (!state) return <MatchError message={error ?? 'OC preparation is unavailable.'} onRetry={() => void retry()} />
+  return <OcPreparationScreen state={state} pending={pending} error={error} onLock={lock} />
 }
 
 function LoadedOnlineBattle({ matchId }: { matchId: string }) {

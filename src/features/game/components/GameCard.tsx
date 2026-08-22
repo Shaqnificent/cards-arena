@@ -25,11 +25,14 @@ export function GameCard({ character, compact = false, selected = false, used = 
           <span className="game-card-fallback">{character.name.charAt(0)}</span>
         )}
         <b>{character.overall}<small>OVR</small></b>
+        {selected && <i className="game-card-check" aria-hidden="true">✓</i>}
+        {used && <em className="game-card-state">USED</em>}
       </div>
-      <span className="game-card-verse">{character.verses?.name ?? 'Unknown Verse'}</span>
-      <strong>{character.name}</strong>
-      {character.version && <span className="game-card-version">{character.version}</span>}
-      {used && <em>USED</em>}
+      <div className="game-card-content">
+        <span className="game-card-verse">{character.verses?.name ?? 'Unknown Verse'}</span>
+        <strong>{character.name}</strong>
+        {character.version && <span className="game-card-version">{character.version}</span>}
+      </div>
     </button>
   )
 }

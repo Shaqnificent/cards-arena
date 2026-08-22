@@ -80,7 +80,7 @@ export function useOnlineBattle(matchId: string) {
 
   return {
     state, loading, error, message, pendingAction,
-    lock: (fighterId: string) => runAction('lock', () => lockBattleFighter(matchId, fighterId)),
+    lock: (selectionType: 'canon' | 'oc', fighterId: string) => runAction('lock', () => lockBattleFighter(matchId, selectionType, fighterId)),
     advance: () => runAction('advance', () => advanceOnlineBattle(matchId)),
     retry: prepare,
   }

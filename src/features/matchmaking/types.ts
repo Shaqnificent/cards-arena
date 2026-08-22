@@ -1,7 +1,7 @@
 import type { Profile } from '../../types/profile'
 
 export type MatchmakingState = 'checking' | 'idle' | 'joining' | 'searching' | 'matched' | 'cancelling' | 'error'
-export type MatchStatus = 'waiting' | 'initiative' | 'draft' | 'battle' | 'completed' | 'cancelled'
+export type MatchStatus = 'waiting' | 'initiative' | 'oc_selection' | 'draft' | 'oc_preparation' | 'battle' | 'completed' | 'cancelled'
 
 export interface MatchmakingRpcRow {
   result_status: 'waiting' | 'matched' | 'existing_match' | 'cancelled'

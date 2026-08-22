@@ -13,10 +13,11 @@ export async function loadOnlineBattle(matchId: string): Promise<OnlineBattleSta
   return data as OnlineBattleState
 }
 
-export async function lockBattleFighter(matchId: string, matchCharacterId: string): Promise<void> {
+export async function lockBattleFighter(matchId: string, selectionType: 'canon' | 'oc', fighterId: string): Promise<void> {
   const { error } = await supabase.rpc('submit_battle_selection', {
     p_match_id: matchId,
-    p_match_character_id: matchCharacterId,
+    p_selection_type: selectionType,
+    p_fighter_id: fighterId,
   })
   if (error) throw error
 }

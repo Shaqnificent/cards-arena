@@ -1,7 +1,7 @@
 import { supabase } from '../../../lib/supabase'
 import type { Profile } from '../../../types/profile'
 import type { Character } from '../../../types/character'
-import type { InitiativeChoice, OnlineDraftState, OnlineInitiativeState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
+import type { InitiativeChoice, MatchOcSelectionState, OnlineDraftState, OnlineInitiativeState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
 import type { MatchStatus } from '../../matchmaking/types'
 
 type MatchRow = Omit<OnlineMatchRecord, 'player_one' | 'player_two'> & {
@@ -30,6 +30,26 @@ export async function initializeOnlineDraft(matchId: string): Promise<void> {
 export async function initializeMatchInitiative(matchId: string): Promise<void> {
   const { error } = await supabase.rpc('initialize_match_initiative', { p_match_id: matchId })
   if (error) throw error
+}
+
+export async function initializeMatchOcSelection(matchId: string): Promise<MatchOcSelectionState> {
+  const { data, error } = await supabase.rpc('initialize_match_oc_selection', { p_match_id: matchId })
+  if (error) throw error
+  return data as MatchOcSelectionState
+}
+
+export async function loadMatchOcSelection(matchId: string, currentUserId: string): Promise<MatchOcSelectionState> {
+  const { data, error } = await supabase.rpc('get_match_oc_selection_state', { p_match_id: matchId })
+  if (error) throw error
+  const state = data as MatchOcSelectionState | null
+  if (!state || state.yourPlayerId !== currentUserId) throw new Error('OC selection state unavailable')
+  return state
+}
+
+export async function submitMatchOcSelection(matchId: string, characterId: string): Promise<MatchOcSelectionState> {
+  const { data, error } = await supabase.rpc('submit_match_oc_selection', { p_match_id: matchId, p_character_id: characterId })
+  if (error) throw error
+  return data as MatchOcSelectionState
 }
 
 export async function validateMatchParticipant(matchId: string, currentUserId: string): Promise<MatchStatus> {
@@ -103,7 +123,7 @@ export async function loadOnlineDraft(matchId: string, currentUserId: string, at
     return loadOnlineDraft(matchId, currentUserId, attempt + 1)
   }
 
-  if (match.status === 'waiting' || match.status === 'initiative' || match.draft_state === 'preparing') {
+  if (match.status === 'waiting' || match.status === 'initiative' || match.status === 'oc_selection' || match.draft_state === 'preparing') {
     throw new Error('Draft initialization did not complete')
   }
   if ((playersResult.data ?? []).length !== 2) {

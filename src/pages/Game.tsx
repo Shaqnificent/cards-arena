@@ -5,6 +5,7 @@ import { DraftBoard } from '../features/game/components/DraftBoard'
 import { MatchResult } from '../features/game/components/MatchResult'
 import { useLocalGame } from '../features/game/hooks/useLocalGame'
 import { useCharacters } from '../hooks/useCharacters'
+import { useLocalMatchProgression } from '../features/ocs/hooks/useLocalMatchProgression'
 
 interface GameProps { playerName: string }
 
@@ -24,6 +25,7 @@ interface LoadedGameProps { characters: ReturnType<typeof useCharacters>['charac
 
 function LoadedGame({ characters, playerName }: LoadedGameProps) {
   const { state, currentCharacter, actions } = useLocalGame(characters, playerName)
+  const progression = useLocalMatchProgression(state)
 
   if (state.error) {
     return <main className="screen"><section className="panel"><h1>Game Unavailable</h1><p className="error-message">{state.error}</p><Link className="button button-secondary" to="/">Return to Lobby</Link></section></main>
@@ -34,7 +36,7 @@ function LoadedGame({ characters, playerName }: LoadedGameProps) {
       <header className="game-header"><Link className="brand-link" to="/">ANIME ARENA</Link><span>Local Prototype</span><Link className="nav-link" to="/">Exit Match</Link></header>
       {state.phase === 'draft' && currentCharacter && <DraftBoard state={state} currentCharacter={currentCharacter} actions={actions} />}
       {state.phase === 'battle' && <BattleBoard state={state} onSelect={actions.selectBattleCard} onLock={actions.lockBattleCard} onContinue={actions.continueBattle} />}
-      {state.phase === 'result' && <MatchResult state={state} onRestart={actions.restart} />}
+      {state.phase === 'result' && <MatchResult state={state} progression={progression} onRestart={() => { progression.reset(); actions.restart() }} />}
     </main>
   )
 }

@@ -28,7 +28,7 @@ export function InitiativeScreen({ initiative, message, onLock }: Props) {
       <div className="initiative-reveal"><div><small>You</small><b>{symbols[initiative.yourChoice]}</b><strong>{initiative.yourChoice}</strong></div><i>VS</i><div><small>{initiative.opponentProfile.username}</small><b>{symbols[initiative.opponentChoice]}</b><strong>{initiative.opponentChoice}</strong></div></div>
       <h2>{initiative.isDraw ? 'Draw' : youWon ? 'You win initiative' : `${winnerName} wins initiative`}</h2>
       <p>{initiative.isDraw ? 'Choose again next round.' : `${winnerName} gets first draft priority.`}</p>
-      <small>{initiative.isDraw ? 'Preparing the next round...' : 'Starting draft...'}</small>
+      <small>{initiative.isDraw ? 'Preparing the next round...' : 'Preparing secret OC selection...'}</small>
     </> : initiative.yourChoice ? <>
       <p className="initiative-instruction">Your move is locked</p><div className="initiative-locked"><b>{symbols[initiative.yourChoice]}</b><strong>{initiative.yourChoice}</strong></div>
       <h2>{initiative.opponentLocked ? 'Opponent locked in' : 'Waiting for opponent...'}</h2><p>Your choice remains hidden until both players lock.</p>

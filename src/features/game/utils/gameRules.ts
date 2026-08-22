@@ -38,6 +38,8 @@ export function isValidBid(bid: number, currentBid: number | null, balance: numb
 }
 
 export function getBattleWinner(playerCard: Character, opponentCard: Character): PlayerId | 'tie' {
+  if (playerCard.overall > opponentCard.overall) return 'player'
+  if (opponentCard.overall > playerCard.overall) return 'opponent'
   if (playerCard.power_score > opponentCard.power_score) return 'player'
   if (opponentCard.power_score > playerCard.power_score) return 'opponent'
   return 'tie'

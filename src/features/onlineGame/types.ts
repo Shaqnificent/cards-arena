@@ -48,7 +48,16 @@ export interface OnlineDraftState {
   currentCharacter: OnlineMatchCharacter | null
 }
 
-export type OnlineDraftAction = 'bid' | 'pass' | 'fold' | null
+export type OnlineDraftAction = 'bid' | 'pass' | 'fold' | 'oc-lock' | null
+export type OcPreparationDecision = 'none' | 'reserve' | 'sacrifice'
+export interface OcPreparationFighter { matchCharacterId: string; characterId: number; name: string; verseId: number; verseName: string; overall: number; powerScore: number; tier: 'D' | 'C' | 'B' | 'A' | 'S' | 'LEGEND'; sacrificeBoost: number }
+export interface MatchOcPreparationState {
+  matchId: string; status: MatchStatus; yourPlayerId: string
+  yourOC: { characterId: string; name: string; verseId: number; verseName: string; baseOverall: number; powerScore: number } | null
+  eligibleSacrifices: OcPreparationFighter[]
+  yourPreparation: { decision: OcPreparationDecision; sacrificedMatchCharacterId: string | null; sacrificeTier: string | null; sacrificeBoost: number; baseOverall: number | null; matchOverall: number | null; basePowerScore: number | null; lockedAt: string } | null
+  yourLocked: boolean; opponentLocked: boolean; bothComplete: boolean
+}
 export type InitiativeChoice = 'rock' | 'paper' | 'scissors'
 export interface OnlineInitiativeState {
   matchId: string
@@ -65,4 +74,29 @@ export interface OnlineInitiativeState {
   winnerPlayerId: string | null
   isDraw: boolean
 }
-export type OnlineMatchLoadState = 'loading-match' | 'determining-initiative' | 'initiative' | 'initializing-draft' | 'loading-draft' | 'ready' | 'error'
+export interface MatchOcOption {
+  characterId: string
+  slot: number
+  name: string
+  verseId: number
+  verseName: string
+  overall: number
+  powerScore: number
+  overallCap: number
+}
+export type MatchOcProfile = Pick<Profile, 'id' | 'username' | 'avatar_url'>
+export interface MatchOcSelectionState {
+  matchId: string
+  status: MatchStatus
+  yourPlayerId: string
+  opponentPlayerId: string
+  yourProfile: MatchOcProfile
+  opponentProfile: MatchOcProfile
+  yourOptions: MatchOcOption[]
+  opponentOptions: MatchOcOption[]
+  yourSelectedCharacterId: string | null
+  yourLocked: boolean
+  opponentLocked: boolean
+  bothComplete: boolean
+}
+export type OnlineMatchLoadState = 'loading-match' | 'determining-initiative' | 'initiative' | 'initializing-oc-selection' | 'oc-selection' | 'initializing-draft' | 'loading-draft' | 'ready' | 'error'

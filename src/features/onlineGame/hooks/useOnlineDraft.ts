@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import {
-  advanceInitiativeRound, initializeMatchInitiative, initializeOnlineDraft, loadMatchInitiative, loadOnlineDraft, submitDraftBid, submitDraftFold, submitDraftPass, submitInitiativeChoice, validateMatchParticipant,
+  advanceInitiativeRound, initializeMatchInitiative, initializeMatchOcSelection, initializeOnlineDraft, loadMatchInitiative, loadMatchOcSelection, loadOnlineDraft, submitDraftBid, submitDraftFold, submitDraftPass, submitInitiativeChoice, submitMatchOcSelection, validateMatchParticipant,
 } from '../services/onlineDraft'
-import type { InitiativeChoice, OnlineDraftAction, OnlineDraftState, OnlineInitiativeState, OnlineMatchLoadState } from '../types'
+import type { InitiativeChoice, MatchOcSelectionState, OnlineDraftAction, OnlineDraftState, OnlineInitiativeState, OnlineMatchLoadState } from '../types'
 
 function setupError(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'PGRST202') {
-    return 'Online draft setup is incomplete. Run docs/supabase_online_draft.sql in Supabase.'
+    return 'Online match setup is incomplete. Run the latest online draft and OC-selection SQL files in Supabase.'
   }
   return 'Unable to prepare the online draft.'
 }
@@ -15,6 +15,7 @@ function setupError(error: unknown): string {
 export function useOnlineDraft(matchId: string, currentUserId: string) {
   const [state, setState] = useState<OnlineDraftState | null>(null)
   const [initiative, setInitiative] = useState<OnlineInitiativeState | null>(null)
+  const [ocSelection, setOcSelection] = useState<MatchOcSelectionState | null>(null)
   const [loadState, setLoadState] = useState<OnlineMatchLoadState>('loading-match')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -65,6 +66,13 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
         return
       }
 
+      if (status === 'oc_selection') {
+        setOcSelection(await loadMatchOcSelection(matchId, currentUserId))
+        if (request !== requestVersion.current) return
+        setLoadState('oc-selection')
+        return
+      }
+
       setLoadState('initializing-draft')
       if (force) initializationPromise.current = null
       initializationPromise.current ??= initializeOnlineDraft(matchId)
@@ -100,9 +108,15 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
             setInitiative(nextInitiative)
             return
           }
-          setLoadState('initializing-draft')
-          await initializeOnlineDraft(matchId)
+          setLoadState('initializing-oc-selection')
+          const nextOcSelection = await initializeMatchOcSelection(matchId)
           if (request !== requestVersion.current) return
+          if (nextOcSelection.status === 'oc_selection') {
+            setOcSelection(nextOcSelection)
+            setInitiative(null)
+            setLoadState('oc-selection')
+            return
+          }
           setLoadState('loading-draft')
           const nextState = await loadOnlineDraft(matchId, currentUserId)
           if (request !== requestVersion.current) return
@@ -111,7 +125,7 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
           setLoadState('ready')
         } catch (draftError) {
           if (request !== requestVersion.current) return
-          console.error('Draft start after initiative failed', draftError)
+          console.error('OC selection start after initiative failed', draftError)
           setError(setupError(draftError))
           setLoadState('error')
         }
@@ -120,6 +134,27 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
     }, 2200)
     return () => window.clearTimeout(timer)
   }, [currentUserId, initiative, loadState, matchId])
+
+  useEffect(() => {
+    if (loadState !== 'oc-selection') return
+    const refreshOcSelection = async () => {
+      try {
+        const next = await loadMatchOcSelection(matchId, currentUserId)
+        if (next.status === 'draft') {
+          setLoadState('loading-draft')
+          setState(await loadOnlineDraft(matchId, currentUserId))
+          setOcSelection(null)
+          setLoadState('ready')
+        } else setOcSelection(next)
+      } catch (selectionError) { console.error('OC selection state refresh failed', selectionError) }
+    }
+    const channel = supabase.channel(`match-oc-selection:${matchId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${matchId}` }, () => { void refreshOcSelection() })
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setMessage('Live OC selection connection interrupted. Refreshing restores the authoritative state.')
+      })
+    return () => { void supabase.removeChannel(channel) }
+  }, [currentUserId, loadState, matchId])
 
   useEffect(() => {
     if (loadState !== 'initiative') return
@@ -146,6 +181,25 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
       try { setInitiative(await loadMatchInitiative(matchId, currentUserId)) } catch { /* Retry remains available through refresh. */ }
     }
   }, [currentUserId, matchId])
+
+  const lockOcSelection = useCallback(async (characterId: string) => {
+    if (pendingAction) return
+    setPendingAction('oc-lock')
+    setMessage(null)
+    try {
+      const next = await submitMatchOcSelection(matchId, characterId)
+      if (next.status === 'draft') {
+        setLoadState('loading-draft')
+        setState(await loadOnlineDraft(matchId, currentUserId))
+        setOcSelection(null)
+        setLoadState('ready')
+      } else setOcSelection(next)
+    } catch (selectionError) {
+      console.error('OC selection rejected', selectionError)
+      setMessage('That OC selection was not accepted. The latest state has been restored.')
+      try { setOcSelection(await loadMatchOcSelection(matchId, currentUserId)) } catch { /* Refresh remains available. */ }
+    } finally { setPendingAction(null) }
+  }, [currentUserId, matchId, pendingAction])
 
   useEffect(() => {
     // Start after the effect setup completes; the request generation guard
@@ -184,8 +238,8 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
   }, [fetchAuthoritativeState, pendingAction])
 
   return {
-    state, initiative, loadState, loading: loadState !== 'ready' && loadState !== 'initiative' && loadState !== 'error', error, message, pendingAction,
-    lockInitiative,
+    state, initiative, ocSelection, loadState, loading: loadState !== 'ready' && loadState !== 'initiative' && loadState !== 'oc-selection' && loadState !== 'error', error, message, pendingAction,
+    lockInitiative, lockOcSelection,
     bid: (amount: number) => runAction('bid', () => submitDraftBid(matchId, amount)),
     pass: () => runAction('pass', () => submitDraftPass(matchId)),
     fold: () => runAction('fold', () => submitDraftFold(matchId)),
