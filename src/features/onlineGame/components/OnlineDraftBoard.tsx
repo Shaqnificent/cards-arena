@@ -1,0 +1,64 @@
+import { GameCard } from '../../game/components/GameCard'
+import type { OnlineDraftAction, OnlineDraftState } from '../types'
+import { OnlineAuctionControls } from './OnlineAuctionControls'
+import { OnlineTeamPanel } from './OnlineTeamPanel'
+
+interface OnlineDraftBoardProps {
+  state: OnlineDraftState
+  currentUserId: string
+  pendingAction: OnlineDraftAction
+  message: string | null
+  onBid: (amount: number) => Promise<void>
+  onPass: () => Promise<void>
+  onFold: () => Promise<void>
+}
+
+export function OnlineDraftBoard({ state, currentUserId, pendingAction, message, onBid, onPass, onFold }: OnlineDraftBoardProps) {
+  const { match } = state
+  const isPlayerOne = currentUserId === match.player_one_id
+  const yourProfile = isPlayerOne ? match.player_one : match.player_two
+  const opponentProfile = isPlayerOne ? match.player_two : match.player_one
+  const you = state.players.find((player) => player.player_id === currentUserId)
+  const opponent = state.players.find((player) => player.player_id !== currentUserId)
+  const yourTeam = state.revealedCharacters.filter((card) => card.owner_player_id === currentUserId)
+  const opponentTeam = state.revealedCharacters.filter((card) => card.owner_player_id === opponent?.player_id)
+
+  if (!you || !opponent) return <div className="catalogue-state error-message">Online player state is unavailable.</div>
+
+  if (match.status === 'battle' || match.draft_state === 'complete') {
+    return (
+      <section className="online-draft-complete">
+        <p className="eyebrow">Online Draft Complete</p><h1>Teams Locked</h1>
+        <div className="completed-team-grid">
+          <OnlineTeamPanel label="Your Team" profile={yourProfile} player={you} team={yourTeam} />
+          <OnlineTeamPanel label="Opponent Team" profile={opponentProfile} player={opponent} team={opponentTeam} />
+        </div>
+        <p>Battle synchronization is coming next.</p>
+      </section>
+    )
+  }
+
+  if (!state.currentCharacter) return <div className="ai-thinking"><span className="thinking-dot" />Preparing current draft card...</div>
+
+  return (
+    <section className="draft-board online-draft-board">
+      <header className="game-phase-header">
+        <div><span>Online Draft</span><strong>{match.current_draft_position} / 10</strong></div>
+        <p>Priority: <b>{match.priority_player_id === currentUserId ? 'You' : opponentProfile.username}</b></p>
+        <div><span>Current Bid</span><strong>{match.current_bid === null ? '—' : `$${match.current_bid}`}</strong></div>
+      </header>
+      {message && <p className="online-draft-message" role="status">{message}</p>}
+      <div className="draft-layout">
+        <OnlineTeamPanel label="Your Team" profile={yourProfile} player={you} team={yourTeam} />
+        <div className="auction-stage">
+          <GameCard character={state.currentCharacter.character} />
+          <OnlineAuctionControls
+            match={match} you={you} userId={currentUserId} pendingAction={pendingAction}
+            onBid={onBid} onPass={onPass} onFold={onFold}
+          />
+        </div>
+        <OnlineTeamPanel label="Opponent Team" profile={opponentProfile} player={opponent} team={opponentTeam} />
+      </div>
+    </section>
+  )
+}

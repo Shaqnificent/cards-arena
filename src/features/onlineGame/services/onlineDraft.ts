@@ -1,0 +1,112 @@
+import { supabase } from '../../../lib/supabase'
+import type { Profile } from '../../../types/profile'
+import type { Character } from '../../../types/character'
+import type { OnlineDraftState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
+
+type MatchRow = Omit<OnlineMatchRecord, 'player_one' | 'player_two'> & {
+  player_one: Profile | Profile[]
+  player_two: Profile | Profile[]
+}
+
+type MatchCharacterRow = Omit<OnlineMatchCharacter, 'character'> & {
+  character: Character | Character[]
+}
+
+export async function initializeOnlineDraft(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc('initialize_match_draft', { p_match_id: matchId })
+  if (error) {
+    console.error('initialize_match_draft failed', {
+      matchId,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    })
+    throw error
+  }
+}
+
+export async function validateMatchParticipant(matchId: string, currentUserId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('matches')
+    .select('id, player_one_id, player_two_id')
+    .eq('id', matchId)
+    .maybeSingle()
+  if (error || !data) throw error ?? new Error('Match unavailable')
+  if (![data.player_one_id, data.player_two_id].includes(currentUserId)) throw new Error('Match unavailable')
+}
+
+export async function loadOnlineDraft(matchId: string, currentUserId: string, attempt = 0): Promise<OnlineDraftState> {
+  const [matchResult, playersResult, charactersResult] = await Promise.all([
+    supabase.from('matches').select(`
+      *,
+      player_one:profiles!matches_player_one_id_fkey (*),
+      player_two:profiles!matches_player_two_id_fkey (*)
+    `).eq('id', matchId).maybeSingle(),
+    supabase.from('match_players').select('*').eq('match_id', matchId).order('player_number'),
+    supabase.from('match_characters').select(`
+      id, match_id, character_id, draft_position, owner_player_id, purchase_price, assigned_at,
+      character:characters!match_characters_character_id_fkey (
+        id, name, slug, version, image_url, overall, power_score, active, verse_id,
+        verses (id, name, slug)
+      )
+    `).eq('match_id', matchId).order('draft_position'),
+  ])
+
+  if (matchResult.error || !matchResult.data) throw matchResult.error ?? new Error('Match unavailable')
+  if (playersResult.error) throw playersResult.error
+  if (charactersResult.error) throw charactersResult.error
+
+  const rawMatch = matchResult.data as unknown as MatchRow
+  if (![rawMatch.player_one_id, rawMatch.player_two_id].includes(currentUserId)) throw new Error('Match unavailable')
+  const playerOne = Array.isArray(rawMatch.player_one) ? rawMatch.player_one[0] : rawMatch.player_one
+  const playerTwo = Array.isArray(rawMatch.player_two) ? rawMatch.player_two[0] : rawMatch.player_two
+  if (!playerOne || !playerTwo) throw new Error('Match profiles unavailable')
+
+  const revealedCharacters = ((charactersResult.data ?? []) as unknown as MatchCharacterRow[]).flatMap((row) => {
+    const character = Array.isArray(row.character) ? row.character[0] : row.character
+    return character ? [{ ...row, character }] : []
+  })
+  const match: OnlineMatchRecord = { ...rawMatch, player_one: playerOne, player_two: playerTwo }
+
+  // The state spans normalized tables. Verify no action committed between the
+  // parallel reads; retrying gives the UI one coherent authoritative version.
+  const { data: versionRow, error: versionError } = await supabase
+    .from('matches').select('action_version').eq('id', matchId).single()
+  if (versionError) throw versionError
+  if (versionRow.action_version !== match.action_version && attempt < 2) {
+    return loadOnlineDraft(matchId, currentUserId, attempt + 1)
+  }
+
+  if (match.status === 'waiting' || match.draft_state === 'preparing') {
+    throw new Error('Draft initialization did not complete')
+  }
+  if ((playersResult.data ?? []).length !== 2) {
+    throw new Error('Draft initialization did not create both player states')
+  }
+  if (match.status === 'draft' && (!match.priority_player_id || match.current_draft_position < 1 || !revealedCharacters.length)) {
+    throw new Error('Draft initialization returned incomplete state')
+  }
+
+  return {
+    match,
+    players: (playersResult.data ?? []) as OnlineMatchPlayer[],
+    revealedCharacters,
+    currentCharacter: revealedCharacters.find((card) => card.draft_position === match.current_draft_position) ?? null,
+  }
+}
+
+export async function submitDraftBid(matchId: string, amount: number): Promise<void> {
+  const { error } = await supabase.rpc('draft_bid', { p_match_id: matchId, p_amount: amount })
+  if (error) throw error
+}
+
+export async function submitDraftPass(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc('draft_pass', { p_match_id: matchId })
+  if (error) throw error
+}
+
+export async function submitDraftFold(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc('draft_fold', { p_match_id: matchId })
+  if (error) throw error
+}

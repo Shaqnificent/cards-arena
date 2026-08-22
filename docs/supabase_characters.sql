@@ -1,0 +1,80 @@
+-- Run this file in the Supabase SQL Editor.
+create table public.verses (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique check (length(btrim(name)) between 1 and 80),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+  image_url text,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table public.characters (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (length(btrim(name)) between 1 and 100),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+  version text check (version is null or length(btrim(version)) between 1 and 100),
+  verse_id uuid not null references public.verses(id) on delete restrict,
+  image_url text,
+  overall integer not null check (overall between 1 and 99),
+  power_score integer not null check (power_score >= 0),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index characters_verse_id_idx on public.characters (verse_id);
+create index characters_overall_idx on public.characters (overall desc);
+create index characters_active_catalogue_idx
+  on public.characters (overall desc, name)
+  where active = true;
+
+alter table public.verses enable row level security;
+alter table public.characters enable row level security;
+
+create policy "Authenticated users can read active verses"
+  on public.verses for select to authenticated
+  using (active = true);
+
+create policy "Authenticated users can read active characters"
+  on public.characters for select to authenticated
+  using (active = true);
+
+grant select on public.verses, public.characters to authenticated;
+revoke insert, update, delete on public.verses from authenticated;
+revoke insert, update, delete on public.characters from authenticated;
+
+insert into public.verses (name, slug) values
+  ('Naruto', 'naruto'),
+  ('Dragon Ball', 'dragon-ball'),
+  ('Bleach', 'bleach'),
+  ('One Piece', 'one-piece')
+on conflict (slug) do update set name = excluded.name, active = true;
+
+-- Initial ratings are provisional test values, not permanent balance decisions.
+insert into public.characters (name, slug, version, verse_id, overall, power_score)
+select seed.name, seed.slug, seed.version, verses.id, seed.overall, seed.power_score
+from (values
+  ('Naruto Uzumaki', 'naruto-uzumaki-six-paths', 'Six Paths', 'naruto', 96, 9630),
+  ('Sasuke Uchiha', 'sasuke-uchiha-rinnegan', 'Rinnegan', 'naruto', 95, 9570),
+  ('Madara Uchiha', 'madara-uchiha-ten-tails', 'Ten Tails', 'naruto', 96, 9610),
+  ('Kakashi Hatake', 'kakashi-hatake-dms', 'Dual Mangekyo Sharingan', 'naruto', 94, 9440),
+  ('Goku', 'goku-ultra-instinct', 'Ultra Instinct', 'dragon-ball', 99, 9980),
+  ('Vegeta', 'vegeta-ultra-ego', 'Ultra Ego', 'dragon-ball', 98, 9860),
+  ('Frieza', 'frieza-black', 'Black', 'dragon-ball', 99, 9940),
+  ('Broly', 'broly-full-power', 'Full Power Super Saiyan', 'dragon-ball', 97, 9780),
+  ('Ichigo Kurosaki', 'ichigo-kurosaki-tybw', 'TYBW', 'bleach', 97, 9750),
+  ('Sosuke Aizen', 'sosuke-aizen-final', 'Final', 'bleach', 97, 9710),
+  ('Yhwach', 'yhwach-almighty', 'The Almighty', 'bleach', 98, 9890),
+  ('Kenpachi Zaraki', 'kenpachi-zaraki-tybw', 'TYBW', 'bleach', 94, 9420),
+  ('Monkey D. Luffy', 'monkey-d-luffy-gear-5', 'Gear 5', 'one-piece', 95, 9530),
+  ('Shanks', 'shanks-emperor', 'Emperor', 'one-piece', 95, 9510),
+  ('Roronoa Zoro', 'roronoa-zoro-king-of-hell', 'King of Hell', 'one-piece', 92, 9250),
+  ('Marshall D. Teach', 'marshall-d-teach-emperor', 'Emperor', 'one-piece', 94, 9480)
+) as seed(name, slug, version, verse_slug, overall, power_score)
+join public.verses on verses.slug = seed.verse_slug
+on conflict (slug) do update set
+  name = excluded.name,
+  version = excluded.version,
+  verse_id = excluded.verse_id,
+  overall = excluded.overall,
+  power_score = excluded.power_score,
+  active = true;
