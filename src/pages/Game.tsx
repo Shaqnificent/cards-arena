@@ -6,6 +6,7 @@ import { MatchResult } from '../features/game/components/MatchResult'
 import { useLocalGame } from '../features/game/hooks/useLocalGame'
 import { useCharacters } from '../hooks/useCharacters'
 import { useLocalMatchProgression } from '../features/ocs/hooks/useLocalMatchProgression'
+import { SoundToggle } from '../features/audio/SoundToggle'
 
 interface GameProps { playerName: string }
 
@@ -34,6 +35,7 @@ function LoadedGame({ characters, playerName }: LoadedGameProps) {
   return (
     <main className="game-page">
       <header className="game-header"><Link className="brand-link" to="/">ANIME ARENA</Link><span>Local Prototype</span><Link className="nav-link" to="/">Exit Match</Link></header>
+      <SoundToggle />
       {state.phase === 'draft' && currentCharacter && <DraftBoard state={state} currentCharacter={currentCharacter} actions={actions} />}
       {state.phase === 'battle' && <BattleBoard state={state} onSelect={actions.selectBattleCard} onLock={actions.lockBattleCard} onContinue={actions.continueBattle} />}
       {state.phase === 'result' && <MatchResult state={state} progression={progression} onRestart={() => { progression.reset(); actions.restart() }} />}

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GameCard } from '../../game/components/GameCard'
 import type { OnlineBattleAction, OnlineBattleState, ResolvedBattleFighter } from '../battleTypes'
 import { resolveOcImageSrc } from '../../ocs/services/ocImageUrl'
+import { useGameSounds } from '../../audio/useGameSounds'
 
 interface Props {
   state: OnlineBattleState
@@ -33,6 +34,9 @@ function ResolvedCard({ fighter, oc, imageUrl, side, winner }: { fighter: Resolv
 export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdvance }: Props) {
   const [selection, setSelection] = useState<{ type: 'canon' | 'oc'; id: string } | null>(null)
   const [showFinalResult, setShowFinalResult] = useState(false)
+  const sounds = useGameSounds()
+  const lockSeen = useRef(Boolean(state.yourSelection))
+  const soundedRound = useRef<number | null>(null)
   const yourSelection = state.yourSelection
   const revealed = state.battleState !== 'selecting' ? state.latestRound : null
   const victory = state.matchWinnerId === state.yourPlayerId
@@ -41,6 +45,29 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   const yourImage = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character.image_url : state.yourOC?.imageUrl
   const opponentImage = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character.image_url : state.opponentOC?.imageUrl
   const finalRound = state.status === 'completed' || state.battleState === 'complete'
+
+  useEffect(() => {
+    if (!lockSeen.current && state.yourSelection) sounds.playLockIn()
+    lockSeen.current = Boolean(state.yourSelection)
+  }, [sounds, state.yourSelection])
+
+  useEffect(() => {
+    if (!revealed || soundedRound.current === revealed.roundNumber) return
+    soundedRound.current = revealed.roundNumber
+    sounds.playRoundReveal()
+    const timer = window.setTimeout(() => {
+      if (revealed.winnerPlayerId === state.yourPlayerId) sounds.playRoundWin()
+      else if (revealed.winnerPlayerId === state.opponentPlayerId) sounds.playRoundLose()
+      else sounds.playRoundDraw()
+    }, 180)
+    return () => window.clearTimeout(timer)
+  }, [revealed, sounds, state.opponentPlayerId, state.yourPlayerId])
+
+  const selectFighter = (type: 'canon' | 'oc', id: string) => {
+    if (selection?.type === type && selection.id === id) return
+    setSelection({ type, id })
+    sounds.playCardSelect()
+  }
 
   if (state.status === 'completed' && (showFinalResult || !revealed)) {
     return <section className="match-result">
@@ -64,13 +91,13 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
         <div className={`versus-result ${roundWinner}`}><span>VS</span><i aria-hidden="true">{roundWinner === 'draw' ? '—' : '♜'}</i><strong>{roundWinner === 'player' ? 'You Win' : roundWinner === 'opponent' ? 'You Lose' : 'Draw'}</strong></div>
         <ResolvedCard fighter={revealed.opponentFighter} oc={revealed.opponentFighter.type === 'oc' ? state.opponentOC : null} imageUrl={opponentImage} side="opponent" winner={roundWinner === 'opponent'} />
       </div>
-      <button className="button button-primary result-continue" disabled={pendingAction !== null} onClick={() => finalRound ? setShowFinalResult(true) : void onAdvance()}>{pendingAction === 'advance' ? 'Advancing...' : finalRound ? 'View Match Result' : 'Next Round'}<span aria-hidden="true">›</span></button>
+      <button className="button button-primary result-continue" disabled={pendingAction !== null} onClick={() => { sounds.playNextRound(); if (finalRound) setShowFinalResult(true); else void onAdvance() }}>{pendingAction === 'advance' ? 'Advancing...' : finalRound ? 'View Match Result' : 'Next Round'}<span aria-hidden="true">›</span></button>
       <p className="result-helper"><i aria-hidden="true">i</i>{finalRound ? 'See the final score and match outcome.' : 'Continue when you’re ready.'}</p>
     </div> : <>
       <div className="opponent-roster"><h2>Opponent Team</h2><div>{state.opponentTeam.map((item) => <span key={item.id} className={item.used ? 'used' : undefined}>{item.character.name}</span>)}</div></div>
       <h2 className="fighter-heading">{yourSelection ? 'Fighter Locked In' : 'Choose Your Fighter'}</h2>
-      <div className="battle-options"><div className="battle-hand">{state.yourTeam.map((item) => <div key={item.id} className={item.sacrificed ? 'battle-card-sacrificed' : undefined}><GameCard character={item.character} compact used={item.used || item.sacrificed} selected={(yourSelection?.id ?? selection?.id) === item.id} onClick={yourSelection || item.sacrificed || item.used ? undefined : () => setSelection({ type: 'canon', id: item.id })} />{item.sacrificed && <strong>ABSORBED</strong>}</div>)}</div>
-      {state.yourOC && <button type="button" className={`oc-reserve-card ${state.yourOC.used ? 'used' : ''} ${selection?.type === 'oc' ? 'selected' : ''}`} disabled={Boolean(yourSelection) || state.yourOC.used} onClick={() => setSelection({ type: 'oc', id: state.yourOC!.id })}><small>OC Reserve</small><i>✦</i><strong>{state.yourOC.name}</strong><span>{state.yourOC.verseName}</span><b>{state.yourOC.overall} OVR</b><span>{state.yourOC.powerScore.toLocaleString()} Power</span>{state.yourOC.boost > 0 && <em>Boosted +{state.yourOC.boost} OVR</em>}{selection?.type === 'oc' && <u>✓</u>}{state.yourOC.used && <u>Used</u>}</button>}</div>
+      <div className="battle-options"><div className="battle-hand">{state.yourTeam.map((item) => <div key={item.id} className={item.sacrificed ? 'battle-card-sacrificed' : undefined}><GameCard character={item.character} compact used={item.used || item.sacrificed} selected={(yourSelection?.id ?? selection?.id) === item.id} onHover={sounds.playCardHover} onClick={yourSelection || item.sacrificed || item.used ? undefined : () => selectFighter('canon', item.id)} />{item.sacrificed && <strong>ABSORBED</strong>}</div>)}</div>
+      {state.yourOC && <button type="button" className={`oc-reserve-card ${state.yourOC.used ? 'used' : ''} ${selection?.type === 'oc' ? 'selected' : ''}`} disabled={Boolean(yourSelection) || state.yourOC.used} onMouseEnter={sounds.playCardHover} onClick={() => selectFighter('oc', state.yourOC!.id)}><small>OC Reserve</small><i>✦</i><strong>{state.yourOC.name}</strong><span>{state.yourOC.verseName}</span><b>{state.yourOC.overall} OVR</b><span>{state.yourOC.powerScore.toLocaleString()} Power</span>{state.yourOC.boost > 0 && <em>Boosted +{state.yourOC.boost} OVR</em>}{selection?.type === 'oc' && <u>✓</u>}{state.yourOC.used && <u>Used</u>}</button>}</div>
       {yourSelection ? <p className="battle-lock-status">{state.opponentLocked ? 'Opponent locked in. Resolving round...' : 'Waiting for opponent...'}</p>
         : <><button className="button button-primary lock-button" disabled={!selection || pendingAction !== null} onClick={() => selection && void onLock(selection.type, selection.id)}>{pendingAction === 'lock' ? 'Locking...' : 'Lock In'}</button><p className="battle-secret-note">▣ Your selection is secret until revealed</p></>}
       {!yourSelection && state.opponentLocked && <p className="battle-lock-status">Opponent has locked in.</p>}

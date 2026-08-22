@@ -7,15 +7,17 @@ interface GameCardProps {
   selected?: boolean
   used?: boolean
   onClick?: () => void
+  onHover?: () => void
 }
 
-export function GameCard({ character, compact = false, selected = false, used = false, onClick }: GameCardProps) {
+export function GameCard({ character, compact = false, selected = false, used = false, onClick, onHover }: GameCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   return (
     <button
       type="button"
       className={`game-card${compact ? ' compact' : ''}${selected ? ' selected' : ''}${used ? ' used' : ''}`}
       onClick={onClick}
+      onMouseEnter={used || !onClick ? undefined : onHover}
       disabled={used || !onClick}
     >
       <div className="game-card-image">

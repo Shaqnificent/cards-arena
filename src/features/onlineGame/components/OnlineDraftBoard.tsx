@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react'
 import { GameCard } from '../../game/components/GameCard'
 import type { OnlineDraftAction, OnlineDraftState } from '../types'
 import { OnlineAuctionControls } from './OnlineAuctionControls'
 import { OnlineTeamPanel } from './OnlineTeamPanel'
+import { useGameSounds } from '../../audio/useGameSounds'
 
 interface OnlineDraftBoardProps {
   state: OnlineDraftState
@@ -14,6 +16,8 @@ interface OnlineDraftBoardProps {
 }
 
 export function OnlineDraftBoard({ state, currentUserId, pendingAction, message, onBid, onPass, onFold }: OnlineDraftBoardProps) {
+  const sounds = useGameSounds()
+  const revealedPosition = useRef<number | null>(null)
   const { match } = state
   const isPlayerOne = currentUserId === match.player_one_id
   const yourProfile = isPlayerOne ? match.player_one : match.player_two
@@ -22,6 +26,12 @@ export function OnlineDraftBoard({ state, currentUserId, pendingAction, message,
   const opponent = state.players.find((player) => player.player_id !== currentUserId)
   const yourTeam = state.revealedCharacters.filter((card) => card.owner_player_id === currentUserId)
   const opponentTeam = state.revealedCharacters.filter((card) => card.owner_player_id === opponent?.player_id)
+
+  useEffect(() => {
+    if (!state.currentCharacter || revealedPosition.current === match.current_draft_position) return
+    revealedPosition.current = match.current_draft_position
+    sounds.playRoundReveal()
+  }, [match.current_draft_position, sounds, state.currentCharacter])
 
   if (!you || !opponent) return <div className="catalogue-state error-message">Online player state is unavailable.</div>
 

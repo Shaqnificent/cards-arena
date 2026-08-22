@@ -9,6 +9,7 @@ import { useOnlineBattle } from '../features/onlineGame/hooks/useOnlineBattle'
 import { useOnlineDraft } from '../features/onlineGame/hooks/useOnlineDraft'
 import { useOcPreparation } from '../features/onlineGame/hooks/useOcPreparation'
 import { MatchExitBoundary } from '../features/onlineGame/components/MatchExitControl'
+import { SoundToggle } from '../features/audio/SoundToggle'
 
 interface MatchProps { currentUserId: string }
 
@@ -16,7 +17,7 @@ export function Match({ currentUserId }: MatchProps) {
   const { matchId } = useParams()
 
   if (!matchId) return <MatchError message="Match not found." />
-  return <MatchExitBoundary matchId={matchId} currentUserId={currentUserId}><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} /></MatchExitBoundary>
+  return <MatchExitBoundary matchId={matchId} currentUserId={currentUserId}><SoundToggle/><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} /></MatchExitBoundary>
 }
 
 function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {

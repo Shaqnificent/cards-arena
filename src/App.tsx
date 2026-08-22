@@ -11,6 +11,7 @@ import { Game } from './pages/Game'
 import { Match } from './pages/Match'
 import { Suggestions } from './pages/Suggestions'
 import { PlayerCharacters } from './pages/PlayerCharacters'
+import { SoundProvider } from './features/audio/SoundProvider'
 
 function App() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -27,7 +28,7 @@ function App() {
   const headerUsername = profile?.username ?? user.user_metadata.full_name ?? user.user_metadata.name ?? 'Player'
   const headerAvatarUrl = profile?.avatar_url ?? user.user_metadata.avatar_url ?? user.user_metadata.picture ?? null
 
-  return (
+  return <SoundProvider>
     <Routes>
       <Route
         path="/"
@@ -49,7 +50,7 @@ function App() {
       <Route path="/match/:matchId" element={<Match currentUserId={user.id} />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
+  </SoundProvider>
 }
 
 export default App

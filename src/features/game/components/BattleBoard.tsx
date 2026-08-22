@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react'
 import type { LocalGameState } from '../types'
 import { GameCard } from './GameCard'
+import { useGameSounds } from '../../audio/useGameSounds'
 
 interface BattleBoardProps {
   state: LocalGameState
@@ -11,6 +13,32 @@ interface BattleBoardProps {
 export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoardProps) {
   const { battle } = state
   const matchPoint = battle.playerScore >= 3 || battle.opponentScore >= 3 || battle.round >= 5
+  const sounds = useGameSounds()
+  const soundedRound = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!battle.reveal || soundedRound.current === battle.round) return
+    soundedRound.current = battle.round
+    sounds.playLockIn()
+    const revealTimer = window.setTimeout(sounds.playRoundReveal, 100)
+    const resultTimer = window.setTimeout(() => {
+      if (battle.reveal?.winner === 'player') sounds.playRoundWin()
+      else if (battle.reveal?.winner === 'opponent') sounds.playRoundLose()
+      else sounds.playRoundDraw()
+    }, 280)
+    return () => { window.clearTimeout(revealTimer); window.clearTimeout(resultTimer) }
+  }, [battle.reveal, battle.round, sounds])
+
+  const selectCard = (id: string) => {
+    if (battle.selectedPlayerId === id) return
+    onSelect(id)
+    sounds.playCardSelect()
+  }
+
+  const continueRound = () => {
+    sounds.playNextRound()
+    onContinue()
+  }
 
   return (
     <section className="battle-board">
@@ -25,7 +53,7 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
           <GameCard character={battle.reveal.playerCard} />
           <div className="versus-result"><span>VS</span><strong>{battle.reveal.winner === 'player' ? 'You Win' : battle.reveal.winner === 'opponent' ? 'Opponent Wins' : 'Power Tie'}</strong></div>
           <GameCard character={battle.reveal.opponentCard} />
-          <button className="button button-primary" onClick={onContinue}>{matchPoint ? 'View Result' : 'Next Round'}</button>
+          <button className="button button-primary" onClick={continueRound}>{matchPoint ? 'View Result' : 'Next Round'}</button>
         </div>
       ) : (
         <>
@@ -45,7 +73,8 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
                 key={character.id} character={character} compact
                 selected={battle.selectedPlayerId === character.id}
                 used={battle.playerUsedIds.includes(character.id)}
-                onClick={() => onSelect(character.id)}
+                onHover={sounds.playCardHover}
+                onClick={() => selectCard(character.id)}
               />
             ))}
           </div>

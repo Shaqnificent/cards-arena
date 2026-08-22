@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { OnlineDraftAction, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
+import { useGameSounds } from '../../audio/useGameSounds'
 
 interface OnlineAuctionControlsProps {
   match: OnlineMatchRecord
@@ -12,6 +13,7 @@ interface OnlineAuctionControlsProps {
 }
 
 export function OnlineAuctionControls({ match, you, userId, pendingAction, onBid, onPass, onFold }: OnlineAuctionControlsProps) {
+  const sounds = useGameSounds()
   const [choosingOpeningBid, setChoosingOpeningBid] = useState(false)
   const minimumBid = match.current_bid === null ? 0 : match.current_bid + 1
   const [proposedBid, setProposedBid] = useState(minimumBid)
@@ -25,8 +27,8 @@ export function OnlineAuctionControls({ match, you, userId, pendingAction, onBid
   if (match.draft_state === 'decision' && !choosingOpeningBid) {
     return isPriority ? (
       <div className="auction-actions">
-        <button className="button button-primary" onClick={() => setChoosingOpeningBid(true)}>Bid</button>
-        <button className="button button-secondary" onClick={() => void onPass()}>Pass</button>
+        <button className="button button-primary" onMouseEnter={sounds.playCardHover} onClick={() => { setChoosingOpeningBid(true); sounds.playCardSelect() }}>Bid</button>
+        <button className="button button-secondary" onMouseEnter={sounds.playCardHover} onClick={() => { sounds.playCardSelect(); void onPass() }}>Pass</button>
       </div>
     ) : <div className="ai-thinking"><span className="thinking-dot" />Waiting for opponent...</div>
   }
@@ -42,12 +44,12 @@ export function OnlineAuctionControls({ match, you, userId, pendingAction, onBid
     <div className="bid-controls">
       <p>{match.current_bid === null ? 'Choose an opening bid' : `Current bid: $${match.current_bid}`}</p>
       <div className="bid-stepper">
-        <button onClick={() => setProposedBid(Math.max(minimumBid, effectiveBid - 1))} aria-label="Decrease bid">−</button>
+        <button onMouseEnter={sounds.playCardHover} onClick={() => { setProposedBid(Math.max(minimumBid, effectiveBid - 1)); sounds.playCardSelect() }} aria-label="Decrease bid">−</button>
         <strong>${effectiveBid}</strong>
-        <button onClick={() => setProposedBid(Math.min(you.balance, effectiveBid + 1))} aria-label="Increase bid">+</button>
+        <button onMouseEnter={sounds.playCardHover} onClick={() => { setProposedBid(Math.min(you.balance, effectiveBid + 1)); sounds.playCardSelect() }} aria-label="Increase bid">+</button>
       </div>
-      <button className="button button-primary" disabled={!canAffordRaise} onClick={() => void onBid(effectiveBid)}>Place Bid</button>
-      {match.draft_state === 'bidding' && <button className="button button-secondary" onClick={() => void onFold()}>Fold</button>}
+      <button className="button button-primary" disabled={!canAffordRaise} onMouseEnter={sounds.playCardHover} onClick={() => { sounds.playCardSelect(); void onBid(effectiveBid) }}>Place Bid</button>
+      {match.draft_state === 'bidding' && <button className="button button-secondary" onMouseEnter={sounds.playCardHover} onClick={() => { sounds.playCardSelect(); void onFold() }}>Fold</button>}
       {!canAffordRaise && <small>Your ${you.balance} balance cannot cover the next bid. You can fold.</small>}
     </div>
   )
