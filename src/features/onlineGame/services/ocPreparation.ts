@@ -1,10 +1,14 @@
 import { supabase } from '../../../lib/supabase'
 import type { MatchOcPreparationState } from '../types'
+import { loadMatchOcPortraits } from './matchOcPortraits'
 
 export async function loadOcPreparation(matchId: string): Promise<MatchOcPreparationState> {
   const { data, error } = await supabase.rpc('get_match_oc_preparation_state', { p_match_id: matchId })
   if (error) throw error
-  return data as MatchOcPreparationState
+  const state = data as MatchOcPreparationState
+  const portraits = await loadMatchOcPortraits(matchId)
+  if (state.yourOC) state.yourOC.imageUrl = portraits.get(state.yourOC.characterId) ?? null
+  return state
 }
 
 export async function submitOcPreparation(matchId: string, decision: 'reserve' | 'sacrifice', sacrificedId: string | null): Promise<MatchOcPreparationState> {

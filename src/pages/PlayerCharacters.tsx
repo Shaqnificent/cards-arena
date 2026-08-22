@@ -5,6 +5,8 @@ import { getGrowthType, type PlayerCharacter } from '../features/ocs/types'
 import { getOverallUpgradeCost } from '../features/ocs/types'
 import { useOcProgression } from '../features/ocs/hooks/useOcProgression'
 import { useVerses } from '../hooks/useVerses'
+import { OCImage } from '../features/ocs/components/OCImage'
+import { removeOcPortrait, uploadOcPortrait, validatePortrait } from '../features/ocs/services/ocImages'
 
 interface PlayerCharactersProps { username: string; avatarUrl: string | null }
 
@@ -12,7 +14,7 @@ const formatPower = (value: number) => value.toLocaleString()
 
 function CharacterIdentity({ character }: { character: PlayerCharacter }) {
   return <div className="oc-identity">
-    <div className="oc-avatar" aria-hidden="true">{character.name.charAt(0).toUpperCase()}</div>
+    <OCImage src={character.image_url} name={character.name} className="oc-avatar" />
     <div><span>{character.verse.name}</span><h3>{character.name}</h3></div>
   </div>
 }
@@ -31,6 +33,10 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
   const [developing, setDeveloping] = useState<PlayerCharacter | null>(null)
   const [developmentMessage, setDevelopmentMessage] = useState<string | null>(null)
   const [rewardTargets, setRewardTargets] = useState<Record<string, string>>({})
+  const [portraitCharacter, setPortraitCharacter] = useState<PlayerCharacter | null>(null)
+  const [portraitFile, setPortraitFile] = useState<File | null>(null)
+  const [portraitPreview, setPortraitPreview] = useState<string | null>(null)
+  const [portraitPending, setPortraitPending] = useState(false)
 
   const active = useMemo(() => collection.characters.filter((character) => character.active), [collection.characters])
   const retired = useMemo(() => collection.characters.filter((character) => !character.active), [collection.characters])
@@ -83,6 +89,31 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
     } catch (error) { setActionError(error instanceof Error ? error.message : 'Unable to develop this fighter.') }
   }
 
+  const choosePortrait = (file: File | null) => {
+    if (portraitPreview) URL.revokeObjectURL(portraitPreview)
+    setPortraitFile(null); setPortraitPreview(null); setActionError(null)
+    if (!file) return
+    const validation = validatePortrait(file)
+    if (validation) return setActionError(validation)
+    setPortraitFile(file); setPortraitPreview(URL.createObjectURL(file))
+  }
+
+  const savePortrait = async () => {
+    if (!portraitCharacter || !portraitFile || portraitPending) return
+    setPortraitPending(true); setActionError(null)
+    try { await uploadOcPortrait(portraitCharacter.id, portraitFile, portraitCharacter.image_url); await collection.refresh(); setPortraitCharacter(null); choosePortrait(null) }
+    catch (error) { setActionError(error instanceof Error ? error.message : 'Unable to upload this portrait.') }
+    finally { setPortraitPending(false) }
+  }
+
+  const removePortrait = async (character: PlayerCharacter) => {
+    if (!character.image_url || portraitPending) return
+    setPortraitPending(true); setActionError(null)
+    try { await removeOcPortrait(character.id, character.image_url); await collection.refresh(); setPortraitCharacter(null); choosePortrait(null) }
+    catch (error) { setActionError(error instanceof Error ? error.message : 'Unable to remove this portrait.') }
+    finally { setPortraitPending(false) }
+  }
+
   return <main className="oc-page">
     <AppHeader active="ocs" username={username} avatarUrl={avatarUrl} />
     <section className="oc-content" aria-labelledby="oc-heading">
@@ -97,7 +128,7 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
         <section className="oc-section" aria-labelledby="family-heading"><div className="oc-section-heading"><div><p className="eyebrow">Active OC Family</p><h2 id="family-heading">Match Loadout</h2></div><span>Up to three fighters</span></div>
           <div className="oc-family-grid">{Array.from({ length: 3 }, (_, index) => {
             const character = equipped[index]
-            return character ? <article className="oc-family-slot filled" key={character.id}><CharacterIdentity character={character} /><div className="oc-slot-stats"><b>{character.overall} <small>OVR</small></b><b>{formatPower(character.power_score)} <small>Power</small></b></div></article>
+            return character ? <article className="oc-family-slot filled" key={character.id}><span className="oc-slot-label">Slot {index + 1}</span><OCImage src={character.image_url} name={character.name} className="oc-family-portrait" /><CharacterIdentity character={character} /><div className="oc-slot-stats"><b>{character.overall} <small>OVR</small></b><b>{formatPower(character.power_score)} <small>Power</small></b></div><div className="oc-portrait-actions"><button className="button button-secondary" onClick={() => { setPortraitCharacter(character); setPortraitFile(null); setPortraitPreview(null); setActionError(null) }}>{character.image_url ? 'Change Portrait' : 'Add Portrait'}</button>{character.image_url && <button className="text-button" disabled={portraitPending} onClick={() => void removePortrait(character)}>Remove</button>}</div></article>
               : <div className="oc-family-slot empty" key={`empty-${index}`}><span>+</span><strong>Empty Slot</strong><small>Equip an OC from your collection</small></div>
           })}</div>
         </section>
@@ -117,5 +148,6 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
 
     {retiring && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal compact" role="alertdialog" aria-modal="true" aria-labelledby="retire-oc-heading"><p className="eyebrow">Retire Fighter</p><h2 id="retire-oc-heading">Retire {retiring.name}?</h2><p>This fighter will leave your active collection and cannot be used in new matches.</p><div className="oc-modal-actions"><button className="button button-secondary" onClick={() => setRetiring(null)}>Cancel</button><button className="button oc-danger-button" onClick={() => void confirmRetirement()}>Retire Fighter</button></div></section></div>}
     {developing && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal" role="dialog" aria-modal="true" aria-labelledby="develop-oc-heading"><div className="oc-modal-heading"><div><p className="eyebrow">Develop Fighter</p><h2 id="develop-oc-heading">{developing.name}</h2><p>{developing.verse.name}</p></div><button onClick={() => setDeveloping(null)} aria-label="Close development panel">×</button></div><div className="oc-points-balance"><span>Progression Points</span><strong>{developing.progression_points}</strong></div>{developing.overall >= developing.overall_cap && developing.power_score >= developing.power_score_cap && <p className="oc-max-development">Max Development</p>}<div className="oc-upgrade-list"><article><div><span>Overall</span><strong>{developing.overall} / {developing.overall_cap}</strong></div>{developing.overall >= developing.overall_cap ? <p>OVR MAX</p> : <p>Next: {developing.overall} → {developing.overall + 1}<br />Cost: {getOverallUpgradeCost(developing.overall)} {getOverallUpgradeCost(developing.overall) === 1 ? 'point' : 'points'}</p>}<button className="button button-primary" disabled={developing.overall >= developing.overall_cap || developing.progression_points < getOverallUpgradeCost(developing.overall) || progression.pendingKey !== null} onClick={() => void develop('overall')}>{developing.overall >= developing.overall_cap ? 'OVR Max' : 'Increase OVR'}</button></article><article><div><span>Battle Power</span><strong>{formatPower(developing.power_score)} / {formatPower(developing.power_score_cap)}</strong></div>{developing.power_score >= developing.power_score_cap ? <p>POWER MAX</p> : <p>Next: {formatPower(developing.power_score)} → {formatPower(Math.min(developing.power_score + 50, developing.power_score_cap))}<br />Cost: 1 point</p>}<button className="button button-primary" disabled={developing.power_score >= developing.power_score_cap || developing.progression_points < 1 || progression.pendingKey !== null} onClick={() => void develop('power')}>{developing.power_score >= developing.power_score_cap ? 'Power Max' : 'Increase Power'}</button></article></div>{developmentMessage && <p className="oc-development-success" role="status">{developmentMessage}</p>}{actionError && <p className="error-message" role="alert">{actionError}</p>}</section></div>}
+    {portraitCharacter && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal compact oc-portrait-modal" role="dialog" aria-modal="true" aria-labelledby="portrait-heading"><div className="oc-modal-heading"><div><p className="eyebrow">OC Portrait</p><h2 id="portrait-heading">{portraitCharacter.image_url ? 'Change Portrait' : 'Add Portrait'}</h2></div><button onClick={() => { setPortraitCharacter(null); choosePortrait(null) }} aria-label="Close portrait uploader">×</button></div><OCImage src={portraitPreview ?? portraitCharacter.image_url} name={portraitCharacter.name} className="oc-portrait-preview" /><label className="oc-file-picker">Choose JPG, PNG, or WebP<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => choosePortrait(event.target.files?.[0] ?? null)} /></label><small>Maximum file size: 5 MB</small>{actionError && <p className="error-message" role="alert">{actionError}</p>}<div className="oc-modal-actions"><button className="button button-secondary" disabled={portraitPending} onClick={() => { setPortraitCharacter(null); choosePortrait(null) }}>Cancel</button><button className="button button-primary" disabled={!portraitFile || portraitPending} onClick={() => void savePortrait()}>{portraitPending ? 'Uploading...' : 'Save Portrait'}</button></div></section></div>}
   </main>
 }

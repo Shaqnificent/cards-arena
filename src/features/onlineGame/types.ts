@@ -53,7 +53,7 @@ export type OcPreparationDecision = 'none' | 'reserve' | 'sacrifice'
 export interface OcPreparationFighter { matchCharacterId: string; characterId: number; name: string; verseId: number; verseName: string; overall: number; powerScore: number; tier: 'D' | 'C' | 'B' | 'A' | 'S' | 'LEGEND'; sacrificeBoost: number }
 export interface MatchOcPreparationState {
   matchId: string; status: MatchStatus; yourPlayerId: string
-  yourOC: { characterId: string; name: string; verseId: number; verseName: string; baseOverall: number; powerScore: number } | null
+  yourOC: { characterId: string; name: string; verseId: number; verseName: string; baseOverall: number; powerScore: number; imageUrl: string | null } | null
   eligibleSacrifices: OcPreparationFighter[]
   yourPreparation: { decision: OcPreparationDecision; sacrificedMatchCharacterId: string | null; sacrificeTier: string | null; sacrificeBoost: number; baseOverall: number | null; matchOverall: number | null; basePowerScore: number | null; lockedAt: string } | null
   yourLocked: boolean; opponentLocked: boolean; bothComplete: boolean
@@ -83,6 +83,7 @@ export interface MatchOcOption {
   overall: number
   powerScore: number
   overallCap: number
+  imageUrl: string | null
 }
 export type MatchOcProfile = Pick<Profile, 'id' | 'username' | 'avatar_url'>
 export interface MatchOcSelectionState {

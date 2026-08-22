@@ -36,8 +36,8 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   const victory = state.matchWinnerId === state.yourPlayerId
   const draw = state.status === 'completed' && !state.matchWinnerId
   const roundWinner = revealed?.winnerPlayerId === state.yourPlayerId ? 'player' : revealed?.winnerPlayerId === state.opponentPlayerId ? 'opponent' : 'draw'
-  const yourImage = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character.image_url : null
-  const opponentImage = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character.image_url : null
+  const yourImage = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character.image_url : state.yourOC?.imageUrl
+  const opponentImage = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character.image_url : state.opponentOC?.imageUrl
   const finalRound = state.status === 'completed' || state.battleState === 'complete'
 
   if (state.status === 'completed' && (showFinalResult || !revealed)) {

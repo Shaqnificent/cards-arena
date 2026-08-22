@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import type { MatchOcOption, MatchOcSelectionState } from '../types'
+import { OCImage } from '../../ocs/components/OCImage'
 
 const formatPower = (value: number) => value.toLocaleString()
 
 function OcOptionCard({ option, selected, selectable, onSelect }: { option: MatchOcOption; selected?: boolean; selectable?: boolean; onSelect?: () => void }) {
-  const content = <><div className="match-oc-avatar" aria-hidden="true">{option.name.charAt(0).toUpperCase()}</div><div className="match-oc-card-copy"><span>{option.verseName}</span><h3>{option.name}</h3><div><b>{option.overall} <small>OVR</small></b><b>{formatPower(option.powerScore)} <small>Power</small></b></div></div></>
+  const content = <><OCImage src={option.imageUrl} name={option.name} className="match-oc-avatar" /><div className="match-oc-card-copy"><span>{option.verseName}</span><h3>{option.name}</h3><div><b>{option.overall} <small>OVR</small></b><b>{formatPower(option.powerScore)} <small>Power</small></b></div></div></>
   return selectable ? <button type="button" className={`match-oc-card${selected ? ' selected' : ''}`} onClick={onSelect}>{content}</button>
     : <article className="match-oc-card">{content}</article>
 }

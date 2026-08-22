@@ -11,7 +11,7 @@ export interface OnlineBattleFighter {
   sacrificed?: boolean
   character: Character
 }
-export interface OnlineBattleOc { id: string; name: string; verseName: string; overall: number; powerScore: number; used: boolean; boost: number; decision: 'reserve' | 'sacrifice'; sacrificeTier?: string | null; sacrificeBoost?: number; sacrificedName?: string | null }
+export interface OnlineBattleOc { id: string; name: string; verseName: string; overall: number; powerScore: number; used: boolean; boost: number; decision: 'reserve' | 'sacrifice'; imageUrl: string | null; sacrificeTier?: string | null; sacrificeBoost?: number; sacrificedName?: string | null }
 export interface BattleSelectionRef { type: 'canon' | 'oc'; id: string }
 export interface ResolvedBattleFighter { type: 'canon' | 'oc'; id: string; name: string; overall: number; powerScore: number }
 

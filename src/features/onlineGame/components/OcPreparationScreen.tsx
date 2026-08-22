@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { MatchOcPreparationState } from '../types'
+import { OCImage } from '../../ocs/components/OCImage'
 
 interface Props { state:MatchOcPreparationState;pending:boolean;error:string|null;onLock:(decision:'reserve'|'sacrifice',sacrificedId:string|null)=>Promise<void> }
 
@@ -14,5 +15,5 @@ export function OcPreparationScreen({state,pending,error,onLock}:Props){
     <div className="preparation-warning"><i>!</i><p>Sacrificed fighters cannot be used in battle this match.<br/>This decision cannot be changed.</p></div><button className="button button-primary preparation-lock" disabled={pending||(choice.decision==='sacrifice'&&!choice.id)} onClick={()=>void onLock(choice.decision,choice.id)}>{pending?'Locking...':'Lock Preparation'}</button>
   </section></main>
 }
-function OcSummary({name,verse,overall,power}:{name:string;verse:string;overall:number;power:number}){return <div className="oc-preparation-summary"><i>✦</i><span><strong>{name}</strong><small>{verse}</small></span><div><b>{overall} OVR</b><small>{power.toLocaleString()} Power</small></div></div>}
+function OcSummary({name,verse,overall,power,imageUrl=null}:{name:string;verse:string;overall:number;power:number;imageUrl?:string|null}){return <div className="oc-preparation-summary"><OCImage src={imageUrl} name={name} className="oc-preparation-portrait" /><span><strong>{name}</strong><small>{verse}</small></span><div><b>{overall} OVR</b><small>{power.toLocaleString()} Power</small></div></div>}
 function WaitingState({title,text}:{title:string;text:string}){return <section className="oc-preparation waiting"><p className="eyebrow">OC Preparation</p><h1>{title}</h1><div className="preparation-waiting"><i>⌛</i><strong>{text}</strong></div></section>}
