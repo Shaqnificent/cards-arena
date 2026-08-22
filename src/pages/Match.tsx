@@ -8,6 +8,7 @@ import { OcPreparationScreen } from '../features/onlineGame/components/OcPrepara
 import { useOnlineBattle } from '../features/onlineGame/hooks/useOnlineBattle'
 import { useOnlineDraft } from '../features/onlineGame/hooks/useOnlineDraft'
 import { useOcPreparation } from '../features/onlineGame/hooks/useOcPreparation'
+import { MatchExitBoundary } from '../features/onlineGame/components/MatchExitControl'
 
 interface MatchProps { currentUserId: string }
 
@@ -15,7 +16,7 @@ export function Match({ currentUserId }: MatchProps) {
   const { matchId } = useParams()
 
   if (!matchId) return <MatchError message="Match not found." />
-  return <LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} />
+  return <MatchExitBoundary matchId={matchId} currentUserId={currentUserId}><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} /></MatchExitBoundary>
 }
 
 function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {
