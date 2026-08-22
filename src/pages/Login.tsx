@@ -12,10 +12,11 @@ export function Login({ initialError = null }: LoginProps) {
   const handleGoogleLogin = async () => {
     setError(null)
     setPendingAction('google')
+    const redirectTo = new URL('/', window.location.origin).toString()
 
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo },
     })
 
     if (authError) {
