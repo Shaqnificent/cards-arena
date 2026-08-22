@@ -43,7 +43,8 @@ function App() {
       <Route path="/characters" element={<Characters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/ocs" element={<PlayerCharacters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/leaderboard" element={<Leaderboard currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />
-      <Route path="/suggestions" element={profile ? <Suggestions currentUserId={user.id} profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your player profile..." />} />
+      <Route path="/community" element={profile ? <Suggestions currentUserId={user.id} profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your player profile..." />} />
+      <Route path="/suggestions" element={<Navigate to="/community" replace />} />
       <Route path="/play/test" element={profile ? <Game playerName={profile.username} /> : <LoadingScreen message="Loading your player profile..." />} />
       <Route path="/match/:matchId" element={<Match currentUserId={user.id} />} />
       <Route path="*" element={<Navigate to="/" replace />} />

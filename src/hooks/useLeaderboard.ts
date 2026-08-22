@@ -49,7 +49,7 @@ export function useLeaderboard(limit = 100): LeaderboardState {
             winRate: gamesPlayed === 0 ? 0 : (profile.wins / gamesPlayed) * 100,
           }
         })
-        .filter((player) => player.wins > 0)
+        .filter((player) => player.gamesPlayed > 0)
         .sort((a, b) =>
           b.winRate - a.winRate ||
           b.wins - a.wins ||

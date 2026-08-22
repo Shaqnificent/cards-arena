@@ -40,20 +40,19 @@ export function Login({ initialError = null }: LoginProps) {
   const isPending = pendingAction !== null
 
   return (
-    <main className="screen">
-      <section className="panel login-panel" aria-labelledby="login-title">
-        <p className="eyebrow">Build your team. Own the arena.</p>
-        <h1 id="login-title">ANIME ARENA</h1>
-
-        {error && <p className="error-message" role="alert">{error}</p>}
-
-        <button className="button button-primary" onClick={handleGoogleLogin} disabled={isPending}>
-          {pendingAction === 'google' ? 'Connecting...' : 'Continue with Google'}
-        </button>
-        <div className="divider"><span>or</span></div>
-        <button className="button button-secondary" onClick={handleGuestLogin} disabled={isPending}>
-          {pendingAction === 'guest' ? 'Entering Arena...' : 'Play as Guest'}
-        </button>
+    <main className="login-page">
+      <header className="login-header"><strong><i aria-hidden="true">⚔</i> ANIME <span>ARENA</span></strong><small><i aria-hidden="true">◇</i> Fair Play</small></header>
+      <section className="login-content" aria-labelledby="login-title">
+        <div className="login-intro"><p className="eyebrow">Build your team. Own the arena.</p><h1 id="login-title">ANIME <span>ARENA</span></h1><p>Strategize, battle, and rise through the ranks in fast-paced<br/>anime-inspired PvP battles.</p></div>
+        <section className="login-panel">
+          {error && <p className="error-message" role="alert">{error}</p>}
+          <button className="button button-primary login-google" onClick={handleGoogleLogin} disabled={isPending}><i aria-hidden="true">G</i>{pendingAction === 'google' ? 'Connecting...' : 'Continue with Google'}</button>
+          <div className="divider"><span>or</span></div>
+          <button className="button button-secondary login-guest" onClick={handleGuestLogin} disabled={isPending}><i aria-hidden="true">♙</i>{pendingAction === 'guest' ? 'Entering Arena...' : 'Play as Guest'}</button>
+          <p className="login-trust"><span aria-hidden="true">◇</span> Secure <i>•</i> Private <i>•</i> Respects Your Progress</p>
+        </section>
+        <div className="login-features"><article><i aria-hidden="true">⚔</i><span><strong>Draft Battles</strong><small>Build the perfect team</small></span></article><article><i aria-hidden="true">♟</i><span><strong>Build OCs</strong><small>Create and grow your roster</small></span></article><article><i aria-hidden="true">♛</i><span><strong>Ranked PvP</strong><small>Climb the leaderboards</small></span></article></div>
+        <footer className="login-footer"><span>◇</span> Server-authoritative matchmaking <i>•</i> Skill-based progression</footer>
       </section>
     </main>
   )
