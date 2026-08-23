@@ -12,6 +12,10 @@ import { Match } from './pages/Match'
 import { Suggestions } from './pages/Suggestions'
 import { PlayerCharacters } from './pages/PlayerCharacters'
 import { SoundProvider } from './features/audio/SoundProvider'
+import { MatchmakingToast } from './components/MatchmakingToast'
+import { useMatchmaking } from './features/matchmaking/hooks/useMatchmaking'
+import type { User } from '@supabase/supabase-js'
+import type { Profile } from './types/profile'
 
 function App() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -24,6 +28,17 @@ function App() {
   if (!user) {
     return <Login initialError={authError} />
   }
+
+  return <AuthenticatedApp user={user} profile={profile} profileLoading={profileLoading} profileError={profileError} />
+}
+
+function AuthenticatedApp({ user, profile, profileLoading, profileError }: {
+  user: User
+  profile: Profile | null
+  profileLoading: boolean
+  profileError: string | null
+}) {
+  const matchmaking = useMatchmaking(user.id)
 
   const headerUsername = profile?.username ?? user.user_metadata.full_name ?? user.user_metadata.name ?? 'Player'
   const headerAvatarUrl = profile?.avatar_url ?? user.user_metadata.avatar_url ?? user.user_metadata.picture ?? null
@@ -38,6 +53,7 @@ function App() {
             profile={profile}
             profileLoading={profileLoading}
             profileError={profileError}
+            matchmaking={matchmaking}
           />
         }
       />
@@ -50,6 +66,7 @@ function App() {
       <Route path="/match/:matchId" element={<Match currentUserId={user.id} />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <MatchmakingToast matchmaking={matchmaking} />
   </SoundProvider>
 }
 

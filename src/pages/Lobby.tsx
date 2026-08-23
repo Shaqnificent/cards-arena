@@ -5,13 +5,12 @@ import { LoadingScreen } from '../components/LoadingScreen'
 import { LeaderboardPreview } from '../components/LeaderboardPreview'
 import { PlayerAvatar } from '../components/PlayerAvatar'
 import { MatchmakingControls } from '../components/MatchmakingControls'
-import { useMatchmaking } from '../features/matchmaking/hooks/useMatchmaking'
 import { cancelMatchmaking } from '../features/matchmaking/services/matchmaking'
-import type { MatchmakingState } from '../features/matchmaking/types'
+import type { MatchmakingController, MatchmakingState } from '../features/matchmaking/types'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../types/profile'
 
-interface LobbyProps { user: User; profile: Profile | null; profileLoading: boolean; profileError: string | null }
+interface LobbyProps { user: User; profile: Profile | null; profileLoading: boolean; profileError: string | null; matchmaking: MatchmakingController }
 
 function getQueueCopy(status: MatchmakingState, administratorMatched: boolean) {
   if (status === 'searching' || status === 'joining' || status === 'cancelling') return { label: 'Searching', title: 'Finding an opponent...', description: 'Stay ready. The arena is searching for your match.' }
@@ -23,9 +22,8 @@ function getQueueCopy(status: MatchmakingState, administratorMatched: boolean) {
   return { label: 'Online', title: 'Ready to fight!', description: 'Jump into the arena and test your skills.' }
 }
 
-export function Lobby({ user, profile, profileLoading, profileError }: LobbyProps) {
+export function Lobby({ user, profile, profileLoading, profileError, matchmaking }: LobbyProps) {
   const [signOutError, setSignOutError] = useState<string | null>(null)
-  const matchmaking = useMatchmaking(user.id)
 
   const handleSignOut = async () => {
     setSignOutError(null)

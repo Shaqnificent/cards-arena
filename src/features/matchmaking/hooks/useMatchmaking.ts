@@ -10,7 +10,7 @@ import {
   getOwnQueueEntry,
   matchHasSystemPlayer,
 } from '../services/matchmaking'
-import type { MatchmakingState, QueueEntry } from '../types'
+import type { MatchmakingController, MatchmakingState, QueueEntry } from '../types'
 
 function matchmakingErrorMessage(error: unknown, fallback: string): string {
   if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'PGRST202') {
@@ -19,26 +19,32 @@ function matchmakingErrorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
-export function useMatchmaking(userId: string) {
+export function useMatchmaking(userId: string): MatchmakingController {
   const navigate = useNavigate()
   const [status, setStatus] = useState<MatchmakingState>('checking')
   const [error, setError] = useState<string | null>(null)
   const [queueJoinedAt, setQueueJoinedAt] = useState<string | null>(null)
-  const [administratorCountdownSeconds, setAdministratorCountdownSeconds] = useState<number | null>(null)
+  const [claimingAdministrator, setClaimingAdministrator] = useState(false)
   const [administratorMatched, setAdministratorMatched] = useState(false)
   const claimInFlight = useRef(false)
   const navigationTimer = useRef<number | null>(null)
 
-  const enterMatch = useCallback((matchId: string, isAdministrator = false) => {
+  const enterMatch = useCallback((matchId: string, isAdministrator = false, showTransition = true) => {
+    if (navigationTimer.current !== null) window.clearTimeout(navigationTimer.current)
     setStatus('matched')
     setAdministratorMatched(isAdministrator)
+    setClaimingAdministrator(false)
     setQueueJoinedAt(null)
-    setAdministratorCountdownSeconds(null)
-    if (isAdministrator) {
-      navigationTimer.current = window.setTimeout(() => navigate(`/match/${matchId}`), 850)
-    } else {
+    const navigateToMatch = () => {
+      setStatus('idle')
+      setAdministratorMatched(false)
       navigate(`/match/${matchId}`)
     }
+    if (!showTransition) {
+      navigateToMatch()
+      return
+    }
+    navigationTimer.current = window.setTimeout(navigateToMatch, isAdministrator ? 850 : 550)
   }, [navigate])
 
   useEffect(() => () => {
@@ -48,11 +54,14 @@ export function useMatchmaking(userId: string) {
   useEffect(() => {
     let isCurrent = true
     const restoreState = async () => {
+      setStatus('checking')
+      setError(null)
+      setClaimingAdministrator(false)
       try {
         const activeMatch = await getActiveMatch(userId)
         if (!isCurrent) return
         if (activeMatch) {
-          enterMatch(activeMatch.id)
+          enterMatch(activeMatch.id, false, false)
           return
         }
 
@@ -82,13 +91,25 @@ export function useMatchmaking(userId: string) {
       .channel(`matchmaking:${userId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'matchmaking_queue', filter: `player_id=eq.${userId}` },
+        { event: '*', schema: 'public', table: 'matchmaking_queue', filter: `player_id=eq.${userId}` },
         (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setQueueJoinedAt(null)
+            setClaimingAdministrator(false)
+            setStatus('idle')
+            return
+          }
           const entry = payload.new as QueueEntry
           if (entry.status === 'matched' && entry.matched_match_id && !claimInFlight.current) {
             void matchHasSystemPlayer(entry.matched_match_id)
               .then((isAdministrator) => enterMatch(entry.matched_match_id!, isAdministrator))
               .catch(() => enterMatch(entry.matched_match_id!))
+          } else if (entry.status === 'cancelled') {
+            setQueueJoinedAt(null)
+            setClaimingAdministrator(false)
+            setStatus('idle')
+          } else if (entry.status === 'waiting' && entry.joined_at !== queueJoinedAt) {
+            setQueueJoinedAt(entry.joined_at)
           }
         },
       )
@@ -99,7 +120,7 @@ export function useMatchmaking(userId: string) {
         }
       })
     return () => { void supabase.removeChannel(channel) }
-  }, [enterMatch, status, userId])
+  }, [enterMatch, queueJoinedAt, status, userId])
 
   useEffect(() => {
     if (status !== 'searching' || !queueJoinedAt) {
@@ -107,15 +128,25 @@ export function useMatchmaking(userId: string) {
     }
 
     let isCurrent = true
+    let claimTimer: number | null = null
     const joinedAtMs = new Date(queueJoinedAt).getTime()
-    const updateCountdown = () => {
-      const seconds = Math.max(0, Math.ceil(
-        (joinedAtMs + ADMINISTRATOR_MATCH_TIMEOUT_SECONDS * 1000 - Date.now()) / 1000,
-      ))
-      setAdministratorCountdownSeconds(seconds)
-      if (seconds > 0 || claimInFlight.current) return
+    const fallbackAtMs = joinedAtMs + ADMINISTRATOR_MATCH_TIMEOUT_SECONDS * 1000
+
+    const scheduleClaim = (delayMs: number) => {
+      if (claimTimer !== null) window.clearTimeout(claimTimer)
+      claimTimer = window.setTimeout(attemptClaim, Math.max(0, delayMs))
+    }
+
+    const attemptClaim = () => {
+      if (!isCurrent || claimInFlight.current) return
+      const remainingMs = fallbackAtMs - Date.now()
+      if (remainingMs > 0) {
+        scheduleClaim(remainingMs)
+        return
+      }
 
       claimInFlight.current = true
+      setClaimingAdministrator(true)
       void claimAdministratorMatch()
         .then(async (result) => {
           if (!isCurrent) return
@@ -125,21 +156,29 @@ export function useMatchmaking(userId: string) {
             if (isCurrent) enterMatch(result.match_id, isAdministrator)
             return
           }
-          setAdministratorCountdownSeconds(Math.max(0, result.retry_after_seconds))
+          setClaimingAdministrator(false)
+          scheduleClaim(Math.max(250, result.retry_after_seconds * 1000))
         })
         .catch((claimError) => {
           if (!isCurrent) return
+          setClaimingAdministrator(false)
           setError(matchmakingErrorMessage(claimError, 'Unable to contact the Administrator. Please try matchmaking again.'))
           setStatus('error')
         })
         .finally(() => { claimInFlight.current = false })
     }
 
-    updateCountdown()
-    const timer = window.setInterval(updateCountdown, 250)
+    const refreshAfterBackground = () => {
+      if (document.visibilityState === 'visible' && Date.now() >= fallbackAtMs) attemptClaim()
+    }
+    scheduleClaim(fallbackAtMs - Date.now())
+    document.addEventListener('visibilitychange', refreshAfterBackground)
+    window.addEventListener('focus', refreshAfterBackground)
     return () => {
       isCurrent = false
-      window.clearInterval(timer)
+      if (claimTimer !== null) window.clearTimeout(claimTimer)
+      document.removeEventListener('visibilitychange', refreshAfterBackground)
+      window.removeEventListener('focus', refreshAfterBackground)
     }
   }, [enterMatch, queueJoinedAt, status])
 
@@ -147,11 +186,15 @@ export function useMatchmaking(userId: string) {
     if (status !== 'idle' && status !== 'error') return
     setStatus('joining')
     setError(null)
+    setClaimingAdministrator(false)
     setAdministratorMatched(false)
     try {
       const result = await findOrCreateMatch()
       if ((result.result_status === 'matched' || result.result_status === 'existing_match') && result.match_id) {
-        enterMatch(result.match_id)
+        const isAdministrator = result.result_status === 'existing_match'
+          ? await matchHasSystemPlayer(result.match_id).catch(() => false)
+          : false
+        enterMatch(result.match_id, isAdministrator)
         return
       }
 
@@ -182,7 +225,7 @@ export function useMatchmaking(userId: string) {
         enterMatch(result.match_id, isAdministrator)
       } else {
         setQueueJoinedAt(null)
-        setAdministratorCountdownSeconds(null)
+        setClaimingAdministrator(false)
         setStatus('idle')
       }
     } catch (cancelError) {
@@ -191,5 +234,5 @@ export function useMatchmaking(userId: string) {
     }
   }, [enterMatch, status])
 
-  return { status, error, administratorCountdownSeconds, administratorMatched, findMatch, cancelSearch }
+  return { status, error, queueJoinedAt, claimingAdministrator, administratorMatched, findMatch, cancelSearch }
 }

@@ -21,6 +21,16 @@ export interface QueueEntry {
   matched_match_id: string | null
 }
 
+export interface MatchmakingController {
+  status: MatchmakingState
+  error: string | null
+  queueJoinedAt: string | null
+  claimingAdministrator: boolean
+  administratorMatched: boolean
+  findMatch: () => Promise<void>
+  cancelSearch: (navigateIfMatched?: boolean) => Promise<void>
+}
+
 export interface OnlineMatch {
   id: string
   player_one_id: string
