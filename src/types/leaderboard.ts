@@ -7,4 +7,5 @@ export interface LeaderboardPlayer {
   gamesPlayed: number
   winRate: number
   rank: number
+  isSystemPlayer: boolean
 }

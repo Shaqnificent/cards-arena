@@ -1,5 +1,6 @@
 import type { Profile } from '../../../types/profile'
 import type { OnlineMatchCharacter, OnlineMatchPlayer } from '../types'
+import { SystemBadge } from '../../../components/SystemBadge'
 
 interface OnlineTeamPanelProps {
   label: string
@@ -12,7 +13,7 @@ export function OnlineTeamPanel({ label, profile, player, team }: OnlineTeamPane
   return (
     <aside className="team-panel online-team-panel">
       <div className="team-panel-heading"><span>{label}</span><b>${player.balance}</b></div>
-      <p>{profile.username} · {team.length} / 5 fighters</p>
+      <p>{profile.username} <SystemBadge visible={profile.is_system_player} /> · {team.length} / 5 fighters</p>
       <ol>
         {team.map((card) => (
           <li key={card.id}>

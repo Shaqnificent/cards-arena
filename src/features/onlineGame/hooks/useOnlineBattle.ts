@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import type { OnlineBattleAction, OnlineBattleState } from '../battleTypes'
 import { advanceOnlineBattle, initializeOnlineBattle, loadOnlineBattle, lockBattleFighter } from '../services/onlineBattle'
+import { wakeAdministratorOpponent } from '../services/onlineDraft'
 
 export function useOnlineBattle(matchId: string) {
   const [state, setState] = useState<OnlineBattleState | null>(null)
@@ -14,6 +15,7 @@ export function useOnlineBattle(matchId: string) {
   const refresh = useCallback(async () => {
     const request = ++requestVersion.current
     try {
+      await wakeAdministratorOpponent(matchId)
       const nextState = await loadOnlineBattle(matchId)
       if (request === requestVersion.current) {
         setState(nextState)
@@ -35,6 +37,7 @@ export function useOnlineBattle(matchId: string) {
     setError(null)
     try {
       await initializeOnlineBattle(matchId)
+      await wakeAdministratorOpponent(matchId)
       if (request !== requestVersion.current) return
       const nextState = await loadOnlineBattle(matchId)
       if (request !== requestVersion.current) return

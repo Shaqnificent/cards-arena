@@ -8,6 +8,12 @@ export interface MatchmakingRpcRow {
   match_id: string | null
 }
 
+export interface AdministratorMatchRpcRow {
+  result_status: 'waiting' | 'matched' | 'administrator_matched' | 'existing_match'
+  match_id: string | null
+  retry_after_seconds: number
+}
+
 export interface QueueEntry {
   player_id: string
   status: 'waiting' | 'matched' | 'cancelled'

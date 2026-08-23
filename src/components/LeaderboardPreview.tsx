@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { LeaderboardEmptyState } from './LeaderboardEmptyState'
 import { PlayerAvatar } from './PlayerAvatar'
+import { SystemBadge } from './SystemBadge'
 
 export function LeaderboardPreview() {
   const { players, loading, error } = useLeaderboard(5)
@@ -23,7 +24,7 @@ export function LeaderboardPreview() {
         <ol className="preview-list">
           {players.map((player) => (
             <li key={player.id}>
-              <span><strong className={player.rank === 1 ? 'preview-rank first' : 'preview-rank'}>{player.rank === 1 ? '♛' : player.rank}</strong><PlayerAvatar compact username={player.username} avatarUrl={player.avatarUrl} /><em>{player.username}</em></span>
+              <span><strong className={player.rank === 1 ? 'preview-rank first' : 'preview-rank'}>{player.rank === 1 ? '♛' : player.rank}</strong><PlayerAvatar compact username={player.username} avatarUrl={player.avatarUrl} /><em>{player.username}</em><SystemBadge visible={player.isSystemPlayer} /></span>
               <b>{player.winRate.toFixed(1)}%</b>
             </li>
           ))}

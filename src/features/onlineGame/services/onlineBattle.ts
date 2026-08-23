@@ -1,6 +1,7 @@
 import { supabase } from '../../../lib/supabase'
 import type { OnlineBattleState } from '../battleTypes'
 import { loadMatchOcPortraits } from './matchOcPortraits'
+import { withSystemIdentity } from './systemIdentity'
 
 export async function initializeOnlineBattle(matchId: string): Promise<void> {
   const { error } = await supabase.rpc('initialize_online_battle', { p_match_id: matchId })
@@ -51,7 +52,7 @@ export async function loadOnlineBattle(matchId: string): Promise<OnlineBattleSta
   if (state.opponentOC) state.opponentOC.imageUrl = portraits.get(state.opponentOC.id) ?? null
   if (state.yourSupport) state.yourSupport.imageUrl = portraits.get(state.yourSupport.id) ?? null
   if (state.opponentSupport) state.opponentSupport.imageUrl = portraits.get(state.opponentSupport.id) ?? null
-  return state
+  return withSystemIdentity(state)
 }
 
 export async function lockBattleFighter(matchId: string, selectionType: 'canon' | 'oc', fighterId: string): Promise<void> {

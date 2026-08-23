@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { loadOcPreparation, submitOcPreparation } from '../services/ocPreparation'
+import { wakeAdministratorOpponent } from '../services/onlineDraft'
 import type { MatchOcPreparationState } from '../types'
 
 export function useOcPreparation(matchId: string) {
@@ -9,7 +10,7 @@ export function useOcPreparation(matchId: string) {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const refresh = useCallback(async () => {
-    try { setState(await loadOcPreparation(matchId)); setError(null) }
+    try { await wakeAdministratorOpponent(matchId); setState(await loadOcPreparation(matchId)); setError(null) }
     catch (cause) { console.error('OC preparation load failed', cause); setError('Unable to load OC preparation.') }
     finally { setLoading(false) }
   }, [matchId])

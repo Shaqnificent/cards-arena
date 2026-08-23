@@ -57,6 +57,7 @@ function LoadedOcPreparation({ matchId }: { matchId: string }) {
   const { state, loading, pending, error, lock, retry } = useOcPreparation(matchId)
   if (loading && !state) return <LoadingScreen message="Preparing your OC strategy..." />
   if (!state) return <MatchError message={error ?? 'OC preparation is unavailable.'} onRetry={() => void retry()} />
+  if (state.status === 'battle' || state.status === 'completed') return <LoadedOnlineBattle matchId={matchId} />
   return <OcPreparationScreen state={state} pending={pending} error={error} onLock={lock} />
 }
 

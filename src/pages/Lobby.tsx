@@ -13,9 +13,11 @@ import type { Profile } from '../types/profile'
 
 interface LobbyProps { user: User; profile: Profile | null; profileLoading: boolean; profileError: string | null }
 
-function getQueueCopy(status: MatchmakingState) {
+function getQueueCopy(status: MatchmakingState, administratorMatched: boolean) {
   if (status === 'searching' || status === 'joining' || status === 'cancelling') return { label: 'Searching', title: 'Finding an opponent...', description: 'Stay ready. The arena is searching for your match.' }
-  if (status === 'matched') return { label: 'Match Found', title: 'Opponent found!', description: 'Entering your shared match now.' }
+  if (status === 'matched') return administratorMatched
+    ? { label: 'System Match', title: 'Administrator has entered the Arena', description: 'Entering your ranked system match now.' }
+    : { label: 'Match Found', title: 'Opponent found!', description: 'Entering your shared match now.' }
   if (status === 'checking') return { label: 'Checking', title: 'Restoring your status...', description: 'Checking for an active match or queue entry.' }
   if (status === 'error') return { label: 'Offline', title: 'Matchmaking interrupted', description: 'Use Find Match to try connecting again.' }
   return { label: 'Online', title: 'Ready to fight!', description: 'Jump into the arena and test your skills.' }
@@ -40,7 +42,7 @@ export function Lobby({ user, profile, profileLoading, profileError }: LobbyProp
   const gamesPlayed = profile.wins + profile.losses
   const winRate = gamesPlayed === 0 ? 0 : Math.round((profile.wins / gamesPlayed) * 100)
   const avatarUrl = profile.avatar_url ?? user.user_metadata.avatar_url ?? user.user_metadata.picture ?? null
-  const queueCopy = getQueueCopy(matchmaking.status)
+  const queueCopy = getQueueCopy(matchmaking.status, matchmaking.administratorMatched)
 
   return <main className="lobby-page">
     <AppHeader active="play" username={profile.username} avatarUrl={avatarUrl} />

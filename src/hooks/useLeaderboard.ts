@@ -7,6 +7,7 @@ interface LeaderboardProfileRow {
   username: string
   avatar_url: string | null
   is_guest: boolean
+  is_system_player: boolean
   wins: number
   losses: number
 }
@@ -26,7 +27,7 @@ export function useLeaderboard(limit = 100): LeaderboardState {
     const loadLeaderboard = async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, is_guest, wins, losses')
+        .select('id, username, avatar_url, is_guest, is_system_player, wins, losses')
         .eq('is_guest', false)
 
       if (!isCurrent) return
@@ -47,6 +48,7 @@ export function useLeaderboard(limit = 100): LeaderboardState {
             losses: profile.losses,
             gamesPlayed,
             winRate: gamesPlayed === 0 ? 0 : (profile.wins / gamesPlayed) * 100,
+            isSystemPlayer: profile.is_system_player,
           }
         })
         .filter((player) => player.gamesPlayed > 0)

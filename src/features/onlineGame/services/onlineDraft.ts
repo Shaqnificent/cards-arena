@@ -4,6 +4,7 @@ import type { Character } from '../../../types/character'
 import type { InitiativeChoice, MatchOcSelectionState, OnlineDraftState, OnlineInitiativeState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
 import type { MatchStatus } from '../../matchmaking/types'
 import { loadMatchOcPortraits } from './matchOcPortraits'
+import { withSystemIdentity } from './systemIdentity'
 
 type MatchRow = Omit<OnlineMatchRecord, 'player_one' | 'player_two'> & {
   player_one: Profile | Profile[]
@@ -33,10 +34,13 @@ function preserveAuthoritativeOcTypes(state: MatchOcSelectionState): MatchOcSele
 
 async function withOcPortraits(matchId: string, state: MatchOcSelectionState): Promise<MatchOcSelectionState> {
   const authoritativeState = preserveAuthoritativeOcTypes(state)
-  const portraits = await loadMatchOcPortraits(matchId)
-  return { ...authoritativeState,
-    yourOptions: authoritativeState.yourOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
-    opponentOptions: authoritativeState.opponentOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
+  const [portraits, identifiedState] = await Promise.all([
+    loadMatchOcPortraits(matchId),
+    withSystemIdentity(authoritativeState),
+  ])
+  return { ...identifiedState,
+    yourOptions: identifiedState.yourOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
+    opponentOptions: identifiedState.opponentOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
   }
 }
 
@@ -90,12 +94,23 @@ export async function validateMatchParticipant(matchId: string, currentUserId: s
   return data.status as MatchStatus
 }
 
+export async function wakeAdministratorOpponent(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc('advance_administrator_match', { p_match_id: matchId })
+  if (error && error.code !== 'PGRST202' && error.code !== '42501') {
+    console.warn('Administrator recovery request was not accepted', {
+      matchId,
+      code: error.code,
+      message: error.message,
+    })
+  }
+}
+
 export async function loadMatchInitiative(matchId: string, currentUserId: string): Promise<OnlineInitiativeState> {
   const { data, error } = await supabase.rpc('get_match_initiative_state', { p_match_id: matchId })
   if (error) throw error
   const state = data as OnlineInitiativeState | null
   if (!state || state.yourPlayerId !== currentUserId) throw new Error('Initiative state unavailable')
-  return state
+  return withSystemIdentity(state)
 }
 
 export async function submitInitiativeChoice(matchId: string, choice: InitiativeChoice): Promise<void> {

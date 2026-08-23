@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase'
-import type { MatchmakingRpcRow, OnlineMatch, QueueEntry } from '../types'
+import type { AdministratorMatchRpcRow, MatchmakingRpcRow, OnlineMatch, QueueEntry } from '../types'
 
 function firstRpcRow(data: unknown): MatchmakingRpcRow | null {
   if (Array.isArray(data)) return (data[0] as MatchmakingRpcRow | undefined) ?? null
@@ -20,6 +20,33 @@ export async function cancelMatchmaking(): Promise<MatchmakingRpcRow> {
   const result = firstRpcRow(data)
   if (!result) throw new Error('Cancellation returned no result.')
   return result
+}
+
+export async function claimAdministratorMatch(): Promise<AdministratorMatchRpcRow> {
+  const { data, error } = await supabase.rpc('claim_administrator_match')
+  if (error) throw error
+  const result = Array.isArray(data)
+    ? (data[0] as AdministratorMatchRpcRow | undefined)
+    : data as AdministratorMatchRpcRow | null
+  if (!result) throw new Error('Administrator matchmaking returned no result.')
+  return result
+}
+
+export async function matchHasSystemPlayer(matchId: string): Promise<boolean> {
+  const { data: match, error: matchError } = await supabase
+    .from('matches')
+    .select('player_one_id, player_two_id')
+    .eq('id', matchId)
+    .single()
+  if (matchError) throw matchError
+
+  const { count, error: profileError } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .in('id', [match.player_one_id, match.player_two_id])
+    .eq('is_system_player', true)
+  if (profileError) throw profileError
+  return (count ?? 0) > 0
 }
 
 export async function getActiveMatch(userId: string): Promise<OnlineMatch | null> {

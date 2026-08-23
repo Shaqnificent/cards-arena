@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import {
-  advanceInitiativeRound, initializeMatchInitiative, initializeMatchOcSelection, initializeOnlineDraft, loadMatchInitiative, loadMatchOcSelection, loadOnlineDraft, submitDraftBid, submitDraftFold, submitDraftPass, submitInitiativeChoice, submitMatchOcSelection, validateMatchParticipant,
+  advanceInitiativeRound, initializeMatchInitiative, initializeMatchOcSelection, initializeOnlineDraft, loadMatchInitiative, loadMatchOcSelection, loadOnlineDraft, submitDraftBid, submitDraftFold, submitDraftPass, submitInitiativeChoice, submitMatchOcSelection, validateMatchParticipant, wakeAdministratorOpponent,
 } from '../services/onlineDraft'
 import type { InitiativeChoice, MatchOcSelectionState, OnlineDraftAction, OnlineDraftState, OnlineInitiativeState, OnlineMatchLoadState } from '../types'
 
@@ -53,6 +53,8 @@ export function useOnlineDraft(matchId: string, currentUserId: string) {
       setLoadState('loading-match')
       if (sessionError || session?.user.id !== currentUserId) throw sessionError ?? new Error('Authentication required')
       const status = await validateMatchParticipant(matchId, currentUserId)
+      if (request !== requestVersion.current) return
+      await wakeAdministratorOpponent(matchId)
       if (request !== requestVersion.current) return
 
       if (status === 'waiting' || status === 'initiative') {

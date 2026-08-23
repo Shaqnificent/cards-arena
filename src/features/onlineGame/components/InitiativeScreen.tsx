@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { InitiativeChoice, OnlineInitiativeState } from '../types'
 import { useGameSounds } from '../../audio/useGameSounds'
+import { SystemBadge } from '../../../components/SystemBadge'
 
 const choices: InitiativeChoice[] = ['rock', 'paper', 'scissors']
 const symbols: Record<InitiativeChoice, string> = { rock: '●', paper: '▰', scissors: '✂' }
@@ -52,7 +53,7 @@ export function InitiativeScreen({ initiative, message, onLock }: Props) {
     {message && <p className="online-draft-message" role="status">{message}</p>}
     {revealed && initiative.yourChoice && initiative.opponentChoice ? <>
       <p className="initiative-instruction">Initiative Reveal</p>
-      <div className="initiative-reveal"><div><small>You</small><b>{symbols[initiative.yourChoice]}</b><strong>{initiative.yourChoice}</strong></div><i>VS</i><div><small>{initiative.opponentProfile.username}</small><b>{symbols[initiative.opponentChoice]}</b><strong>{initiative.opponentChoice}</strong></div></div>
+      <div className="initiative-reveal"><div><small>You</small><b>{symbols[initiative.yourChoice]}</b><strong>{initiative.yourChoice}</strong></div><i>VS</i><div><small>{initiative.opponentProfile.username} <SystemBadge visible={initiative.opponentProfile.is_system_player} /></small><b>{symbols[initiative.opponentChoice]}</b><strong>{initiative.opponentChoice}</strong></div></div>
       <h2>{initiative.isDraw ? 'Draw' : youWon ? 'You win initiative' : `${winnerName} wins initiative`}</h2>
       <p>{initiative.isDraw ? 'Choose again next round.' : `${winnerName} gets first draft priority.`}</p>
       <small>{initiative.isDraw ? 'Preparing the next round...' : 'Preparing secret OC selection...'}</small>

@@ -4,6 +4,7 @@ import { GameCard } from '../../game/components/GameCard'
 import type { OnlineBattleAction, OnlineBattleState, ResolvedBattleFighter } from '../battleTypes'
 import { resolveOcImageSrc } from '../../ocs/services/ocImageUrl'
 import { useGameSounds } from '../../audio/useGameSounds'
+import { SystemBadge } from '../../../components/SystemBadge'
 
 interface Props {
   state: OnlineBattleState
@@ -73,7 +74,7 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   if (state.status === 'completed' && (showFinalResult || !revealed)) {
     return <section className="match-result">
       <p className="eyebrow">Match Complete</p><h1>{draw ? 'Draw' : victory ? 'Victory' : 'Defeat'}</h1>
-      <div className="final-score"><span>{state.yourProfile.username} <b>{state.yourScore}</b></span><i>—</i><span><b>{state.opponentScore}</b> {state.opponentProfile.username}</span></div>
+      <div className="final-score"><span>{state.yourProfile.username} <b>{state.yourScore}</b></span><i>—</i><span><b>{state.opponentScore}</b> {state.opponentProfile.username} <SystemBadge visible={state.opponentProfile.is_system_player} /></span></div>
       <p>Your Record: {state.yourProfile.wins} Wins • {state.yourProfile.losses} Losses</p>
       <Link className="button button-primary" to="/">Return to Lobby</Link>
     </section>
@@ -83,7 +84,7 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
     <header className="battle-score">
       <div className="battle-score-player"><span>{state.yourProfile.username}</span><strong>{state.yourScore}</strong></div>
       <div className="battle-score-round"><b>Round {state.roundNumber}</b><small>First to 3</small><span className="round-progress" aria-label={`${state.yourScore} of 3 rounds won`}>{[0, 1, 2].map((step) => <i key={step} className={step < state.yourScore ? 'filled' : undefined} />)}</span></div>
-      <div className="battle-score-opponent"><strong>{state.opponentScore}</strong><span>{state.opponentProfile.username}</span></div>
+      <div className="battle-score-opponent"><strong>{state.opponentScore}</strong><span>{state.opponentProfile.username} <SystemBadge visible={state.opponentProfile.is_system_player} /></span></div>
     </header>
     {message && <p className="online-draft-message" role="status">{message}</p>}
     {state.yourSupport && <div className="battle-support-banner"><strong>{state.yourSupport.decision === 'sacrifice' ? 'Sacrificial OC Activated' : 'Sacrificial OC Inactive'}</strong><span>{state.yourSupport.name} · {state.yourSupport.verseName}{state.yourSupport.decision === 'sacrifice' ? ` · ${state.yourSupport.recipientCount ?? 0} fighters empowered` : ''}</span></div>}

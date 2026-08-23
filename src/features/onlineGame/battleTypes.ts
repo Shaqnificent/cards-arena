@@ -2,8 +2,8 @@ import type { Character } from '../../types/character'
 import type { Profile } from '../../types/profile'
 
 export type OnlineBattlePhase = 'selecting' | 'revealed' | 'complete'
-export type YourOnlineBattleProfile = Pick<Profile, 'id' | 'username' | 'wins' | 'losses'>
-export type OpponentOnlineBattleProfile = Pick<Profile, 'id' | 'username'>
+export type YourOnlineBattleProfile = Pick<Profile, 'id' | 'username' | 'wins' | 'losses' | 'is_system_player'>
+export type OpponentOnlineBattleProfile = Pick<Profile, 'id' | 'username' | 'is_system_player'>
 
 export interface OnlineBattleFighter {
   id: string

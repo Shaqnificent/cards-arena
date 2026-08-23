@@ -87,7 +87,7 @@ export interface MatchOcOption {
   imageUrl: string | null
   ocType: OcType | null
 }
-export type MatchOcProfile = Pick<Profile, 'id' | 'username' | 'avatar_url'>
+export type MatchOcProfile = Pick<Profile, 'id' | 'username' | 'avatar_url' | 'is_system_player'>
 export interface MatchOcSelectionState {
   matchId: string
   status: MatchStatus
