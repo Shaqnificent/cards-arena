@@ -4,41 +4,48 @@ import { AppHeader } from '../components/AppHeader'
 import { CharacterCard } from '../components/CharacterCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { useCharacters } from '../hooks/useCharacters'
-import { useVerses } from '../hooks/useVerses'
+import type { CharacterVerse } from '../types/verse'
 
 type CharacterSort = 'overall-desc' | 'overall-asc' | 'power-desc' | 'power-asc'
 
 const characterSorts: CharacterSort[] = ['overall-desc', 'overall-asc', 'power-desc', 'power-asc']
 const pageSize = 24
 
-const getVerseFilterKey = (verse: { id: string; slug: string | null }) =>
+const getLegacyVerseFilterKey = (verse: { id: string; slug: string | null }) =>
   verse.slug?.trim() || `verse-${verse.id}`
 
 interface CharactersProps { username: string; avatarUrl: string | null }
 
 export function Characters({ username, avatarUrl }: CharactersProps) {
   const { characters, loading: charactersLoading, error: charactersError } = useCharacters()
-  const { verses, loading: versesLoading, error: versesError } = useVerses()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [searchParams, setSearchParams] = useSearchParams()
-  const requestedVerse = searchParams.get('verse') ?? 'all'
+  const requestedVerse = searchParams.get('verse')
   const requestedSort = searchParams.get('sort')
   const sort: CharacterSort = requestedSort && characterSorts.includes(requestedSort as CharacterSort)
     ? requestedSort as CharacterSort
     : 'overall-desc'
-  const selectedVerseRecord = verses.find((verse) => getVerseFilterKey(verse) === requestedVerse)
-  const selectedVerse = requestedVerse === 'all' || selectedVerseRecord
-    ? requestedVerse
-    : 'all'
+  const catalogueVerses = useMemo(() => {
+    const versesById = new Map<string, CharacterVerse>()
+    for (const character of characters) {
+      if (character.verses) versesById.set(String(character.verse_id), character.verses)
+    }
+    return [...versesById.values()].toSorted((first, second) =>
+      first.name.localeCompare(second.name, undefined, { sensitivity: 'base' }))
+  }, [characters])
+  const selectedVerseRecord = requestedVerse
+    ? catalogueVerses.find((verse) =>
+        String(verse.id) === requestedVerse || getLegacyVerseFilterKey(verse) === requestedVerse)
+    : undefined
+  const selectedVerseId = selectedVerseRecord ? String(selectedVerseRecord.id) : 'all'
 
   const filteredCharacters = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
     const visible = characters.filter((character) => {
       const matchesSearch = normalizedSearch.length === 0 ||
         character.name.toLowerCase().includes(normalizedSearch)
-      const matchesVerse = selectedVerse === 'all' ||
-        String(character.verse_id) === String(selectedVerseRecord?.id)
+      const matchesVerse = selectedVerseId === 'all' || String(character.verse_id) === selectedVerseId
       return matchesSearch && matchesVerse
     })
     return visible.toSorted((a, b) => {
@@ -47,15 +54,15 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
       if (sort === 'power-desc') return b.power_score - a.power_score || b.overall - a.overall
       return a.power_score - b.power_score || a.overall - b.overall
     })
-  }, [characters, search, selectedVerse, selectedVerseRecord?.id, sort])
+  }, [characters, search, selectedVerseId, sort])
 
   const pageCount = Math.max(1, Math.ceil(filteredCharacters.length / pageSize))
   const currentPage = Math.min(page, pageCount)
   const paginatedCharacters = filteredCharacters.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  const handleVerseChange = (slug: string) => {
+  const handleVerseChange = (verseId: string) => {
     const next = new URLSearchParams(searchParams)
-    if (slug === 'all') next.delete('verse'); else next.set('verse', slug)
+    if (verseId === 'all') next.delete('verse'); else next.set('verse', verseId)
     setSearchParams(next, { replace: true })
     setPage(1)
   }
@@ -67,11 +74,11 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
     setPage(1)
   }
 
-  if (charactersLoading || versesLoading) {
+  if (charactersLoading) {
     return <LoadingScreen message="Loading the playable roster..." />
   }
 
-  const error = charactersError ?? versesError
+  const error = charactersError
 
   return (
     <main className="catalogue-page">
@@ -96,9 +103,9 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
           </label>
           <label className="field">
             <span className="sr-only">Filter by verse</span>
-            <select value={selectedVerse} onChange={(event) => handleVerseChange(event.target.value)}>
+            <select value={selectedVerseId} onChange={(event) => handleVerseChange(event.target.value)}>
               <option value="all">All Verses</option>
-              {verses.map((verse) => <option key={verse.id} value={getVerseFilterKey(verse)}>{verse.name}</option>)}
+              {catalogueVerses.map((verse) => <option key={verse.id} value={String(verse.id)}>{verse.name}</option>)}
             </select>
           </label>
           <label className="field">
@@ -113,10 +120,10 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
         </div>
 
         <div className="verse-chips" aria-label="Quick verse filters">
-          <button type="button" className={selectedVerse === 'all' ? 'active' : ''} onClick={() => handleVerseChange('all')}>All</button>
-          {verses.map((verse) => {
-            const verseKey = getVerseFilterKey(verse)
-            return <button type="button" key={verse.id} className={selectedVerse === verseKey ? 'active' : ''} onClick={() => handleVerseChange(verseKey)}>{verse.name}</button>
+          <button type="button" className={selectedVerseId === 'all' ? 'active' : ''} onClick={() => handleVerseChange('all')}>All</button>
+          {catalogueVerses.map((verse) => {
+            const verseId = String(verse.id)
+            return <button type="button" key={verse.id} className={selectedVerseId === verseId ? 'active' : ''} onClick={() => handleVerseChange(verseId)}>{verse.name}</button>
           })}
         </div>
 
@@ -128,7 +135,7 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
           </div>
         ) : (
           <>
-            {(search || selectedVerse !== 'all') && <p className="character-count">{filteredCharacters.length} {filteredCharacters.length === 1 ? 'Result' : 'Results'}</p>}
+            {(search || selectedVerseId !== 'all') && <p className="character-count">{filteredCharacters.length} {filteredCharacters.length === 1 ? 'Result' : 'Results'}</p>}
             {characters.length === 0 ? (
               <div className="catalogue-state">
                 <h2>No roster data available</h2>
