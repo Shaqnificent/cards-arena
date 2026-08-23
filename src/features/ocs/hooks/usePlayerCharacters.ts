@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { createPlayerCharacter, getPlayerCharacters, retirePlayerCharacter, setPlayerCharacterEquipped } from '../services/playerCharacters'
+import { createPlayerCharacter, getPlayerCharacters, retirePlayerCharacter, selectPlayerCharacterType, setPlayerCharacterEquipped } from '../services/playerCharacters'
 import type { CreatePlayerCharacterInput, PlayerCharacter } from '../types'
 
 function friendlyError(error: unknown, fallback: string): string {
@@ -48,5 +48,12 @@ export function usePlayerCharacters() {
     finally { setPendingId(null) }
   }
 
-  return { characters, loading, error, pendingId, refresh, create, setEquipped, retire }
+  const selectType = async (character: PlayerCharacter, ocType: PlayerCharacter['oc_type']) => {
+    setPendingId(character.id)
+    try { await selectPlayerCharacterType(character.id, ocType); await refresh() }
+    catch (typeError) { console.error('OC type selection failed', typeError); throw new Error(friendlyError(typeError, 'Unable to set this fighter type.')) }
+    finally { setPendingId(null) }
+  }
+
+  return { characters, loading, error, pendingId, refresh, create, setEquipped, retire, selectType }
 }

@@ -11,6 +11,9 @@ type CharacterSort = 'overall-desc' | 'overall-asc' | 'power-desc' | 'power-asc'
 const characterSorts: CharacterSort[] = ['overall-desc', 'overall-asc', 'power-desc', 'power-asc']
 const pageSize = 24
 
+const getVerseFilterKey = (verse: { id: string; slug: string | null }) =>
+  verse.slug?.trim() || `verse-${verse.id}`
+
 interface CharactersProps { username: string; avatarUrl: string | null }
 
 export function Characters({ username, avatarUrl }: CharactersProps) {
@@ -24,7 +27,8 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
   const sort: CharacterSort = requestedSort && characterSorts.includes(requestedSort as CharacterSort)
     ? requestedSort as CharacterSort
     : 'overall-desc'
-  const selectedVerse = requestedVerse === 'all' || verses.some((verse) => verse.slug === requestedVerse)
+  const selectedVerseRecord = verses.find((verse) => getVerseFilterKey(verse) === requestedVerse)
+  const selectedVerse = requestedVerse === 'all' || selectedVerseRecord
     ? requestedVerse
     : 'all'
 
@@ -33,7 +37,8 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
     const visible = characters.filter((character) => {
       const matchesSearch = normalizedSearch.length === 0 ||
         character.name.toLowerCase().includes(normalizedSearch)
-      const matchesVerse = selectedVerse === 'all' || character.verses?.slug === selectedVerse
+      const matchesVerse = selectedVerse === 'all' ||
+        String(character.verse_id) === String(selectedVerseRecord?.id)
       return matchesSearch && matchesVerse
     })
     return visible.toSorted((a, b) => {
@@ -42,7 +47,7 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
       if (sort === 'power-desc') return b.power_score - a.power_score || b.overall - a.overall
       return a.power_score - b.power_score || a.overall - b.overall
     })
-  }, [characters, search, selectedVerse, sort])
+  }, [characters, search, selectedVerse, selectedVerseRecord?.id, sort])
 
   const pageCount = Math.max(1, Math.ceil(filteredCharacters.length / pageSize))
   const currentPage = Math.min(page, pageCount)
@@ -93,7 +98,7 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
             <span className="sr-only">Filter by verse</span>
             <select value={selectedVerse} onChange={(event) => handleVerseChange(event.target.value)}>
               <option value="all">All Verses</option>
-              {verses.map((verse) => <option key={verse.id} value={verse.slug}>{verse.name}</option>)}
+              {verses.map((verse) => <option key={verse.id} value={getVerseFilterKey(verse)}>{verse.name}</option>)}
             </select>
           </label>
           <label className="field">
@@ -109,7 +114,10 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
 
         <div className="verse-chips" aria-label="Quick verse filters">
           <button type="button" className={selectedVerse === 'all' ? 'active' : ''} onClick={() => handleVerseChange('all')}>All</button>
-          {verses.map((verse) => <button type="button" key={verse.id} className={selectedVerse === verse.slug ? 'active' : ''} onClick={() => handleVerseChange(verse.slug)}>{verse.name}</button>)}
+          {verses.map((verse) => {
+            const verseKey = getVerseFilterKey(verse)
+            return <button type="button" key={verse.id} className={selectedVerse === verseKey ? 'active' : ''} onClick={() => handleVerseChange(verseKey)}>{verse.name}</button>
+          })}
         </div>
 
         <div className="rating-info"><span aria-hidden="true">ⓘ</span><p><strong>OVR</strong> = strength within their verse <i>•</i> <strong>Global Power</strong> = cross-verse tiebreaker (used only when OVR is equal)</p></div>

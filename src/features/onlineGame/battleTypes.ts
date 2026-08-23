@@ -9,11 +9,15 @@ export interface OnlineBattleFighter {
   id: string
   used: boolean
   sacrificed?: boolean
+  empowered?: boolean
+  basePowerScore?: number
+  matchPowerScore?: number
+  powerBoost?: number
   character: Character
 }
-export interface OnlineBattleOc { id: string; name: string; verseName: string; overall: number; powerScore: number; used: boolean; boost: number; decision: 'reserve' | 'sacrifice'; imageUrl: string | null; sacrificeTier?: string | null; sacrificeBoost?: number; sacrificedName?: string | null }
+export interface OnlineBattleOc { id: string; name: string; verseName: string; overall: number; powerScore: number; used: boolean; boost: number; ocType: 'champion' | 'sacrificial'; decision: 'reserve' | 'absorb' | 'inactive' | 'sacrifice'; imageUrl: string | null; sacrificeTier?: string | null; sacrificeBoost?: number; sacrificedName?: string | null; recipientCount?: number }
 export interface BattleSelectionRef { type: 'canon' | 'oc'; id: string }
-export interface ResolvedBattleFighter { type: 'canon' | 'oc'; id: string; name: string; overall: number; powerScore: number }
+export interface ResolvedBattleFighter { type: 'canon' | 'oc'; id: string; name: string; overall: number; powerScore: number; empowered?: boolean; powerBoost?: number }
 
 export interface OnlineBattleRound {
   roundNumber: number
@@ -38,6 +42,8 @@ export interface OnlineBattleState {
   opponentTeam: OnlineBattleFighter[]
   yourOC: OnlineBattleOc | null
   opponentOC: OnlineBattleOc | null
+  yourSupport: OnlineBattleOc | null
+  opponentSupport: OnlineBattleOc | null
   yourSelection: BattleSelectionRef | null
   opponentLocked: boolean
   latestRound: OnlineBattleRound | null

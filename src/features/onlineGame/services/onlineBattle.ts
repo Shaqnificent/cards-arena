@@ -8,13 +8,49 @@ export async function initializeOnlineBattle(matchId: string): Promise<void> {
 }
 
 export async function loadOnlineBattle(matchId: string): Promise<OnlineBattleState> {
-  const { data, error } = await supabase.rpc('get_online_battle_state', { p_match_id: matchId })
+  const [{ data, error }, preparationResult] = await Promise.all([
+    supabase.rpc('get_online_battle_state', { p_match_id: matchId }),
+    supabase.rpc('get_match_oc_preparation_state', { p_match_id: matchId }),
+  ])
   if (error) throw error
   if (!data || typeof data !== 'object') throw new Error('Battle state unavailable')
   const state = data as OnlineBattleState
+  if (!preparationResult.error && preparationResult.data && typeof preparationResult.data === 'object') {
+    const preparation = preparationResult.data as {
+      yourPreparation?: {
+        ocType?: 'champion' | 'sacrificial' | null
+        decision?: 'reserve' | 'absorb' | 'inactive' | 'sacrifice'
+        sacrificedMatchCharacterId?: string | null
+      } | null
+    }
+    const ownPreparation = preparation.yourPreparation
+    if (ownPreparation?.sacrificedMatchCharacterId) {
+      state.yourTeam = state.yourTeam.map((fighter) => ({
+        ...fighter,
+        sacrificed: fighter.id === ownPreparation.sacrificedMatchCharacterId || fighter.sacrificed,
+      }))
+    }
+    if (state.yourOC && ownPreparation?.ocType &&
+      (ownPreparation.decision === 'reserve' ||
+        (ownPreparation.ocType === 'champion' && ownPreparation.decision === 'absorb'))) {
+      state.yourOC.ocType = ownPreparation.ocType
+      state.yourOC.decision = ownPreparation.decision
+      state.yourSupport = null
+    } else if (state.yourOC && ownPreparation?.ocType === 'sacrificial' &&
+      (ownPreparation.decision === 'inactive' || ownPreparation.decision === 'sacrifice')) {
+      state.yourSupport = {
+        ...state.yourOC,
+        ocType: 'sacrificial',
+        decision: ownPreparation.decision,
+      }
+      state.yourOC = null
+    }
+  }
   const portraits = await loadMatchOcPortraits(matchId)
   if (state.yourOC) state.yourOC.imageUrl = portraits.get(state.yourOC.id) ?? null
   if (state.opponentOC) state.opponentOC.imageUrl = portraits.get(state.opponentOC.id) ?? null
+  if (state.yourSupport) state.yourSupport.imageUrl = portraits.get(state.yourSupport.id) ?? null
+  if (state.opponentSupport) state.opponentSupport.imageUrl = portraits.get(state.opponentSupport.id) ?? null
   return state
 }
 

@@ -49,13 +49,14 @@ export interface OnlineDraftState {
 }
 
 export type OnlineDraftAction = 'bid' | 'pass' | 'fold' | 'oc-lock' | null
-export type OcPreparationDecision = 'none' | 'reserve' | 'sacrifice'
-export interface OcPreparationFighter { matchCharacterId: string; characterId: number; name: string; verseId: number; verseName: string; overall: number; powerScore: number; tier: 'D' | 'C' | 'B' | 'A' | 'S' | 'LEGEND'; sacrificeBoost: number }
+export type OcType = 'champion' | 'sacrificial'
+export type OcPreparationDecision = 'none' | 'reserve' | 'absorb' | 'inactive' | 'sacrifice'
+export interface OcPreparationFighter { matchCharacterId: string; characterId: number; name: string; verseId: number; verseName: string; overall: number; powerScore: number; tier: 'D' | 'C' | 'B' | 'A' | 'S' | 'LEGEND'; sacrificeBoost: number; compatibilityPercent?: number; effectiveBonus?: number; matchPowerScore?: number }
 export interface MatchOcPreparationState {
   matchId: string; status: MatchStatus; yourPlayerId: string
-  yourOC: { characterId: string; name: string; verseId: number; verseName: string; baseOverall: number; powerScore: number; imageUrl: string | null } | null
+  yourOC: { characterId: string; name: string; verseId: number; verseName: string; baseOverall: number; powerScore: number; ocType: OcType | null; imageUrl: string | null } | null
   eligibleSacrifices: OcPreparationFighter[]
-  yourPreparation: { decision: OcPreparationDecision; sacrificedMatchCharacterId: string | null; sacrificeTier: string | null; sacrificeBoost: number; baseOverall: number | null; matchOverall: number | null; basePowerScore: number | null; lockedAt: string } | null
+  yourPreparation: { ocType: OcType | null; decision: OcPreparationDecision; ocSacrificed: boolean; sacrificedMatchCharacterId: string | null; sacrificeTier: string | null; sacrificeBoost: number; baseOverall: number | null; matchOverall: number | null; basePowerScore: number | null; baseTransferPower: number; recipientCount: number; lockedAt: string } | null
   yourLocked: boolean; opponentLocked: boolean; bothComplete: boolean
 }
 export type InitiativeChoice = 'rock' | 'paper' | 'scissors'
@@ -84,6 +85,7 @@ export interface MatchOcOption {
   powerScore: number
   overallCap: number
   imageUrl: string | null
+  ocType: OcType | null
 }
 export type MatchOcProfile = Pick<Profile, 'id' | 'username' | 'avatar_url'>
 export interface MatchOcSelectionState {

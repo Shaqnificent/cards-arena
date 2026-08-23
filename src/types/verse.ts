@@ -1,7 +1,7 @@
 export interface Verse {
   id: string
   name: string
-  slug: string
+  slug: string | null
   image_url: string | null
   active: boolean
 }

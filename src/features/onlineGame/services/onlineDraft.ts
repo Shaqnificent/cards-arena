@@ -14,11 +14,29 @@ type MatchCharacterRow = Omit<OnlineMatchCharacter, 'character'> & {
   character: Character | Character[]
 }
 
+function preserveAuthoritativeOcTypes(state: MatchOcSelectionState): MatchOcSelectionState {
+  const validateOptions = (options: MatchOcSelectionState['yourOptions']) => options.map((option) => {
+    if (option.ocType === 'champion' || option.ocType === 'sacrificial') return option
+    console.error('get_match_oc_selection_state returned an unexpected ocType', {
+      characterId: option.characterId,
+      ocType: option.ocType,
+    })
+    return { ...option, ocType: null }
+  })
+
+  return {
+    ...state,
+    yourOptions: validateOptions(state.yourOptions),
+    opponentOptions: state.opponentOptions.map((option) => ({ ...option, ocType: null })),
+  }
+}
+
 async function withOcPortraits(matchId: string, state: MatchOcSelectionState): Promise<MatchOcSelectionState> {
+  const authoritativeState = preserveAuthoritativeOcTypes(state)
   const portraits = await loadMatchOcPortraits(matchId)
-  return { ...state,
-    yourOptions: state.yourOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
-    opponentOptions: state.opponentOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
+  return { ...authoritativeState,
+    yourOptions: authoritativeState.yourOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
+    opponentOptions: authoritativeState.opponentOptions.map((option) => ({ ...option, imageUrl: portraits.get(option.characterId) ?? null })),
   }
 }
 

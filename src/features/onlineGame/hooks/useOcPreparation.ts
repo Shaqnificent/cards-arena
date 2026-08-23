@@ -20,7 +20,7 @@ export function useOcPreparation(matchId: string) {
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
   }, [matchId, refresh])
-  const lock = async (decision: 'reserve' | 'sacrifice', sacrificedId: string | null) => {
+  const lock = async (decision: 'reserve' | 'absorb' | 'inactive' | 'sacrifice', sacrificedId: string | null) => {
     if (pending) return
     setPending(true); setError(null)
     try { setState(await submitOcPreparation(matchId, decision, sacrificedId)) }

@@ -5,7 +5,7 @@ const playerCharacterSelection = `
   id, owner_id, verse_id, name, image_url,
   starting_overall, overall, overall_cap,
   starting_power_score, power_score, power_score_cap,
-  progression_points, equipped, active, created_at, updated_at, retired_at,
+  progression_points, equipped, active, created_at, updated_at, retired_at, oc_type, type_selected_at,
   verse:verses (id, name, slug)
 `
 
@@ -22,9 +22,15 @@ export async function createPlayerCharacter(input: CreatePlayerCharacterInput): 
   const { data, error } = await supabase.rpc('create_player_character', {
     p_name: input.name,
     p_verse_id: input.verse.id,
+    p_oc_type: input.ocType,
   })
   if (error) throw error
   return { ...(data as Omit<PlayerCharacter, 'verse'>), verse: input.verse }
+}
+
+export async function selectPlayerCharacterType(characterId: string, ocType: PlayerCharacter['oc_type']): Promise<void> {
+  const { error } = await supabase.rpc('select_player_character_type', { p_character_id: characterId, p_oc_type: ocType })
+  if (error) throw error
 }
 
 export async function setPlayerCharacterEquipped(characterId: string, equipped: boolean): Promise<void> {

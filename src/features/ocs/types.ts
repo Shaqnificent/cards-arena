@@ -1,5 +1,7 @@
 import type { CharacterVerse } from '../../types/verse'
 
+export type OcType = 'champion' | 'sacrificial'
+
 export interface PlayerCharacter {
   id: string
   owner_id: string
@@ -18,12 +20,15 @@ export interface PlayerCharacter {
   created_at: string
   updated_at: string
   retired_at: string | null
+  oc_type: OcType
+  type_selected_at: string | null
   verse: CharacterVerse
 }
 
 export interface CreatePlayerCharacterInput {
   name: string
   verse: CharacterVerse
+  ocType: OcType
 }
 
 export interface OcProgressionReward {
