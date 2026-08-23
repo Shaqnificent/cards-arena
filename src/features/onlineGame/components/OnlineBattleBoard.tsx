@@ -5,6 +5,8 @@ import type { OnlineBattleAction, OnlineBattleState, ResolvedBattleFighter } fro
 import { resolveOcImageSrc } from '../../ocs/services/ocImageUrl'
 import { useGameSounds } from '../../audio/useGameSounds'
 import { SystemBadge } from '../../../components/SystemBadge'
+import { CharacterArtwork } from '../../../components/CharacterArtwork'
+import type { Character } from '../../../types/character'
 
 interface Props {
   state: OnlineBattleState
@@ -15,11 +17,15 @@ interface Props {
   onFinalResultVisible?: () => void
 }
 
-function ResolvedCard({ fighter, oc, imageUrl, side, winner }: { fighter: ResolvedBattleFighter; oc?: OnlineBattleState['opponentOC']; imageUrl?: string | null; side: 'player' | 'opponent'; winner: boolean }) {
+function ResolvedCard({ fighter, character, oc, imageUrl, side, winner }: { fighter: ResolvedBattleFighter; character?: Character; oc?: OnlineBattleState['opponentOC']; imageUrl?: string | null; side: 'player' | 'opponent'; winner: boolean }) {
   const resolvedImageUrl = fighter.type === 'oc' ? resolveOcImageSrc(imageUrl) : imageUrl
   return <article className={`result-fighter-card ${side}${winner ? ' winner' : ''}`}>
     <div className="result-fighter-media">
-      {resolvedImageUrl ? <img src={resolvedImageUrl} alt="" /> : <span className="result-fighter-fallback" aria-hidden="true">{fighter.name.charAt(0)}</span>}
+      {fighter.type === 'canon' && character
+        ? <CharacterArtwork character={character} imageClassName="result-fighter-image" fallbackClassName="result-fighter-fallback" />
+        : resolvedImageUrl
+          ? <img src={resolvedImageUrl} alt="" />
+          : <span className="result-fighter-fallback" aria-hidden="true">{fighter.name.charAt(0)}</span>}
       {fighter.type === 'oc' && <small className="oc-reveal-badge">OC Revealed</small>}
     </div>
     <div className="result-fighter-body">
@@ -45,8 +51,10 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   const victory = state.matchWinnerId === state.yourPlayerId
   const draw = state.status === 'completed' && !state.matchWinnerId
   const roundWinner = revealed?.winnerPlayerId === state.yourPlayerId ? 'player' : revealed?.winnerPlayerId === state.opponentPlayerId ? 'opponent' : 'draw'
-  const yourImage = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character.image_url : state.yourOC?.imageUrl
-  const opponentImage = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character.image_url : state.opponentOC?.imageUrl
+  const yourRevealedCharacter = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character : undefined
+  const opponentRevealedCharacter = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character : undefined
+  const yourImage = revealed?.yourFighter.type === 'oc' ? state.yourOC?.imageUrl : yourRevealedCharacter?.image_url
+  const opponentImage = revealed?.opponentFighter.type === 'oc' ? state.opponentOC?.imageUrl : opponentRevealedCharacter?.image_url
   const finalRound = state.status === 'completed' || state.battleState === 'complete'
   const finalResultVisible = state.status === 'completed' && (showFinalResult || !revealed)
 
@@ -97,9 +105,9 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
     {state.opponentSupport && <div className="battle-support-banner opponent"><strong>Sacrificial OC Revealed</strong><span>{state.opponentSupport.name} · {state.opponentSupport.verseName} · {state.opponentSupport.recipientCount ?? 0} fighters empowered</span></div>}
     {revealed ? <div className="battle-reveal">
       <div className="battle-result-fighters">
-        <ResolvedCard fighter={revealed.yourFighter} oc={revealed.yourFighter.type === 'oc' ? state.yourOC : null} imageUrl={yourImage} side="player" winner={roundWinner === 'player'} />
+        <ResolvedCard fighter={revealed.yourFighter} character={yourRevealedCharacter} oc={revealed.yourFighter.type === 'oc' ? state.yourOC : null} imageUrl={yourImage} side="player" winner={roundWinner === 'player'} />
         <div className={`versus-result ${roundWinner}`}><span>VS</span><i aria-hidden="true">{roundWinner === 'draw' ? '—' : '♜'}</i><strong>{roundWinner === 'player' ? 'You Win' : roundWinner === 'opponent' ? 'You Lose' : 'Draw'}</strong></div>
-        <ResolvedCard fighter={revealed.opponentFighter} oc={revealed.opponentFighter.type === 'oc' ? state.opponentOC : null} imageUrl={opponentImage} side="opponent" winner={roundWinner === 'opponent'} />
+        <ResolvedCard fighter={revealed.opponentFighter} character={opponentRevealedCharacter} oc={revealed.opponentFighter.type === 'oc' ? state.opponentOC : null} imageUrl={opponentImage} side="opponent" winner={roundWinner === 'opponent'} />
       </div>
       <button className="button button-primary result-continue" disabled={pendingAction !== null} onClick={() => { sounds.playNextRound(); if (finalRound) setShowFinalResult(true); else void onAdvance() }}>{pendingAction === 'advance' ? 'Advancing...' : finalRound ? 'View Match Result' : 'Next Round'}<span aria-hidden="true">›</span></button>
       <p className="result-helper"><i aria-hidden="true">i</i>{finalRound ? 'See the final score and match outcome.' : 'Continue when you’re ready.'}</p>

@@ -553,6 +553,12 @@ OVR 99
 
 The first MVP does not require deep character detail pages.
 
+### Random Verse
+
+The Random verse broadens the playable roster with generic low- and mid-tier canon filler fighters. Its characters use a small reusable portrait set with deterministic frontend background themes so repeated portraits remain visually distinct.
+
+Random fighters remain available in the normal character catalogue and canon draft pool. Random is not selectable as the verse for newly created OCs.
+
 ---
 
 ## 21. Verse Listing

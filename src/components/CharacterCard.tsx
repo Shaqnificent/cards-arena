@@ -1,31 +1,21 @@
-import { useState } from 'react'
 import type { Character } from '../types/character'
+import { CharacterArtwork } from './CharacterArtwork'
 
 interface CharacterCardProps {
   character: Character
 }
 
 export function CharacterCard({ character }: CharacterCardProps) {
-  const [imageFailed, setImageFailed] = useState(false)
-
-  const showImage = character.image_url && !imageFailed
-
   return (
     <article className="character-card">
       <div className="character-image-wrap">
-        {showImage ? (
-          <img
-            className="character-image"
-            src={character.image_url ?? undefined}
-            alt={character.name}
-            loading="lazy"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div className="character-image-fallback" aria-label={`${character.name} image unavailable`}>
-            <span>{character.name.charAt(0)}</span>
-          </div>
-        )}
+        <CharacterArtwork
+          character={character}
+          imageClassName="character-image"
+          fallbackClassName="character-image-fallback"
+          alt={character.name}
+          loading="lazy"
+        />
         <div className="overall-badge"><strong>{character.overall}</strong><span>OVR</span></div>
       </div>
       <div className="character-details">
