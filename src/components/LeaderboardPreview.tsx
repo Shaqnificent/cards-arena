@@ -4,13 +4,13 @@ import { LeaderboardEmptyState } from './LeaderboardEmptyState'
 import { PlayerAvatar } from './PlayerAvatar'
 
 export function LeaderboardPreview() {
-  const { players, loading, error } = useLeaderboard(10)
+  const { players, loading, error } = useLeaderboard(5)
 
   return (
     <section className="leaderboard-preview" aria-labelledby="top-players-heading">
       <div className="preview-heading">
         <h2 id="top-players-heading">Top Players</h2>
-        <span>Top 10</span>
+        <span>Top 5</span>
       </div>
 
       {loading ? (
