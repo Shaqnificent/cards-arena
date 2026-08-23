@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { CharacterCard } from '../components/CharacterCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { useCharacters } from '../hooks/useCharacters'
 import type { CharacterVerse } from '../types/verse'
+import { getPaginationItems } from '../lib/pagination'
 
 type CharacterSort = 'overall-desc' | 'overall-asc' | 'power-desc' | 'power-asc'
 
@@ -16,10 +17,18 @@ const getLegacyVerseFilterKey = (verse: { id: string; slug: string | null }) =>
 
 interface CharactersProps { username: string; avatarUrl: string | null }
 
+const getResponsiveSiblingCount = () => {
+  if (typeof window === 'undefined') return 3
+  if (window.matchMedia('(max-width: 520px)').matches) return 1
+  if (window.matchMedia('(max-width: 900px)').matches) return 2
+  return 3
+}
+
 export function Characters({ username, avatarUrl }: CharactersProps) {
   const { characters, loading: charactersLoading, error: charactersError } = useCharacters()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [paginationSiblingCount, setPaginationSiblingCount] = useState(getResponsiveSiblingCount)
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedVerse = searchParams.get('verse')
   const requestedSort = searchParams.get('sort')
@@ -59,6 +68,24 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
   const pageCount = Math.max(1, Math.ceil(filteredCharacters.length / pageSize))
   const currentPage = Math.min(page, pageCount)
   const paginatedCharacters = filteredCharacters.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const paginationItems = useMemo(() => getPaginationItems({
+    currentPage,
+    totalPages: pageCount,
+    siblingCount: paginationSiblingCount,
+  }), [currentPage, pageCount, paginationSiblingCount])
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 520px)')
+    const tabletQuery = window.matchMedia('(max-width: 900px)')
+    const updateSiblingCount = () => setPaginationSiblingCount(
+      mobileQuery.matches ? 1 : tabletQuery.matches ? 2 : 3)
+    mobileQuery.addEventListener('change', updateSiblingCount)
+    tabletQuery.addEventListener('change', updateSiblingCount)
+    return () => {
+      mobileQuery.removeEventListener('change', updateSiblingCount)
+      tabletQuery.removeEventListener('change', updateSiblingCount)
+    }
+  }, [])
 
   const handleVerseChange = (verseId: string) => {
     const next = new URLSearchParams(searchParams)
@@ -153,7 +180,9 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
             )}
             {filteredCharacters.length > pageSize && <nav className="catalogue-pagination" aria-label="Character pages">
               <button type="button" aria-label="Previous page" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>‹</button>
-              {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => <button type="button" key={pageNumber} className={pageNumber === currentPage ? 'active' : ''} aria-current={pageNumber === currentPage ? 'page' : undefined} onClick={() => setPage(pageNumber)}>{pageNumber}</button>)}
+              {paginationItems.map((item) => typeof item === 'number'
+                ? <button type="button" key={item} className={item === currentPage ? 'active' : ''} aria-current={item === currentPage ? 'page' : undefined} aria-label={`Page ${item}`} onClick={() => setPage(item)}>{item}</button>
+                : <span className="catalogue-pagination-ellipsis" key={item} aria-hidden="true">&hellip;</span>)}
               <button type="button" aria-label="Next page" disabled={currentPage === pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>›</button>
             </nav>}
           </>
