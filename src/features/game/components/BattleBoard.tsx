@@ -41,7 +41,7 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
   }
 
   return (
-    <section className="battle-board">
+    <section className="battle-board local-battle-board">
       <header className="battle-score">
         <div><span>You</span><strong>{battle.playerScore}</strong></div>
         <p>Round {battle.round}<small>First to 3</small></p>
@@ -66,8 +66,8 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
             ))}
           </div>
           <div className="opponent-hidden"><span>?</span><p>Opponent selection hidden</p></div>
-          <h2>Choose your fighter</h2>
-          <div className="battle-hand">
+          <h2 className="local-fighter-heading">Choose your fighter</h2>
+          <div className="battle-hand local-battle-hand">
             {state.player.team.map((character) => (
               <GameCard
                 key={character.id} character={character} compact
@@ -78,7 +78,7 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
               />
             ))}
           </div>
-          <button className="button button-primary lock-button" disabled={!battle.selectedPlayerId} onClick={onLock}>Lock In</button>
+          <button className="button button-primary lock-button local-lock-button" disabled={!battle.selectedPlayerId} onClick={onLock}>Lock In</button>
         </>
       )}
     </section>
