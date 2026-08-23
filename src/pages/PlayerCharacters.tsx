@@ -11,6 +11,7 @@ import { removeOcPortrait, uploadOcPortrait, validatePortrait } from '../feature
 interface PlayerCharactersProps { username: string; avatarUrl: string | null }
 
 const formatPower = (value: number) => value.toLocaleString()
+const MAX_ACTIVE_OCS = 5
 
 function CharacterIdentity({ character }: { character: PlayerCharacter }) {
   return <div className="oc-identity">
@@ -56,8 +57,10 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
   const sacrificialCount = equipped.length - championCount
   const familyComposition = equipped.length === 0 ? 'Up to three fighters' : `${championCount} Champion${championCount === 1 ? '' : 's'}${sacrificialCount ? ` / ${sacrificialCount} Sacrificial` : ''}`
   const selectedVerseId = String(verseId || verses[0]?.id || '')
+  const collectionAtCapacity = active.length >= MAX_ACTIVE_OCS
 
   const openCreation = () => {
+    if (collectionAtCapacity) return setActionError('Your OC collection is full. Retire one fighter before creating another.')
     setActionError(null); setCreated(null); setName(''); setVerseId(verses[0]?.id ?? ''); setOcType(null); setFormOpen(true)
   }
 
@@ -139,7 +142,7 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
   return <main className="oc-page">
     <AppHeader active="ocs" username={username} avatarUrl={avatarUrl} />
     <section className="oc-content" aria-labelledby="oc-heading">
-      <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><strong>{equipped.length} / 3 <small>Equipped</small></strong><button className="button button-primary" onClick={openCreation} disabled={versesLoading || Boolean(versesError)}>+ Create OC</button></div></header>
+      <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong><button className="button button-primary" onClick={openCreation} disabled={versesLoading || Boolean(versesError) || collectionAtCapacity}>{collectionAtCapacity ? 'Collection Full' : '+ Create OC'}</button></div></header>
 
       {actionError && <p className="oc-message error-message" role="alert">{actionError}</p>}
       {progression.error && <p className="oc-message error-message" role="alert">{progression.error}</p>}

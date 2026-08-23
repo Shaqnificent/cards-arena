@@ -7,6 +7,7 @@ function friendlyError(error: unknown, fallback: string): string {
     : typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' ? error.message
     : String(error)
   if (message.includes('already has 3 fighters')) return 'Your OC Family already has 3 fighters. Unequip one before adding another.'
+  if (message.includes('already has 5 active fighters')) return 'Your OC collection is full. Retire one fighter before creating another.'
   if (message.includes('between 2 and 50')) return 'OC name must be between 2 and 50 characters.'
   if (message.includes('active verse')) return 'Select an active verse.'
   if (message.includes('not owned')) return 'That fighter is unavailable or does not belong to you.'

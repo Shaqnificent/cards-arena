@@ -26,6 +26,7 @@ returns public.player_characters language plpgsql security definer set search_pa
 declare
   caller_id uuid := auth.uid(); normalized_name text := btrim(p_name); band_roll double precision;
   rolled_overall integer; derived_overall_cap integer; derived_power_cap integer;
+  active_character_count integer;
   created_character public.player_characters%rowtype;
 begin
   if caller_id is null then raise exception using errcode='42501', message='Authentication required.'; end if;
@@ -33,6 +34,10 @@ begin
   if normalized_name is null or char_length(normalized_name) not between 2 and 50 then raise exception using errcode='22023', message='OC name must be between 2 and 50 characters.'; end if;
   if p_oc_type not in ('champion','sacrificial') then raise exception using errcode='22023', message='Choose Champion or Sacrificial.'; end if;
   if not exists(select 1 from public.verses where id=p_verse_id and active=true) then raise exception using errcode='22023', message='Select an active verse.'; end if;
+  -- Serialize creation per owner so concurrent requests cannot exceed five.
+  perform 1 from public.profiles where id=caller_id for update;
+  select count(*) into active_character_count from public.player_characters where owner_id=caller_id and active=true;
+  if active_character_count >= 5 then raise exception using errcode='22023', message='Your OC collection already has 5 active fighters. Retire one before creating another.'; end if;
   band_roll := random();
   if band_roll < .20 then rolled_overall:=50+floor(random()*3)::integer; derived_overall_cap:=92; derived_power_cap:=10000;
   elsif band_roll < .60 then rolled_overall:=53+floor(random()*3)::integer; derived_overall_cap:=93; derived_power_cap:=9500;
