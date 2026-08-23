@@ -12,6 +12,7 @@ interface Props {
   message: string | null
   onLock: (selectionType: 'canon' | 'oc', fighterId: string) => Promise<void>
   onAdvance: () => Promise<void>
+  onFinalResultVisible?: () => void
 }
 
 function ResolvedCard({ fighter, oc, imageUrl, side, winner }: { fighter: ResolvedBattleFighter; oc?: OnlineBattleState['opponentOC']; imageUrl?: string | null; side: 'player' | 'opponent'; winner: boolean }) {
@@ -33,7 +34,7 @@ function ResolvedCard({ fighter, oc, imageUrl, side, winner }: { fighter: Resolv
   </article>
 }
 
-export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdvance }: Props) {
+export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdvance, onFinalResultVisible }: Props) {
   const [selection, setSelection] = useState<{ type: 'canon' | 'oc'; id: string } | null>(null)
   const [showFinalResult, setShowFinalResult] = useState(false)
   const sounds = useGameSounds()
@@ -47,6 +48,7 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   const yourImage = revealed?.yourFighter.type === 'canon' ? state.yourTeam.find((item) => item.id === revealed.yourFighter.id)?.character.image_url : state.yourOC?.imageUrl
   const opponentImage = revealed?.opponentFighter.type === 'canon' ? state.opponentTeam.find((item) => item.id === revealed.opponentFighter.id)?.character.image_url : state.opponentOC?.imageUrl
   const finalRound = state.status === 'completed' || state.battleState === 'complete'
+  const finalResultVisible = state.status === 'completed' && (showFinalResult || !revealed)
 
   useEffect(() => {
     if (!lockSeen.current && state.yourSelection) sounds.playLockIn()
@@ -65,13 +67,17 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
     return () => window.clearTimeout(timer)
   }, [revealed, sounds, state.opponentPlayerId, state.yourPlayerId])
 
+  useEffect(() => {
+    if (finalResultVisible) onFinalResultVisible?.()
+  }, [finalResultVisible, onFinalResultVisible])
+
   const selectFighter = (type: 'canon' | 'oc', id: string) => {
     if (selection?.type === type && selection.id === id) return
     setSelection({ type, id })
     sounds.playCardSelect()
   }
 
-  if (state.status === 'completed' && (showFinalResult || !revealed)) {
+  if (finalResultVisible) {
     return <section className="match-result">
       <p className="eyebrow">Match Complete</p><h1>{draw ? 'Draw' : victory ? 'Victory' : 'Defeat'}</h1>
       <div className="final-score"><span>{state.yourProfile.username} <b>{state.yourScore}</b></span><i>—</i><span><b>{state.opponentScore}</b> {state.opponentProfile.username} <SystemBadge visible={state.opponentProfile.is_system_player} /></span></div>

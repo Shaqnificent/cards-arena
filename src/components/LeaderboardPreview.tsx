@@ -24,7 +24,11 @@ export function LeaderboardPreview() {
         <ol className="preview-list">
           {players.map((player) => (
             <li key={player.id}>
-              <span><strong className={player.rank === 1 ? 'preview-rank first' : 'preview-rank'}>{player.rank === 1 ? '♛' : player.rank}</strong><PlayerAvatar compact username={player.username} avatarUrl={player.avatarUrl} /><em>{player.username}</em><SystemBadge visible={player.isSystemPlayer} /></span>
+              <span>
+                <strong className={player.rank === 1 ? 'preview-rank first' : 'preview-rank'}>{player.rank === 1 ? '♛' : player.rank}</strong>
+                <PlayerAvatar compact username={player.username} avatarUrl={player.avatarUrl} />
+                <span className="preview-player-name"><em>{player.username}</em><SystemBadge visible={player.isSystemPlayer} /></span>
+              </span>
               <b>{player.winRate.toFixed(1)}%</b>
             </li>
           ))}

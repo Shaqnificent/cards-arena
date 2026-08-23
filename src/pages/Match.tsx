@@ -10,6 +10,8 @@ import { useOnlineDraft } from '../features/onlineGame/hooks/useOnlineDraft'
 import { useOcPreparation } from '../features/onlineGame/hooks/useOcPreparation'
 import { MatchExitBoundary } from '../features/onlineGame/components/MatchExitControl'
 import { SoundToggle } from '../features/audio/SoundToggle'
+import { AdministratorToast } from '../components/AdministratorToast'
+import { useAdministratorInteractions } from '../features/onlineGame/hooks/useAdministratorInteractions'
 
 interface MatchProps { currentUserId: string }
 
@@ -17,10 +19,15 @@ export function Match({ currentUserId }: MatchProps) {
   const { matchId } = useParams()
 
   if (!matchId) return <MatchError message="Match not found." />
-  return <MatchExitBoundary matchId={matchId} currentUserId={currentUserId}><SoundToggle/><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} /></MatchExitBoundary>
+  return <MatchExitBoundary matchId={matchId} currentUserId={currentUserId}><SoundToggle/><AdministratorMatchExperience matchId={matchId} currentUserId={currentUserId} /></MatchExitBoundary>
 }
 
-function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {
+function AdministratorMatchExperience({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {
+  const { toast, notifyResultVisible } = useAdministratorInteractions(matchId, currentUserId)
+  return <><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} onAdministratorResultVisible={notifyResultVisible} />{toast && <AdministratorToast key={toast.context} message={toast} />}</>
+}
+
+function LoadedOnlineMatch({ matchId, currentUserId, onAdministratorResultVisible }: { matchId: string; currentUserId: string; onAdministratorResultVisible: () => void }) {
   const { state, initiative, ocSelection, loadState, loading, error, message, pendingAction, lockInitiative, lockOcSelection, bid, pass, fold, retry } = useOnlineDraft(matchId, currentUserId)
 
   if (loadState === 'initiative' && initiative) return <InitiativeScreen key={initiative.initiativeRound} initiative={initiative} message={message} onLock={lockInitiative} />
@@ -37,9 +44,9 @@ function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; curren
   if (error || !state) return <MatchError message={error ?? 'This match is unavailable.'} onRetry={() => void retry()} />
 
   if (state.match.status === 'battle' || state.match.status === 'completed') {
-    return <LoadedOnlineBattle matchId={matchId} />
+    return <LoadedOnlineBattle matchId={matchId} onAdministratorResultVisible={onAdministratorResultVisible} />
   }
-  if (state.match.status === 'oc_preparation') return <LoadedOcPreparation matchId={matchId} />
+  if (state.match.status === 'oc_preparation') return <LoadedOcPreparation matchId={matchId} onAdministratorResultVisible={onAdministratorResultVisible} />
 
   return (
     <main className="game-page">
@@ -53,21 +60,21 @@ function LoadedOnlineMatch({ matchId, currentUserId }: { matchId: string; curren
   )
 }
 
-function LoadedOcPreparation({ matchId }: { matchId: string }) {
+function LoadedOcPreparation({ matchId, onAdministratorResultVisible }: { matchId: string; onAdministratorResultVisible: () => void }) {
   const { state, loading, pending, error, lock, retry } = useOcPreparation(matchId)
   if (loading && !state) return <LoadingScreen message="Preparing your OC strategy..." />
   if (!state) return <MatchError message={error ?? 'OC preparation is unavailable.'} onRetry={() => void retry()} />
-  if (state.status === 'battle' || state.status === 'completed') return <LoadedOnlineBattle matchId={matchId} />
+  if (state.status === 'battle' || state.status === 'completed') return <LoadedOnlineBattle matchId={matchId} onAdministratorResultVisible={onAdministratorResultVisible} />
   return <OcPreparationScreen state={state} pending={pending} error={error} onLock={lock} />
 }
 
-function LoadedOnlineBattle({ matchId }: { matchId: string }) {
+function LoadedOnlineBattle({ matchId, onAdministratorResultVisible }: { matchId: string; onAdministratorResultVisible: () => void }) {
   const { state, loading, error, message, pendingAction, lock, advance, retry } = useOnlineBattle(matchId)
   if (loading && !state) return <LoadingScreen message="Preparing authoritative battle..." />
   if (error || !state) return <MatchError message={error ?? 'This battle is unavailable.'} onRetry={() => void retry()} />
   return <main className="game-page">
     <header className="game-header"><span className="brand-link">ANIME ARENA</span><span>Server-Authoritative Battle</span><span className="nav-link">Match {matchId.slice(0, 8)}</span></header>
-    <OnlineBattleBoard key={`${state.roundNumber}:${state.battleState}`} state={state} pendingAction={pendingAction} message={message} onLock={lock} onAdvance={advance} />
+    <OnlineBattleBoard key={`${state.roundNumber}:${state.battleState}`} state={state} pendingAction={pendingAction} message={message} onLock={lock} onAdvance={advance} onFinalResultVisible={onAdministratorResultVisible} />
   </main>
 }
 
