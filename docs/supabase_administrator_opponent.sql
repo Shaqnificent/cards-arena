@@ -43,10 +43,41 @@ create table if not exists public.administrator_config (
   singleton boolean primary key default true check (singleton),
   player_id uuid not null unique references public.profiles(id) on delete restrict,
   match_timeout_seconds integer not null default 12 check (match_timeout_seconds between 5 and 120),
+  -- Centralized OC-first strategy tuning. Synergy can swing close choices, but
+  -- the reasonable OVR gap prevents it from overruling a major strength loss.
+  oc_draft_synergy_bonus integer not null default 3 check (oc_draft_synergy_bonus between 0 and 10),
+  oc_same_verse_density_bonus integer not null default 2 check (oc_same_verse_density_bonus between 0 and 10),
+  oc_reasonable_ovr_gap integer not null default 4 check (oc_reasonable_ovr_gap between 0 and 15),
+  champion_selection_bonus integer not null default 14 check (champion_selection_bonus between 0 and 30),
+  sacrificial_recipient_selection_bonus integer not null default 8 check (sacrificial_recipient_selection_bonus between 0 and 30),
+  sacrificial_min_power_gain integer not null default 400 check (sacrificial_min_power_gain between 0 and 2000),
   enabled boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.administrator_config
+  add column if not exists oc_draft_synergy_bonus integer not null default 3,
+  add column if not exists oc_same_verse_density_bonus integer not null default 2,
+  add column if not exists oc_reasonable_ovr_gap integer not null default 4,
+  add column if not exists champion_selection_bonus integer not null default 14,
+  add column if not exists sacrificial_recipient_selection_bonus integer not null default 8,
+  add column if not exists sacrificial_min_power_gain integer not null default 400;
+
+alter table public.administrator_config
+  drop constraint if exists administrator_config_oc_draft_synergy_bonus_check,
+  drop constraint if exists administrator_config_oc_same_verse_density_bonus_check,
+  drop constraint if exists administrator_config_oc_reasonable_ovr_gap_check,
+  drop constraint if exists administrator_config_champion_selection_bonus_check,
+  drop constraint if exists administrator_config_sacrificial_recipient_selection_bonus_check,
+  drop constraint if exists administrator_config_sacrificial_min_power_gain_check;
+alter table public.administrator_config
+  add constraint administrator_config_oc_draft_synergy_bonus_check check (oc_draft_synergy_bonus between 0 and 10),
+  add constraint administrator_config_oc_same_verse_density_bonus_check check (oc_same_verse_density_bonus between 0 and 10),
+  add constraint administrator_config_oc_reasonable_ovr_gap_check check (oc_reasonable_ovr_gap between 0 and 15),
+  add constraint administrator_config_champion_selection_bonus_check check (champion_selection_bonus between 0 and 30),
+  add constraint administrator_config_sacrificial_recipient_selection_bonus_check check (sacrificial_recipient_selection_bonus between 0 and 30),
+  add constraint administrator_config_sacrificial_min_power_gain_check check (sacrificial_min_power_gain between 0 and 2000);
 
 insert into public.administrator_config (singleton, player_id, match_timeout_seconds, enabled)
 values (true, '00000000-0000-4000-8000-000000000001', 12, true)
@@ -70,7 +101,7 @@ alter table public.administrator_config enable row level security;
 alter table public.administrator_matches enable row level security;
 revoke all on public.administrator_config, public.administrator_matches from public, anon, authenticated;
 
--- 2. Seed two real, equipped Administrator OCs from two distinct active verses.
+-- 2. Seed two real, equipped Administrator OCs in their canonical exact verses.
 do $$
 declare
   system_id uuid := '00000000-0000-4000-8000-000000000001';
@@ -78,16 +109,22 @@ declare
   sacrificial_verse_id bigint;
 begin
   select id into champion_verse_id
-  from public.verses where active = true order by id limit 1;
+  from public.verses
+  where active = true
+    and (lower(name) = 'naruto' or lower(slug) = 'naruto')
+  order by case when lower(slug) = 'naruto' then 0 else 1 end, id
+  limit 1;
 
   select id into sacrificial_verse_id
   from public.verses
-  where active = true and id <> champion_verse_id
-  order by id limit 1;
+  where active = true
+    and (lower(name) = 'dragon ball' or lower(slug) = 'dragon-ball')
+  order by case when lower(slug) = 'dragon-ball' then 0 else 1 end, id
+  limit 1;
 
   if champion_verse_id is null or sacrificial_verse_id is null then
     raise exception using errcode = '23514',
-      message = 'Administrator setup requires at least two active verses.';
+      message = 'Administrator setup requires active Naruto and Dragon Ball verses.';
   end if;
 
   -- Only the two seeded OCs belong to the public Administrator family.
@@ -101,23 +138,57 @@ begin
 
   insert into public.player_characters (
     id, owner_id, verse_id, name, starting_overall, overall, overall_cap,
-    starting_power_score, power_score, power_score_cap, progression_points,
+    image_url, starting_power_score, power_score, power_score_cap, progression_points,
     equipped, active, retired_at, oc_type, type_selected_at
   ) values (
     '00000000-0000-4000-8000-000000000011', system_id, champion_verse_id,
-    'Aegis Prime', 60, 90, 95, 5000, 7200, 8500, 0,
+    'Aegis Prime', 60, 90, 95, '/Admin/aegis-prime.png', 5000, 7200, 8500, 0,
     true, true, null, 'champion', now()
-  ) on conflict (id) do nothing;
+  ) on conflict (id) do update set
+    owner_id = excluded.owner_id,
+    verse_id = excluded.verse_id,
+    name = excluded.name,
+    image_url = excluded.image_url,
+    starting_overall = excluded.starting_overall,
+    overall = excluded.overall,
+    overall_cap = excluded.overall_cap,
+    starting_power_score = excluded.starting_power_score,
+    power_score = excluded.power_score,
+    power_score_cap = excluded.power_score_cap,
+    progression_points = excluded.progression_points,
+    equipped = true,
+    active = true,
+    retired_at = null,
+    oc_type = excluded.oc_type,
+    type_selected_at = coalesce(public.player_characters.type_selected_at, excluded.type_selected_at),
+    updated_at = now();
 
   insert into public.player_characters (
     id, owner_id, verse_id, name, starting_overall, overall, overall_cap,
-    starting_power_score, power_score, power_score_cap, progression_points,
+    image_url, starting_power_score, power_score, power_score_cap, progression_points,
     equipped, active, retired_at, oc_type, type_selected_at
   ) values (
     '00000000-0000-4000-8000-000000000012', system_id, sacrificial_verse_id,
-    'Nexus Herald', 59, 85, 95, 5000, 6800, 8500, 0,
+    'Nexus Herald', 59, 85, 95, '/Admin/nexus-herald.png', 5000, 6800, 8500, 0,
     true, true, null, 'sacrificial', now()
-  ) on conflict (id) do nothing;
+  ) on conflict (id) do update set
+    owner_id = excluded.owner_id,
+    verse_id = excluded.verse_id,
+    name = excluded.name,
+    image_url = excluded.image_url,
+    starting_overall = excluded.starting_overall,
+    overall = excluded.overall,
+    overall_cap = excluded.overall_cap,
+    starting_power_score = excluded.starting_power_score,
+    power_score = excluded.power_score,
+    power_score_cap = excluded.power_score_cap,
+    progression_points = excluded.progression_points,
+    equipped = true,
+    active = true,
+    retired_at = null,
+    oc_type = excluded.oc_type,
+    type_selected_at = coalesce(public.player_characters.type_selected_at, excluded.type_selected_at),
+    updated_at = now();
 
   update public.player_characters
   set equipped = true, active = true, retired_at = null
@@ -222,18 +293,40 @@ declare
   selected_verse_id bigint;
   selected_oc_type text;
   selected_oc_overall integer;
+  selected_oc_power integer;
   same_verse_count integer;
   boost_value integer;
+  champion_gain integer;
+  baseline_roster_score integer;
+  absorb_score_delta integer;
+  total_projected_power_gain integer;
   system_balance integer;
   system_team_size integer;
   remaining_slots integer;
   current_overall integer;
   current_power integer;
   current_verse_id bigint;
+  draft_synergy_bonus integer;
+  strategic_overall integer;
+  best_available_overall integer;
   max_bid integer;
   opening_bid integer;
+  strategy_oc_draft_synergy_bonus integer;
+  strategy_oc_same_verse_density_bonus integer;
+  strategy_oc_reasonable_ovr_gap integer;
+  strategy_champion_selection_bonus integer;
+  strategy_sacrificial_recipient_selection_bonus integer;
+  strategy_sacrificial_min_power_gain integer;
 begin
-  select c.player_id into system_id
+  select c.player_id, c.oc_draft_synergy_bonus,
+    c.oc_same_verse_density_bonus, c.oc_reasonable_ovr_gap,
+    c.champion_selection_bonus, c.sacrificial_recipient_selection_bonus,
+    c.sacrificial_min_power_gain
+  into system_id, strategy_oc_draft_synergy_bonus,
+    strategy_oc_same_verse_density_bonus, strategy_oc_reasonable_ovr_gap,
+    strategy_champion_selection_bonus,
+    strategy_sacrificial_recipient_selection_bonus,
+    strategy_sacrificial_min_power_gain
   from public.administrator_config c
   where c.singleton = true and c.enabled = true;
 
@@ -301,23 +394,48 @@ begin
 
       if current_overall is null then exit; end if;
 
-      select s.verse_id into selected_verse_id
+      select s.verse_id, coalesce(s.oc_type_snapshot, o.oc_type_snapshot)
+      into selected_verse_id, selected_oc_type
       from public.match_oc_selections s
+      left join public.match_oc_options o
+        on o.match_id = s.match_id and o.player_id = s.player_id
+        and o.player_character_id = s.player_character_id
       where s.match_id = p_match_id and s.player_id = system_id;
+
+      select count(*) into same_verse_count
+      from public.match_characters mc
+      where mc.match_id = p_match_id and mc.owner_player_id = system_id
+        and mc.verse_id_snapshot = selected_verse_id;
+
+      -- Exact-verse synergy raises the current card's effective draft value.
+      -- A Champion gets extra credit for a useful absorb tier; a Sacrificial
+      -- OC values each additional recipient more, capped to a close-decision
+      -- swing so weak synergy cards never masquerade as elite cards.
+      draft_synergy_bonus := 0;
+      if selected_verse_id = current_verse_id then
+        if selected_oc_type = 'champion' then
+          draft_synergy_bonus := strategy_oc_draft_synergy_bonus
+            + least(2, public.get_sacrifice_ovr_boost(current_overall));
+        elsif selected_oc_type = 'sacrificial' then
+          draft_synergy_bonus := strategy_oc_draft_synergy_bonus
+            + least(
+              strategy_oc_reasonable_ovr_gap,
+              same_verse_count * strategy_oc_same_verse_density_bonus
+            );
+        end if;
+      end if;
+      strategic_overall := least(99, current_overall + draft_synergy_bonus);
 
       remaining_slots := 5 - system_team_size;
       max_bid := case
-        when current_overall >= 95 then 6
-        when current_overall >= 90 then 5
-        when current_overall >= 85 then 4
-        when current_overall >= 80 then 3
-        when current_overall >= 70 then 2
+        when strategic_overall >= 95 then 6
+        when strategic_overall >= 90 then 5
+        when strategic_overall >= 85 then 4
+        when strategic_overall >= 80 then 3
+        when strategic_overall >= 70 then 2
         else 1
       end;
       if current_power >= 9000 then max_bid := max_bid + 1; end if;
-      if selected_verse_id is not null and selected_verse_id = current_verse_id then
-        max_bid := max_bid + 1;
-      end if;
       max_bid := least(
         system_balance,
         greatest(0, system_balance - greatest(0, remaining_slots - 1)),
@@ -327,7 +445,7 @@ begin
       if match_row.draft_state = 'decision' then
         if match_row.priority_player_id <> system_id then exit; end if;
         if system_balance = 0 or max_bid < 1
-          or random() < (case when current_overall < 75 then 0.34 else 0.16 end) then
+          or random() < (case when strategic_overall < 75 then 0.34 else 0.16 end) then
           perform public.draft_pass(p_match_id);
           continue;
         end if;
@@ -356,8 +474,10 @@ begin
       ) then exit; end if;
 
       select s.player_character_id, s.verse_id,
-        coalesce(s.oc_type_snapshot, o.oc_type_snapshot), s.base_overall
-      into selected_id, selected_verse_id, selected_oc_type, selected_oc_overall
+        coalesce(s.oc_type_snapshot, o.oc_type_snapshot), s.base_overall,
+        s.base_power_score
+      into selected_id, selected_verse_id, selected_oc_type,
+        selected_oc_overall, selected_oc_power
       from public.match_oc_selections s
       left join public.match_oc_options o
         on o.match_id = s.match_id and o.player_id = s.player_id
@@ -367,27 +487,79 @@ begin
       if selected_id is null then exit; end if;
 
       if selected_oc_type = 'champion' then
-        select mc.id, public.get_sacrifice_ovr_boost(mc.overall_snapshot)
-        into selected_id, boost_value
-        from public.match_characters mc
-        where mc.match_id = p_match_id and mc.owner_player_id = system_id
-          and mc.verse_id_snapshot = selected_verse_id
-        order by public.get_sacrifice_ovr_boost(mc.overall_snapshot) desc,
-          mc.overall_snapshot desc, random()
+        selected_id := null;
+        -- Compare the best five usable OVRs before and after each legal absorb.
+        -- The configured four-point tolerance is the maximum aggregate team
+        -- strength the OC identity may trade for a meaningfully stronger OC.
+        with baseline as (
+          select coalesce(sum(r.overall), 0)::integer as roster_score
+          from (
+            select roster.overall
+            from (
+              select mc.overall_snapshot::integer as overall
+              from public.match_characters mc
+              where mc.match_id = p_match_id and mc.owner_player_id = system_id
+              union all
+              select selected_oc_overall
+            ) roster
+            order by roster.overall desc
+            limit 5
+          ) r
+        ), candidates as (
+          select mc.id,
+            public.get_sacrifice_ovr_boost(mc.overall_snapshot::integer) as boost,
+            least(99, selected_oc_overall
+              + public.get_sacrifice_ovr_boost(mc.overall_snapshot::integer)) as boosted_overall
+          from public.match_characters mc
+          where mc.match_id = p_match_id and mc.owner_player_id = system_id
+            and mc.verse_id_snapshot = selected_verse_id
+        ), scored as (
+          select c.id, c.boost, c.boosted_overall,
+            (select coalesce(sum(roster.overall), 0)::integer
+             from (
+               select mc.overall_snapshot::integer as overall
+               from public.match_characters mc
+               where mc.match_id = p_match_id
+                 and mc.owner_player_id = system_id and mc.id <> c.id
+               union all
+               select c.boosted_overall
+             ) roster) as post_score
+          from candidates c
+        )
+        select scored.id, scored.boost,
+          scored.boosted_overall - selected_oc_overall,
+          baseline.roster_score,
+          scored.post_score - baseline.roster_score
+        into selected_id, boost_value, champion_gain,
+          baseline_roster_score, absorb_score_delta
+        from scored cross join baseline
+        order by scored.post_score - baseline.roster_score desc,
+          scored.boosted_overall - selected_oc_overall desc, random()
         limit 1;
 
-        if selected_id is not null and selected_oc_overall < 99 and random() < .70 then
+        if selected_id is not null and champion_gain >= 2
+          and absorb_score_delta >= -strategy_oc_reasonable_ovr_gap then
           perform public.submit_match_oc_preparation(p_match_id, 'absorb', selected_id);
         else
           perform public.submit_match_oc_preparation(p_match_id, 'reserve', null);
         end if;
       elsif selected_oc_type = 'sacrificial' then
-        select count(*) into same_verse_count
+        -- The authoritative transfer function evaluates every exact-verse
+        -- recipient. Activation requires a meaningful average Power gain.
+        select count(*), coalesce(sum(
+          x.match_power_score - mc.power_score_snapshot::integer
+        ), 0)::integer
+        into same_verse_count, total_projected_power_gain
         from public.match_characters mc
+        cross join lateral public.calculate_oc_power_transfer(
+          selected_oc_power, selected_oc_overall,
+          mc.overall_snapshot::integer, mc.power_score_snapshot::integer
+        ) x
         where mc.match_id = p_match_id and mc.owner_player_id = system_id
           and mc.verse_id_snapshot = selected_verse_id;
 
-        if same_verse_count > 0 and random() < .85 then
+        if same_verse_count > 0
+          and total_projected_power_gain >= strategy_sacrificial_min_power_gain * same_verse_count then
           perform public.submit_match_oc_preparation(p_match_id, 'sacrifice', null);
         else
           -- Current canonical rules make Reserve the default mode for every OC.
@@ -406,12 +578,42 @@ begin
           and bs.player_id = system_id
       ) then exit; end if;
 
+      select max(available.overall) into best_available_overall
+      from (
+        select mc.overall_snapshot::integer as overall
+        from public.match_characters mc
+        where mc.match_id = p_match_id and mc.owner_player_id = system_id
+          and not mc.used_in_battle
+          and not exists (
+            select 1 from public.match_oc_preparations p
+            where p.match_id = p_match_id and p.player_id = system_id
+              and p.sacrificed_match_character_id = mc.id
+          )
+        union all
+        select p.match_overall
+        from public.match_oc_preparations p
+        where p.match_id = p_match_id and p.player_id = system_id
+          and p.decision in ('reserve', 'absorb')
+          and not p.oc_sacrificed and not p.used_in_battle
+      ) available;
+
       select candidate.selection_type, candidate.fighter_id
       into selected_type, selected_id
       from (
         select 'canon'::text selection_type, mc.id fighter_id,
           greatest(1, mc.overall_snapshot::integer - 65)
-            + case when b.effective_bonus > 0 then 4 else 0 end weight
+            + case
+                when coalesce(b.match_power_score - b.recipient_base_power, 0) <= 0 then 0
+                when mc.overall_snapshot = best_available_overall
+                  then strategy_sacrificial_recipient_selection_bonus
+                when mc.overall_snapshot >= best_available_overall
+                  - strategy_oc_reasonable_ovr_gap
+                  then greatest(1, strategy_sacrificial_recipient_selection_bonus / 2)
+                else 0
+              end
+            + case when coalesce(b.match_power_score - b.recipient_base_power, 0) > 0
+                and mc.overall_snapshot = best_available_overall
+              then least(2, (b.match_power_score - b.recipient_base_power) / 750) else 0 end weight
         from public.match_characters mc
         left join public.match_oc_power_boosts b
           on b.match_id = mc.match_id and b.match_character_id = mc.id
@@ -425,6 +627,14 @@ begin
         union all
         select 'oc'::text, p.player_character_id,
           greatest(1, p.match_overall - 65)
+            + case when p.oc_type = 'champion'
+                and p.match_overall >= best_available_overall
+                  - strategy_oc_reasonable_ovr_gap
+              then strategy_champion_selection_bonus else 0 end
+            + case when p.oc_type = 'champion' and p.decision = 'absorb'
+                and p.match_overall >= best_available_overall
+                  - strategy_oc_reasonable_ovr_gap
+              then greatest(1, strategy_champion_selection_bonus / 2) else 0 end
         from public.match_oc_preparations p
         where p.match_id = p_match_id and p.player_id = system_id
           and p.decision in ('reserve', 'absorb')
