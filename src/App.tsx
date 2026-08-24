@@ -11,6 +11,7 @@ import { Game } from './pages/Game'
 import { Match } from './pages/Match'
 import { Suggestions } from './pages/Suggestions'
 import { PlayerCharacters } from './pages/PlayerCharacters'
+import { PublicPlayerProfile } from './pages/PublicPlayerProfile'
 import { SoundProvider } from './features/audio/SoundProvider'
 import { MatchmakingToast } from './components/MatchmakingToast'
 import { useMatchmaking } from './features/matchmaking/hooks/useMatchmaking'
@@ -60,6 +61,7 @@ function AuthenticatedApp({ user, profile, profileLoading, profileError }: {
       <Route path="/characters" element={<Characters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/ocs" element={<PlayerCharacters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/leaderboard" element={<Leaderboard currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />
+      <Route path="/profile/:playerId" element={<PublicPlayerProfile currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/community" element={profile ? <Suggestions currentUserId={user.id} profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your player profile..." />} />
       <Route path="/suggestions" element={<Navigate to="/community" replace />} />
       <Route path="/play/test" element={profile ? <Game playerName={profile.username} /> : <LoadingScreen message="Loading your player profile..." />} />

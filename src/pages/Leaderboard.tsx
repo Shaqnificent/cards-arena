@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { LeaderboardEmptyState } from '../components/LeaderboardEmptyState'
 import { PlayerAvatar } from '../components/PlayerAvatar'
@@ -40,7 +41,7 @@ function Segmented<T extends string>({options,value,onChange}:{options:[T,string
 
 function PlayerRankings({players,loading,error,currentUserId}:{players:ReturnType<typeof useLeaderboard>['players'];loading:boolean;error:string|null;currentUserId:string}){
   if(loading)return <RankingSkeleton/>;if(error)return <StateCard tone="error" title="Unable to load the leaderboard" text="Please try again later."/>;if(!players.length)return <LeaderboardEmptyState/>
-  return <div className="leaderboard-table-wrap"><table className="leaderboard-table"><thead><tr><th>Rank</th><th>Player</th><th>Wins</th><th>Losses</th><th>Games</th><th>Win Rate</th></tr></thead><tbody>{players.map(p=><tr key={p.id} className={p.id===currentUserId?'current-player':undefined}><td><RankBadge rank={p.rank}/></td><td><div className="leaderboard-player"><PlayerAvatar username={p.username} avatarUrl={p.avatarUrl} compact/><span>{p.username}{p.id===currentUserId&&<small>You</small>}<SystemBadge visible={p.isSystemPlayer}/></span></div></td><td>{p.wins}</td><td>{p.losses}</td><td>{p.gamesPlayed}</td><td className="win-rate">{p.winRate.toFixed(1)}%</td></tr>)}</tbody></table></div>
+  return <div className="leaderboard-table-wrap"><table className="leaderboard-table"><thead><tr><th>Rank</th><th>Player</th><th>Wins</th><th>Losses</th><th>Games</th><th>Win Rate</th></tr></thead><tbody>{players.map(p=><tr key={p.id} className={p.id===currentUserId?'current-player':undefined}><td><RankBadge rank={p.rank}/></td><td>{p.isSystemPlayer?<div className="leaderboard-player"><PlayerAvatar username={p.username} avatarUrl={p.avatarUrl} compact/><span>{p.username}<SystemBadge visible/></span></div>:<Link className="leaderboard-player leaderboard-profile-link" to={`/profile/${p.id}`} aria-label={`View ${p.username}'s profile`}><PlayerAvatar username={p.username} avatarUrl={p.avatarUrl} compact/><span>{p.username}{p.id===currentUserId&&<small>You</small>}</span></Link>}</td><td>{p.wins}</td><td>{p.losses}</td><td>{p.gamesPlayed}</td><td className="win-rate">{p.winRate.toFixed(1)}%</td></tr>)}</tbody></table></div>
 }
 function RankBadge({rank}:{rank:number}){return <div className={`rank-medal rank-medal-${rank<=3?rank:'standard'}`}><span>{rank}</span>{rank<=3&&<i/>}</div>}
 function OcAvatar({name,url}:{name:string;url:string|null}){return <OCImage src={url} name={name} className="oc-rank-avatar"/>}
