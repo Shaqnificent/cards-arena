@@ -3,11 +3,14 @@ import { AppHeader } from '../components/AppHeader'
 import { LoadoutNav } from '../components/LoadoutNav'
 import { OCImage } from '../features/ocs/components/OCImage'
 import { useLoadoutSummary } from '../features/loadout/hooks/useLoadoutSummary'
+import { useActiveMatchBoon } from '../features/boons/hooks/useActiveMatchBoon'
+import { ActiveMatchBoonLoading, ActiveMatchBoonNotice } from '../features/boons/components/ActiveMatchBoonNotice'
 import type { Profile } from '../types/profile'
 
 export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: string | null }) {
   const boonEligible = !profile.is_guest && !profile.is_system_player
   const summary = useLoadoutSummary({ boonEligible, systemProfile: profile.is_system_player })
+  const matchBoon = useActiveMatchBoon(boonEligible)
   const equippedBoon = summary.boonDashboard?.boons.find((boon) => boon.equipped) ?? null
 
   return <main className="loadout-page">
@@ -42,6 +45,8 @@ export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: s
               : summary.boonError ? <div className="loadout-card-state error" role="alert"><span>{summary.boonError}</span><button type="button" className="text-button" onClick={() => void summary.refresh()}>Try again</button></div>
                 : equippedBoon ? <div className={`loadout-equipped-boon rarity-${equippedBoon.definition.rarity}`}><span aria-hidden="true">✦</span><div><span className={`boon-rarity ${equippedBoon.definition.rarity}`}>{equippedBoon.definition.rarity}</span><h3>{equippedBoon.definition.name}</h3><small>Equipped</small></div></div>
                   : <div className="loadout-card-empty"><strong>No Boon equipped</strong><p>Inventory {summary.boonDashboard?.inventoryCount ?? 0} / 2</p></div>}
+          {matchBoon.loading && boonEligible ? <ActiveMatchBoonLoading /> : matchBoon.activeMatch && <ActiveMatchBoonNotice activeMatch={matchBoon.activeMatch} />}
+          {matchBoon.error && <p className="loadout-match-boon-error" role="alert">{matchBoon.error}</p>}
           <p className="loadout-card-description">Choose one reusable tactical modifier for your ranked loadout.</p>
           {boonEligible ? <Link className="button button-primary" to="/boons">Manage Boons</Link> : <span className="button button-secondary disabled" aria-disabled="true">Boons Require Sign-In</span>}
         </article>

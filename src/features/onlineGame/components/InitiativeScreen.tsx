@@ -4,6 +4,7 @@ import rockIcon from '../../../assets/pre_draft/rock.svg'
 import scissorsIcon from '../../../assets/pre_draft/scissors.svg'
 import { useGameSounds } from '../../audio/useGameSounds'
 import type { InitiativeChoice, OnlineInitiativeState } from '../types'
+import { MatchBoonCard } from './MatchBoonCard'
 
 const choices: InitiativeChoice[] = ['rock', 'paper', 'scissors']
 const choiceIcons: Record<InitiativeChoice, string> = {
@@ -263,6 +264,10 @@ export function InitiativeScreen({ initiative, message, onLock }: Props) {
       <span>Pre-Draft</span><b aria-hidden="true">•</b><span>Round {initiative.initiativeRound}</span>
     </header>
     <div className="initiative-stage">
+      <section className="initiative-boon-reveal" aria-label="Ranked match Boons">
+        <MatchBoonCard label="Your Boon" boon={initiative.yourBoon} />
+        <MatchBoonCard label="Opponent Boon" boon={initiative.opponentBoon} revealed={initiative.opponentBoonRevealed} />
+      </section>
       <section className={`initiative-card ${revealed ? 'state-result' : 'state-choice'}`}>
         <h1>Initiative</h1>
         {message && <p className="online-draft-message" role="status">{message}</p>}

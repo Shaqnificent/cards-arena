@@ -3,6 +3,8 @@ import { LoadoutNav } from '../components/LoadoutNav'
 import { BoonCard } from '../features/boons/components/BoonCard'
 import { BoonRollDialog } from '../features/boons/components/BoonRollDialog'
 import { useBoons } from '../features/boons/hooks/useBoons'
+import { useActiveMatchBoon } from '../features/boons/hooks/useActiveMatchBoon'
+import { ActiveMatchBoonLoading, ActiveMatchBoonNotice } from '../features/boons/components/ActiveMatchBoonNotice'
 import type { Profile } from '../types/profile'
 
 interface BoonsProps {
@@ -13,6 +15,7 @@ interface BoonsProps {
 export function Boons({ profile, avatarUrl }: BoonsProps) {
   const eligible = !profile.is_guest && !profile.is_system_player
   const boons = useBoons(eligible)
+  const matchBoon = useActiveMatchBoon(eligible)
   const equipped = boons.dashboard.boons.find((boon) => boon.equipped) ?? null
   const displayedPoints = boons.loading || boons.error ? profile.boon_points : boons.dashboard.boonPoints
   const busy = boons.pendingId !== null || boons.rolling || boons.resolvingId !== null
@@ -26,6 +29,8 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
     <div className="boon-content">
       <LoadoutNav active="boons" />
       <header className="boon-hero"><div><p className="eyebrow">Boon Shop</p><h1>Boons</h1><p>Spend Boon Points to discover reusable arena modifiers and manage your two-slot collection.</p></div><div className="boon-points-card"><span aria-hidden="true">✦</span><div><small>Boon Points</small><strong>{(eligible ? displayedPoints : 0).toLocaleString()} BP</strong></div></div></header>
+      {matchBoon.loading && eligible ? <ActiveMatchBoonLoading /> : matchBoon.activeMatch && <ActiveMatchBoonNotice activeMatch={matchBoon.activeMatch} />}
+      {matchBoon.error && <p className="boon-error error-message" role="alert">{matchBoon.error}</p>}
 
       {!eligible ? <section className="boon-unavailable" aria-labelledby="boon-unavailable-heading"><span aria-hidden="true">◇</span><h2 id="boon-unavailable-heading">{profile.is_system_player ? 'Player Boon Shop is unavailable' : 'Sign in to earn Boon Points and roll Boons'}</h2><p>{profile.is_system_player ? 'Administrator Boon behavior remains outside the player inventory system.' : 'Guest profiles do not participate in the persistent Boon economy.'}</p></section>
         : boons.loading ? <section className="boon-state" aria-live="polite"><span className="spinner" /><h2>Loading your Boon loadout...</h2></section>

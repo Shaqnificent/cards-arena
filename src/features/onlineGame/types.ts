@@ -1,6 +1,7 @@
 import type { Character } from '../../types/character'
 import type { Profile, PublicGameProfile } from '../../types/profile'
 import type { MatchStatus } from '../matchmaking/types'
+import type { BoonRarity } from '../boons/types'
 
 export type OnlineDraftPhase = 'preparing' | 'decision' | 'bidding' | 'complete'
 
@@ -60,6 +61,21 @@ export interface MatchOcPreparationState {
   yourLocked: boolean; opponentLocked: boolean; bothComplete: boolean
 }
 export type InitiativeChoice = 'rock' | 'paper' | 'scissors'
+export interface MatchBoonSnapshot {
+  definitionId: string
+  key: string
+  name: string
+  description: string
+  rarity: BoonRarity
+  effectType: string
+  effectValue: number | null
+  targetRule: string
+}
+export interface ActiveMatchBoonState {
+  matchId: string
+  status: MatchStatus
+  boon: MatchBoonSnapshot | null
+}
 export interface OnlineInitiativeState {
   matchId: string
   status: MatchStatus
@@ -67,8 +83,11 @@ export interface OnlineInitiativeState {
   initiativeState: 'choosing' | 'revealed'
   yourPlayerId: string
   opponentPlayerId: string
-  yourProfile: PublicGameProfile
-  opponentProfile: PublicGameProfile
+  yourProfile: MatchOcProfile
+  opponentProfile: MatchOcProfile
+  yourBoon: MatchBoonSnapshot | null
+  opponentBoon: MatchBoonSnapshot | null
+  opponentBoonRevealed: boolean
   yourChoice: InitiativeChoice | null
   opponentLocked: boolean
   opponentChoice: InitiativeChoice | null

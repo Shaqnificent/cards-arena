@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 1-3 Foundation and Shop — Implemented (application + migrations ready)**
+**Phase 1-4 Foundation, Shop, and Match Snapshot — Implemented (application + migrations ready)**
 
 Phase 1 is implemented by `docs/supabase_boon_phase_1.sql` and the matching
 frontend changes. The SQL must be run manually in Supabase before the new UI is
@@ -48,6 +48,27 @@ roll that survives refresh; the player must replace one owned Boon or discard
 the new result. Replacing an equipped Boon leaves the equipped slot empty, and
 discarding never refunds the spent BP. A partial unique index permits only one
 unresolved roll per player. Phase 3 still applies no Boon gameplay effects.
+
+Phase 4 is implemented by `docs/supabase_boon_phase_4.sql`. Entering the ranked
+queue locks an immutable snapshot of the caller's equipped Boon definition. The
+match stores one private snapshot row per participant when it is created, with
+an explicit no-Boon state for guests, the Administrator, and players who queue
+without a Boon. Replacing, unequipping, deactivating, or rebalancing the source
+Boon later cannot change an existing match snapshot.
+
+The waiting player's queue snapshot is captured on the transition into
+`waiting` and is preserved by repeat matchmaking calls. The player who matches
+that queue entry immediately is snapshotted by the match-insert trigger before
+the matchmaking transaction returns opponent information. This trigger-based
+integration leaves the canonical human-first and Administrator matchmaking
+functions unchanged. Cancelled matches retain their audit snapshot and never
+consume inventory; a later match takes a fresh snapshot.
+
+The perspective-safe initiative RPC reveals each participant's snapshotted Boon
+at the first competitive phase and supports reconnects without exposing private
+OC, draft, preparation, or battle selections. Snapshot tables have no browser
+SELECT grant and are not subscribed to directly through Realtime. Phase 4 adds
+loadout visibility only; Boons still have no gameplay effects.
 
 This document defines the first version of the Anime Arena **Boon System**, including Boon ownership, equipping, ranked-match rewards, rolling, inventory limits, temporary match effects, and future expansion rules.
 
@@ -810,11 +831,13 @@ This is large enough for variety while remaining manageable to balance and under
 - [x] non-refundable discard behavior
 - [x] reconnect-safe Shop UI
 
-### Phase 4 — Ranked Match Snapshot
-- lock equipped Boon on matchmaking
-- snapshot effect
-- opponent Boon reveal
-- reconnect-safe state
+### Phase 4 — Ranked Match Snapshot (Implemented)
+- [x] lock equipped Boon on matchmaking commitment
+- [x] immutable per-participant definition/effect snapshot
+- [x] explicit no-Boon snapshots for guests and Administrator matches
+- [x] perspective-safe opponent reveal at initiative
+- [x] reconnect-safe initiative and active-loadout state
+- [x] no Boon gameplay effects
 
 ### Phase 5 — Boon Effects
 Start with a small effect set:

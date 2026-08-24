@@ -10,7 +10,7 @@ import { cancelMatchmaking } from '../features/matchmaking/services/matchmaking'
 import type { MatchmakingController, MatchmakingState } from '../features/matchmaking/types'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../types/profile'
-import { useBoonBalance } from '../features/boons/hooks/useBoonBalance'
+import { useLoadoutSummary } from '../features/loadout/hooks/useLoadoutSummary'
 
 interface LobbyProps { user: User; profile: Profile | null; profileLoading: boolean; profileError: string | null; matchmaking: MatchmakingController }
 
@@ -26,7 +26,11 @@ function getQueueCopy(status: MatchmakingState, administratorMatched: boolean) {
 
 export function Lobby({ user, profile, profileLoading, profileError, matchmaking }: LobbyProps) {
   const [signOutError, setSignOutError] = useState<string | null>(null)
-  const boonBalance = useBoonBalance(profile?.boon_points ?? 0)
+  const loadout = useLoadoutSummary({
+    enabled: Boolean(profile) && !profileLoading,
+    boonEligible: Boolean(profile && !profile.is_guest && !profile.is_system_player),
+    systemProfile: profile?.is_system_player ?? false,
+  })
 
   const handleSignOut = async () => {
     setSignOutError(null)
@@ -44,6 +48,8 @@ export function Lobby({ user, profile, profileLoading, profileError, matchmaking
   const winRate = gamesPlayed === 0 ? 0 : Math.round((profile.wins / gamesPlayed) * 100)
   const avatarUrl = profile.avatar_url ?? user.user_metadata.avatar_url ?? user.user_metadata.picture ?? null
   const queueCopy = getQueueCopy(matchmaking.status, matchmaking.administratorMatched)
+  const equippedBoon = loadout.boonDashboard?.boons.find((boon) => boon.equipped) ?? null
+  const displayedBoonPoints = loadout.boonDashboard?.boonPoints ?? profile.boon_points
 
   return <main className="lobby-page">
     <AppHeader active="play" username={profile.username} avatarUrl={avatarUrl} />
@@ -51,7 +57,19 @@ export function Lobby({ user, profile, profileLoading, profileError, matchmaking
     <div className="lobby-dashboard">
       <section className="lobby-hero" aria-labelledby="lobby-title"><div className="lobby-energy" aria-hidden="true" /><div className="lobby-hero-content">
         <p className="eyebrow">Player Lobby</p><h1 id="lobby-title">ANIME ARENA</h1>
-        <div className="lobby-player"><PlayerAvatar username={profile.username} avatarUrl={avatarUrl} /><div><h2>{profile.username}</h2><p className="record">{profile.wins} {profile.wins === 1 ? 'Win' : 'Wins'} <span>•</span> {profile.losses} {profile.losses === 1 ? 'Loss' : 'Losses'} <span>•</span> {winRate}% Win Rate</p><Link className="boon-balance" to="/boons" aria-label={`${boonBalance.balance.toLocaleString()} Boon Points. Manage Boons.`}><span aria-hidden="true">✦</span><b>{boonBalance.loading ? '—' : boonBalance.balance.toLocaleString()}</b><small>BP</small><em>Manage</em></Link></div></div>
+        <div className="lobby-player">
+          <PlayerAvatar username={profile.username} avatarUrl={avatarUrl} />
+          <div>
+            <h2>{profile.username}</h2>
+            <p className="record">{profile.wins} {profile.wins === 1 ? 'Win' : 'Wins'} <span>•</span> {profile.losses} {profile.losses === 1 ? 'Loss' : 'Losses'} <span>•</span> {winRate}% Win Rate</p>
+            <Link className="boon-balance" to="/boons" aria-label={`${displayedBoonPoints.toLocaleString()} Boon Points. Manage Boons.`}><span aria-hidden="true">✦</span><b>{loadout.boonLoading ? '—' : displayedBoonPoints.toLocaleString()}</b><small>BP</small><em>Manage</em></Link>
+          </div>
+        </div>
+        <Link className="ranked-loadout-summary" to="/loadout" aria-label="Review your ranked match loadout">
+          <span><small>Ranked Loadout</small><strong>Review before matchmaking</strong></span>
+          <span><small>OC Family</small><strong>{!loadout.hasLoaded || loadout.ocLoading ? '—' : `${loadout.ocMembers.length} / 3`}</strong></span>
+          <span><small>Boon</small><strong>{!loadout.hasLoaded || loadout.boonLoading ? '—' : equippedBoon?.definition.name ?? 'None Equipped'}</strong>{equippedBoon && <em>{equippedBoon.definition.rarity}</em>}</span>
+        </Link>
         <MatchmakingControls {...matchmaking} />
       </div></section>
 

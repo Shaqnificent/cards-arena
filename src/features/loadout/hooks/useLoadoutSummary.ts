@@ -4,18 +4,27 @@ import type { BoonDashboard } from '../../boons/types'
 import { getEquippedPlayerCharacterSummary } from '../../ocs/services/playerCharacters'
 import type { EquippedPlayerCharacterSummary } from '../../ocs/types'
 
-export function useLoadoutSummary({ boonEligible, systemProfile }: { boonEligible: boolean; systemProfile: boolean }) {
+export function useLoadoutSummary({ enabled = true, boonEligible, systemProfile }: { enabled?: boolean; boonEligible: boolean; systemProfile: boolean }) {
   const [ocMembers, setOcMembers] = useState<EquippedPlayerCharacterSummary[]>([])
   const [boonDashboard, setBoonDashboard] = useState<BoonDashboard | null>(null)
   const [ocLoading, setOcLoading] = useState(!systemProfile)
   const [boonLoading, setBoonLoading] = useState(boonEligible)
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [ocError, setOcError] = useState<string | null>(null)
   const [boonError, setBoonError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    if (!enabled) {
+      setOcLoading(false)
+      setBoonLoading(false)
+      setHasLoaded(false)
+      return
+    }
+
     if (systemProfile) {
       setOcLoading(false)
       setBoonLoading(false)
+      setHasLoaded(true)
       return
     }
 
@@ -43,9 +52,10 @@ export function useLoadoutSummary({ boonEligible, systemProfile }: { boonEligibl
     }
     setOcLoading(false)
     setBoonLoading(false)
-  }, [boonEligible, systemProfile])
+    setHasLoaded(true)
+  }, [boonEligible, enabled, systemProfile])
 
   useEffect(() => { void Promise.resolve().then(refresh) }, [refresh])
 
-  return { ocMembers, boonDashboard, ocLoading, boonLoading, ocError, boonError, refresh }
+  return { ocMembers, boonDashboard, ocLoading, boonLoading, hasLoaded, ocError, boonError, refresh }
 }
