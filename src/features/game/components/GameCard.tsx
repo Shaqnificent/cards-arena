@@ -6,11 +6,12 @@ interface GameCardProps {
   compact?: boolean
   selected?: boolean
   used?: boolean
+  showPower?: boolean
   onClick?: () => void
   onHover?: () => void
 }
 
-export function GameCard({ character, compact = false, selected = false, used = false, onClick, onHover }: GameCardProps) {
+export function GameCard({ character, compact = false, selected = false, used = false, showPower = false, onClick, onHover }: GameCardProps) {
   return (
     <button
       type="button"
@@ -29,6 +30,7 @@ export function GameCard({ character, compact = false, selected = false, used = 
         <span className="game-card-verse">{character.verses?.name ?? 'Unknown Verse'}</span>
         <strong>{character.name}</strong>
         {character.version && <span className="game-card-version">{character.version}</span>}
+        {showPower && <span className="game-card-power">{character.power_score.toLocaleString()} Power</span>}
       </div>
     </button>
   )

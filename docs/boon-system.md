@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 1-4 Foundation, Shop, and Match Snapshot — Implemented (application + migrations ready)**
+**Phase 1-5 Foundation, Shop, Snapshot, and Match Effects — Implemented (application + migrations ready)**
 
 Phase 1 is implemented by `docs/supabase_boon_phase_1.sql` and the matching
 frontend changes. The SQL must be run manually in Supabase before the new UI is
@@ -69,6 +69,27 @@ at the first competitive phase and supports reconnects without exposing private
 OC, draft, preparation, or battle selections. Snapshot tables have no browser
 SELECT grant and are not subscribed to directly through Realtime. Phase 4 adds
 loadout visibility only; Boons still have no gameplay effects.
+
+Phase 5 is implemented by `docs/supabase_boon_phase_5.sql`. Effects resolve
+exactly once in the authoritative `oc_preparation` → `battle` transition, after
+Champion absorption and Sacrificial support calculations. A private resolution
+row stores the snapshotted effect, status, random value, and selected verse;
+private fighter-stat rows preserve base, preparation, Boon, and final values.
+Battle resolution consumes those final rows while completed rounds retain their
+own stat breakdown for auditability and reconnects.
+
+Match OVR is capped at 99 and temporary match Power at 12,000. Exact numeric
+`verse_id` equality is required; AU and canon verses never collapse together.
+Random targets, tie choices, Wild Card values, and Unity verses are selected by
+PostgreSQL and persisted. A valid no-target outcome records
+`no_eligible_target` and never blocks the match.
+
+Every OC remains playable when kept as Reserve, including a Sacrificial-type
+OC. OC-target Boons therefore apply to any selected OC that remains playable as
+Reserve, plus a Champion using Absorb. A Sacrificial OC activated as support is
+not playable and receives no OC-target OVR/Power effect, while Resonance still
+uses its exact verse to empower eligible canon recipients. Permanent canon and
+OC rows are never updated.
 
 This document defines the first version of the Anime Arena **Boon System**, including Boon ownership, equipping, ranked-match rewards, rolling, inventory limits, temporary match effects, and future expansion rules.
 
@@ -839,13 +860,17 @@ This is large enough for variety while remaining manageable to balance and under
 - [x] reconnect-safe initiative and active-loadout state
 - [x] no Boon gameplay effects
 
-### Phase 5 — Boon Effects
-Start with a small effect set:
-- OC OVR
-- OC Power
-- random drafted fighter
-- lowest-OVR fighter
-- same-verse Power
+### Phase 5 — Boon Effects (Implemented)
+- [x] private, exactly-once effect resolution after OC Preparation
+- [x] base / preparation / Boon / final match-stat breakdown
+- [x] Ascendant and OC Power Surge playable-OC targeting
+- [x] Lucky Draft, Chosen One, Underdog, and Elite Training targeting
+- [x] Balanced Formation multi-target resolution
+- [x] exact-verse Resonance and server-selected Unity verse
+- [x] server-selected Wild Card target and value
+- [x] persisted random outcomes and reconnect-safe resolved rounds
+- [x] 99 temporary OVR cap and 12,000 temporary Power cap
+- [x] perspective-safe battle projection and concise Boon indicators
 
 ### Phase 6 — Balance + Polish
 - rarity presentation
