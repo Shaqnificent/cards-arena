@@ -163,7 +163,17 @@ The reward process should be idempotent so a player cannot earn duplicate reward
 
 The Boon Shop is where players spend Boon Points to obtain Boons.
 
-Suggested route:
+Player navigation groups Boons with the OC Family under the shared Loadout
+category. `/loadout` is a lightweight summary hub, while `/boons` remains the
+dedicated Boon Shop and `/ocs` remains the dedicated OC management page:
+
+```text
+Loadout
+├─ OC Family
+└─ Boons
+```
+
+Dedicated route:
 
 ```text
 /boons

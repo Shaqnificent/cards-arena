@@ -1,4 +1,5 @@
 import { AppHeader } from '../components/AppHeader'
+import { LoadoutNav } from '../components/LoadoutNav'
 import { BoonCard } from '../features/boons/components/BoonCard'
 import { BoonRollDialog } from '../features/boons/components/BoonRollDialog'
 import { useBoons } from '../features/boons/hooks/useBoons'
@@ -21,8 +22,9 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
   const poolExhausted = !needsMorePoints && !pendingRoll && !boons.dashboard.canRoll
 
   return <main className="boons-page">
-    <AppHeader active="boons" username={profile.username} avatarUrl={avatarUrl} />
+    <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} />
     <div className="boon-content">
+      <LoadoutNav active="boons" />
       <header className="boon-hero"><div><p className="eyebrow">Boon Shop</p><h1>Boons</h1><p>Spend Boon Points to discover reusable arena modifiers and manage your two-slot collection.</p></div><div className="boon-points-card"><span aria-hidden="true">✦</span><div><small>Boon Points</small><strong>{(eligible ? displayedPoints : 0).toLocaleString()} BP</strong></div></div></header>
 
       {!eligible ? <section className="boon-unavailable" aria-labelledby="boon-unavailable-heading"><span aria-hidden="true">◇</span><h2 id="boon-unavailable-heading">{profile.is_system_player ? 'Player Boon Shop is unavailable' : 'Sign in to earn Boon Points and roll Boons'}</h2><p>{profile.is_system_player ? 'Administrator Boon behavior remains outside the player inventory system.' : 'Guest profiles do not participate in the persistent Boon economy.'}</p></section>

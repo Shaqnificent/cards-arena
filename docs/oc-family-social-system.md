@@ -544,6 +544,17 @@ Tap player -> Public Profile
 
 ### My OCs
 
+The owner surface remains the dedicated `/ocs` page, but player navigation now
+places it under the shared Loadout category alongside Boons. `/loadout` provides
+summary cards and routes to the separate systems without merging their
+management experiences:
+
+```text
+Loadout
+├─ OC Family → /ocs
+└─ Boons → /boons
+```
+
 Add owner actions such as:
 
 - Edit Lore

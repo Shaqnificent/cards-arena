@@ -248,13 +248,18 @@ The principal authenticated routes are:
 | --- | --- |
 | `/` | Player Lobby and matchmaking |
 | `/characters` | Character catalogue |
+| `/loadout` | Pre-match Loadout hub for OC Family and Boon summaries |
 | `/ocs` | OC Family, collection, progression, and portraits |
+| `/boons` | Boon inventory, equipment, and Shop |
 | `/leaderboard` | Player and OC rankings |
 | `/community` | Game guide, FAQ, and suggestions |
 | `/play/test` | Local prototype mode |
 | `/match/:matchId` | Online initiative, OC selection, draft, preparation, and battle |
 
-`/suggestions` is retained as a redirect to `/community`; unknown client routes return to the Lobby after the SPA loads.
+The primary navigation groups `/ocs` and `/boons` under one top-level Loadout
+entry. Both dedicated management URLs remain available and share lightweight
+page-level Loadout navigation. `/suggestions` is retained as a redirect to
+`/community`; unknown client routes return to the Lobby after the SPA loads.
 
 ## Project structure
 

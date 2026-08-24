@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase'
-import type { CreatePlayerCharacterInput, PlayerCharacter } from '../types'
+import type { CreatePlayerCharacterInput, EquippedPlayerCharacterSummary, PlayerCharacter } from '../types'
 
 const playerCharacterSelection = `
   id, owner_id, verse_id, name, image_url, lore,
@@ -16,6 +16,18 @@ export async function getPlayerCharacters(): Promise<PlayerCharacter[]> {
     .order('created_at')
   if (error) throw error
   return (data ?? []) as unknown as PlayerCharacter[]
+}
+
+export async function getEquippedPlayerCharacterSummary(): Promise<EquippedPlayerCharacterSummary[]> {
+  const { data, error } = await supabase
+    .from('player_characters')
+    .select('id, name, image_url')
+    .eq('active', true)
+    .eq('equipped', true)
+    .order('created_at')
+    .limit(3)
+  if (error) throw error
+  return (data ?? []) as EquippedPlayerCharacterSummary[]
 }
 
 export async function createPlayerCharacter(input: CreatePlayerCharacterInput): Promise<PlayerCharacter> {

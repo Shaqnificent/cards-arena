@@ -26,6 +26,12 @@ export interface PlayerCharacter {
   verse: CharacterVerse
 }
 
+export interface EquippedPlayerCharacterSummary {
+  id: string
+  name: string
+  image_url: string | null
+}
+
 export interface CreatePlayerCharacterInput {
   name: string
   verse: CharacterVerse

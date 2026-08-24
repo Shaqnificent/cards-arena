@@ -13,6 +13,7 @@ import { Suggestions } from './pages/Suggestions'
 import { PlayerCharacters } from './pages/PlayerCharacters'
 import { PublicPlayerProfile } from './pages/PublicPlayerProfile'
 import { Boons } from './pages/Boons'
+import { Loadout } from './pages/Loadout'
 import { SoundProvider } from './features/audio/SoundProvider'
 import { MatchmakingToast } from './components/MatchmakingToast'
 import { useMatchmaking } from './features/matchmaking/hooks/useMatchmaking'
@@ -60,6 +61,7 @@ function AuthenticatedApp({ user, profile, profileLoading, profileError }: {
         }
       />
       <Route path="/characters" element={<Characters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
+      <Route path="/loadout" element={profile ? <Loadout profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your Loadout..." />} />
       <Route path="/ocs" element={<PlayerCharacters currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} isGuest={profile?.is_guest ?? true} isSystemPlayer={profile?.is_system_player ?? false} />} />
       <Route path="/boons" element={profile ? <Boons profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your Boon loadout..." />} />
       <Route path="/leaderboard" element={<Leaderboard currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AppHeader } from '../components/AppHeader'
+import { LoadoutNav } from '../components/LoadoutNav'
 import { usePlayerCharacters } from '../features/ocs/hooks/usePlayerCharacters'
 import { getGrowthType, type OcType, type PlayerCharacter } from '../features/ocs/types'
 import { getOverallUpgradeCost } from '../features/ocs/types'
@@ -252,8 +253,9 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, 
   }
 
   return <main className="oc-page">
-    <AppHeader active="ocs" username={username} avatarUrl={avatarUrl} />
+    <AppHeader active="loadout" username={username} avatarUrl={avatarUrl} />
     <section className="oc-content" aria-labelledby="oc-heading">
+      <LoadoutNav active="ocs" />
       <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong>{canCustomizeFamily && <button className="button button-secondary oc-customize-family" onClick={openFamilyEditor} disabled={familyIdentity.loading}>{familyIdentity.identity ? 'Edit Family' : 'Customize Family'}</button>}<button className="button button-primary" onClick={openCreation} disabled={versesLoading || Boolean(versesError) || ocSelectableVerses.length === 0 || collectionAtCapacity}>{collectionAtCapacity ? 'Collection Full' : '+ Create OC'}</button></div></header>
 
       {actionError && <p className="oc-message error-message" role="alert">{actionError}</p>}
