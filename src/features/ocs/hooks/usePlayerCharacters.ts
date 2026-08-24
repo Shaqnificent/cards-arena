@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { createPlayerCharacter, getPlayerCharacters, retirePlayerCharacter, selectPlayerCharacterType, setPlayerCharacterEquipped } from '../services/playerCharacters'
+import { createPlayerCharacter, getPlayerCharacters, retirePlayerCharacter, selectPlayerCharacterType, setPlayerCharacterEquipped, updatePlayerCharacterLore } from '../services/playerCharacters'
 import type { CreatePlayerCharacterInput, PlayerCharacter } from '../types'
 
 function friendlyError(error: unknown, fallback: string): string {
@@ -9,6 +9,7 @@ function friendlyError(error: unknown, fallback: string): string {
   if (message.includes('already has 3 fighters')) return 'Your OC Family already has 3 fighters. Unequip one before adding another.'
   if (message.includes('already has 5 active fighters')) return 'Your OC collection is full. Retire one fighter before creating another.'
   if (message.includes('between 2 and 50')) return 'OC name must be between 2 and 50 characters.'
+  if (message.includes('1000 characters')) return 'OC lore cannot exceed 1000 characters.'
   if (message.includes('active verse')) return 'Select an active verse.'
   if (message.includes('not owned')) return 'That fighter is unavailable or does not belong to you.'
   return fallback
@@ -56,5 +57,12 @@ export function usePlayerCharacters() {
     finally { setPendingId(null) }
   }
 
-  return { characters, loading, error, pendingId, refresh, create, setEquipped, retire, selectType }
+  const updateLore = async (character: PlayerCharacter, lore: string) => {
+    setPendingId(character.id)
+    try { await updatePlayerCharacterLore(character.id, lore); await refresh() }
+    catch (loreError) { console.error('OC lore update failed', loreError); throw new Error(friendlyError(loreError, 'Unable to save this OC background.')) }
+    finally { setPendingId(null) }
+  }
+
+  return { characters, loading, error, pendingId, refresh, create, setEquipped, retire, selectType, updateLore }
 }

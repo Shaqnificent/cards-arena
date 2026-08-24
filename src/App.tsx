@@ -59,7 +59,7 @@ function AuthenticatedApp({ user, profile, profileLoading, profileError }: {
         }
       />
       <Route path="/characters" element={<Characters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
-      <Route path="/ocs" element={<PlayerCharacters username={headerUsername} avatarUrl={headerAvatarUrl} />} />
+      <Route path="/ocs" element={<PlayerCharacters currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} isGuest={profile?.is_guest ?? true} isSystemPlayer={profile?.is_system_player ?? false} />} />
       <Route path="/leaderboard" element={<Leaderboard currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/profile/:playerId" element={<PublicPlayerProfile currentUserId={user.id} username={headerUsername} avatarUrl={headerAvatarUrl} />} />
       <Route path="/community" element={profile ? <Suggestions currentUserId={user.id} profile={profile} avatarUrl={headerAvatarUrl} /> : <LoadingScreen message="Loading your player profile..." />} />

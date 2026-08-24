@@ -6,5 +6,22 @@ export async function getPublicPlayerProfile(playerId: string): Promise<PublicPl
     p_player_id: playerId,
   })
   if (error) throw error
-  return data as PublicPlayerProfile | null
+  if (!data) return null
+
+  const payload = data as unknown as Record<string, unknown>
+  if (Array.isArray(payload.ocFamily)) {
+    return {
+      ...(payload as unknown as Omit<PublicPlayerProfile, 'ocFamily'>),
+      ocFamily: {
+        name: null,
+        tagline: null,
+        description: null,
+        logoPath: null,
+        updatedAt: null,
+        members: payload.ocFamily as PublicPlayerProfile['ocFamily']['members'],
+      },
+    }
+  }
+
+  return data as PublicPlayerProfile
 }

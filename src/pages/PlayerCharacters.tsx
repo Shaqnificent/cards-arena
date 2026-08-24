@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppHeader } from '../components/AppHeader'
 import { usePlayerCharacters } from '../features/ocs/hooks/usePlayerCharacters'
 import { getGrowthType, type OcType, type PlayerCharacter } from '../features/ocs/types'
@@ -8,8 +8,17 @@ import { useVerses } from '../hooks/useVerses'
 import { OCImage } from '../features/ocs/components/OCImage'
 import { removeOcPortrait, uploadOcPortrait, validatePortrait } from '../features/ocs/services/ocImages'
 import { isOcSelectableVerse } from '../lib/randomCharacterTheme'
+import { useOcFamilyIdentity } from '../features/social/hooks/useOcFamilyIdentity'
+import { FamilyLogo } from '../features/social/components/FamilyLogo'
+import { validateFamilyLogo } from '../features/social/services/ocFamilyIdentity'
 
-interface PlayerCharactersProps { username: string; avatarUrl: string | null }
+interface PlayerCharactersProps {
+  currentUserId: string
+  username: string
+  avatarUrl: string | null
+  isGuest: boolean
+  isSystemPlayer: boolean
+}
 
 const formatPower = (value: number) => value.toLocaleString()
 const MAX_ACTIVE_OCS = 5
@@ -29,10 +38,12 @@ function CreationFieldIcon({ type }: { type: 'name' | 'verse' | 'fighter' }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 6 6-2 2-6-6 2-2Zm14 0-6 6 2 2 6-6-2-2ZM7 13l4 4-4 4-4-4 4-4Zm10 0 4 4-4 4-4-4 4-4Z" /></svg>
 }
 
-export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps) {
+export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, isSystemPlayer }: PlayerCharactersProps) {
   const collection = usePlayerCharacters()
   const progression = useOcProgression()
   const { verses, loading: versesLoading, error: versesError } = useVerses()
+  const canCustomizeFamily = !isGuest && !isSystemPlayer
+  const familyIdentity = useOcFamilyIdentity(currentUserId, canCustomizeFamily)
   const [formOpen, setFormOpen] = useState(false)
   const [showRetired, setShowRetired] = useState(false)
   const [name, setName] = useState('')
@@ -50,6 +61,23 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
   const [portraitPending, setPortraitPending] = useState(false)
   const [typingCharacter, setTypingCharacter] = useState<PlayerCharacter | null>(null)
   const [legacyType, setLegacyType] = useState<OcType>('champion')
+  const [loreCharacter, setLoreCharacter] = useState<PlayerCharacter | null>(null)
+  const [loreDraft, setLoreDraft] = useState('')
+  const [loreError, setLoreError] = useState<string | null>(null)
+  const [loreMessage, setLoreMessage] = useState<string | null>(null)
+  const [familyEditorOpen, setFamilyEditorOpen] = useState(false)
+  const [familyName, setFamilyName] = useState('')
+  const [familyTagline, setFamilyTagline] = useState('')
+  const [familyDescription, setFamilyDescription] = useState('')
+  const [familyLogoFile, setFamilyLogoFile] = useState<File | null>(null)
+  const [familyLogoPreview, setFamilyLogoPreview] = useState<string | null>(null)
+  const [removeFamilyLogo, setRemoveFamilyLogo] = useState(false)
+  const [familyError, setFamilyError] = useState<string | null>(null)
+  const [familyMessage, setFamilyMessage] = useState<string | null>(null)
+
+  useEffect(() => () => {
+    if (familyLogoPreview) URL.revokeObjectURL(familyLogoPreview)
+  }, [familyLogoPreview])
 
   const ocSelectableVerses = useMemo(() => verses.filter(isOcSelectableVerse), [verses])
   const active = useMemo(() => collection.characters.filter((character) => character.active), [collection.characters])
@@ -60,6 +88,7 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
   const familyComposition = equipped.length === 0 ? 'Up to three fighters' : `${championCount} Champion${championCount === 1 ? '' : 's'}${sacrificialCount ? ` / ${sacrificialCount} Sacrificial` : ''}`
   const selectedVerseId = String(verseId || ocSelectableVerses[0]?.id || '')
   const collectionAtCapacity = active.length >= MAX_ACTIVE_OCS
+  const familyDisplayName = familyIdentity.identity?.name ?? `${username}'s OC Family`
 
   const openCreation = () => {
     if (collectionAtCapacity) return setActionError('Your OC collection is full. Retire one fighter before creating another.')
@@ -142,12 +171,95 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
     finally { setPortraitPending(false) }
   }
 
+  const openLoreEditor = (character: PlayerCharacter) => {
+    setLoreCharacter(character)
+    setLoreDraft(character.lore ?? '')
+    setLoreError(null)
+    setLoreMessage(null)
+  }
+
+  const saveLore = async () => {
+    if (!loreCharacter || collection.pendingId === loreCharacter.id) return
+    if (loreDraft.length > 1000) return setLoreError('OC lore cannot exceed 1000 characters.')
+    setLoreError(null)
+    try {
+      const characterName = loreCharacter.name
+      await collection.updateLore(loreCharacter, loreDraft)
+      setLoreCharacter(null)
+      setLoreDraft('')
+      setLoreMessage(loreDraft.trim() ? `Background saved for ${characterName}.` : `Background cleared for ${characterName}.`)
+    } catch (error) {
+      setLoreError(error instanceof Error ? error.message : 'Unable to save this OC background.')
+    }
+  }
+
+  const openFamilyEditor = () => {
+    if (!canCustomizeFamily || familyIdentity.loading) return
+    setFamilyName(familyIdentity.identity?.name ?? '')
+    setFamilyTagline(familyIdentity.identity?.tagline ?? '')
+    setFamilyDescription(familyIdentity.identity?.description ?? '')
+    setFamilyLogoFile(null)
+    setFamilyLogoPreview(null)
+    setRemoveFamilyLogo(false)
+    setFamilyError(null)
+    setFamilyMessage(null)
+    setFamilyEditorOpen(true)
+  }
+
+  const closeFamilyEditor = () => {
+    if (familyIdentity.pending) return
+    setFamilyEditorOpen(false)
+    setFamilyLogoFile(null)
+    setFamilyLogoPreview(null)
+    setRemoveFamilyLogo(false)
+    setFamilyError(null)
+  }
+
+  const chooseFamilyLogo = (file: File | null) => {
+    setFamilyLogoFile(null)
+    setFamilyLogoPreview(null)
+    setFamilyError(null)
+    if (!file) return
+    const validation = validateFamilyLogo(file)
+    if (validation) return setFamilyError(validation)
+    setFamilyLogoFile(file)
+    setFamilyLogoPreview(URL.createObjectURL(file))
+    setRemoveFamilyLogo(false)
+  }
+
+  const saveFamilyIdentity = async () => {
+    if (familyIdentity.pending) return
+    if (familyName.trim().length > 40) return setFamilyError('Family name cannot exceed 40 characters.')
+    if (familyTagline.trim().length > 100) return setFamilyError('Family tagline cannot exceed 100 characters.')
+    if (familyDescription.trim().length > 750) return setFamilyError('Family description cannot exceed 750 characters.')
+    setFamilyError(null)
+    try {
+      await familyIdentity.save({
+        name: familyName,
+        tagline: familyTagline,
+        description: familyDescription,
+        logoFile: familyLogoFile,
+        removeLogo: removeFamilyLogo,
+      })
+      setFamilyMessage('Your OC Family identity has been saved.')
+      setFamilyEditorOpen(false)
+      setFamilyLogoFile(null)
+      setFamilyLogoPreview(null)
+      setRemoveFamilyLogo(false)
+    } catch (error) {
+      setFamilyError(error instanceof Error ? error.message : 'Unable to save your OC Family right now.')
+    }
+  }
+
   return <main className="oc-page">
     <AppHeader active="ocs" username={username} avatarUrl={avatarUrl} />
     <section className="oc-content" aria-labelledby="oc-heading">
-      <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong><button className="button button-primary" onClick={openCreation} disabled={versesLoading || Boolean(versesError) || ocSelectableVerses.length === 0 || collectionAtCapacity}>{collectionAtCapacity ? 'Collection Full' : '+ Create OC'}</button></div></header>
+      <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong>{canCustomizeFamily && <button className="button button-secondary oc-customize-family" onClick={openFamilyEditor} disabled={familyIdentity.loading}>{familyIdentity.identity ? 'Edit Family' : 'Customize Family'}</button>}<button className="button button-primary" onClick={openCreation} disabled={versesLoading || Boolean(versesError) || ocSelectableVerses.length === 0 || collectionAtCapacity}>{collectionAtCapacity ? 'Collection Full' : '+ Create OC'}</button></div></header>
 
       {actionError && <p className="oc-message error-message" role="alert">{actionError}</p>}
+      {loreMessage && <p className="oc-message oc-success-message" role="status">{loreMessage}</p>}
+      {familyMessage && <p className="oc-message oc-success-message" role="status">{familyMessage}</p>}
+      {familyIdentity.error && <p className="oc-message error-message" role="alert">{familyIdentity.error}</p>}
       {progression.error && <p className="oc-message error-message" role="alert">{progression.error}</p>}
       {(collection.error || versesError) && <div className="catalogue-state oc-state" role="alert"><h2>Unable to load OC data</h2><p>{collection.error ?? 'Unable to load active verses.'}</p><button className="button button-secondary" onClick={() => void collection.refresh()}>Retry</button></div>}
 
@@ -164,10 +276,10 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
         <section className="oc-section" aria-labelledby="collection-heading"><div className="oc-section-heading"><div><p className="eyebrow">Your Fighters</p><h2 id="collection-heading">OC Collection</h2></div></div>
           {collection.loading ? <div className="catalogue-state oc-state"><h2>Loading your OC family...</h2></div>
             : active.length === 0 ? <div className="catalogue-state oc-state"><h2>No OC fighters yet.</h2><p>Create your first fighter and discover their potential.</p><button className="button button-primary" onClick={openCreation}>Create Your First OC</button></div>
-            : <div className="oc-collection-grid">{active.map((character) => <article className={`oc-card${character.equipped ? ' equipped' : ''}`} key={character.id}><CharacterIdentity character={character} /><div className="oc-card-badges"><span className="oc-growth">{getGrowthType(character.starting_overall)}</span><OcTypeBadge type={character.oc_type} /></div>{!character.type_selected_at && <button className="text-button oc-legacy-type" onClick={() => { setTypingCharacter(character); setLegacyType(character.oc_type) }}>Choose permanent type</button>}<div className="oc-stat-grid"><div><span>Current OVR</span><strong>{character.overall} <small>/ {character.overall_cap}</small></strong></div><div><span>Battle Power</span><strong>{formatPower(character.power_score)} <small>/ {formatPower(character.power_score_cap)}</small></strong></div><div><span>Starting OVR</span><strong>{character.starting_overall}</strong></div><div><span>Progression Points</span><strong>{character.progression_points}</strong></div></div><div className="oc-card-actions"><button className="button oc-develop-button" onClick={() => { setDeveloping(character); setDevelopmentMessage(null); setActionError(null) }}>Develop</button><button className="button button-primary" disabled={collection.pendingId === character.id} onClick={() => void toggleEquipped(character)}>{character.equipped ? 'Unequip' : 'Equip'}</button><button className="button oc-retire-button" disabled={collection.pendingId === character.id} onClick={() => setRetiring(character)}>Retire</button></div></article>)}</div>}
+            : <div className="oc-collection-grid">{active.map((character) => <article className={`oc-card${character.equipped ? ' equipped' : ''}`} key={character.id}><CharacterIdentity character={character} /><div className="oc-card-badges"><span className="oc-growth">{getGrowthType(character.starting_overall)}</span><OcTypeBadge type={character.oc_type} /></div>{!character.type_selected_at && <button className="text-button oc-legacy-type" onClick={() => { setTypingCharacter(character); setLegacyType(character.oc_type) }}>Choose permanent type</button>}<div className="oc-stat-grid"><div><span>Current OVR</span><strong>{character.overall} <small>/ {character.overall_cap}</small></strong></div><div><span>Battle Power</span><strong>{formatPower(character.power_score)} <small>/ {formatPower(character.power_score_cap)}</small></strong></div><div><span>Starting OVR</span><strong>{character.starting_overall}</strong></div><div><span>Progression Points</span><strong>{character.progression_points}</strong></div></div><div className="oc-card-actions"><button className="button oc-develop-button" onClick={() => { setDeveloping(character); setDevelopmentMessage(null); setActionError(null) }}>Develop</button><button className="button button-secondary oc-lore-button" onClick={() => openLoreEditor(character)}>{character.lore ? 'Edit Lore' : 'Add Lore'}</button><button className="button button-primary" disabled={collection.pendingId === character.id} onClick={() => void toggleEquipped(character)}>{character.equipped ? 'Unequip' : 'Equip'}</button><button className="button oc-retire-button" disabled={collection.pendingId === character.id} onClick={() => setRetiring(character)}>Retire</button></div></article>)}</div>}
         </section>
 
-        {retired.length > 0 && <section className="oc-retired"><button className="text-button" onClick={() => setShowRetired((value) => !value)} aria-expanded={showRetired}>Retired OCs ({retired.length}) <span>{showRetired ? '−' : '+'}</span></button>{showRetired && <div className="oc-retired-list">{retired.map((character) => <article key={character.id}><CharacterIdentity character={character} /><span>{character.overall} OVR</span><span>{formatPower(character.power_score)} Power</span><time dateTime={character.retired_at ?? ''}>Retired {character.retired_at ? new Date(character.retired_at).toLocaleDateString() : '—'}</time></article>)}</div>}</section>}
+        {retired.length > 0 && <section className="oc-retired"><button className="text-button" onClick={() => setShowRetired((value) => !value)} aria-expanded={showRetired}>Retired OCs ({retired.length}) <span>{showRetired ? '−' : '+'}</span></button>{showRetired && <div className="oc-retired-list">{retired.map((character) => <article key={character.id}><CharacterIdentity character={character} /><span>{character.overall} OVR</span><span>{formatPower(character.power_score)} Power</span><time dateTime={character.retired_at ?? ''}>Retired {character.retired_at ? new Date(character.retired_at).toLocaleDateString() : '—'}</time><button className="text-button oc-retired-lore-button" onClick={() => openLoreEditor(character)}>{character.lore ? 'Edit Lore' : 'Add Lore'}</button></article>)}</div>}</section>}
       </>}
     </section>
 
@@ -177,6 +289,35 @@ export function PlayerCharacters({ username, avatarUrl }: PlayerCharactersProps)
     {retiring && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal compact" role="alertdialog" aria-modal="true" aria-labelledby="retire-oc-heading"><p className="eyebrow">Retire Fighter</p><h2 id="retire-oc-heading">Retire {retiring.name}?</h2><p>This fighter will leave your active collection and cannot be used in new matches.</p><div className="oc-modal-actions"><button className="button button-secondary" onClick={() => setRetiring(null)}>Cancel</button><button className="button oc-danger-button" onClick={() => void confirmRetirement()}>Retire Fighter</button></div></section></div>}
     {developing && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal" role="dialog" aria-modal="true" aria-labelledby="develop-oc-heading"><div className="oc-modal-heading"><div><p className="eyebrow">Develop Fighter</p><h2 id="develop-oc-heading">{developing.name}</h2><p>{developing.verse.name}</p></div><button onClick={() => setDeveloping(null)} aria-label="Close development panel">×</button></div><div className="oc-points-balance"><span>Progression Points</span><strong>{developing.progression_points}</strong></div>{developing.overall >= developing.overall_cap && developing.power_score >= developing.power_score_cap && <p className="oc-max-development">Max Development</p>}<div className="oc-upgrade-list"><article><div><span>Overall</span><strong>{developing.overall} / {developing.overall_cap}</strong></div>{developing.overall >= developing.overall_cap ? <p>OVR MAX</p> : <p>Next: {developing.overall} → {developing.overall + 1}<br />Cost: {getOverallUpgradeCost(developing.overall)} {getOverallUpgradeCost(developing.overall) === 1 ? 'point' : 'points'}</p>}<button className="button button-primary" disabled={developing.overall >= developing.overall_cap || developing.progression_points < getOverallUpgradeCost(developing.overall) || progression.pendingKey !== null} onClick={() => void develop('overall')}>{developing.overall >= developing.overall_cap ? 'OVR Max' : 'Increase OVR'}</button></article><article><div><span>Battle Power</span><strong>{formatPower(developing.power_score)} / {formatPower(developing.power_score_cap)}</strong></div>{developing.power_score >= developing.power_score_cap ? <p>POWER MAX</p> : <p>Next: {formatPower(developing.power_score)} → {formatPower(Math.min(developing.power_score + 50, developing.power_score_cap))}<br />Cost: 1 point</p>}<button className="button button-primary" disabled={developing.power_score >= developing.power_score_cap || developing.progression_points < 1 || progression.pendingKey !== null} onClick={() => void develop('power')}>{developing.power_score >= developing.power_score_cap ? 'Power Max' : 'Increase Power'}</button></article></div>{developmentMessage && <p className="oc-development-success" role="status">{developmentMessage}</p>}{actionError && <p className="error-message" role="alert">{actionError}</p>}</section></div>}
     {portraitCharacter && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal compact oc-portrait-modal" role="dialog" aria-modal="true" aria-labelledby="portrait-heading"><div className="oc-modal-heading"><div><p className="eyebrow">OC Portrait</p><h2 id="portrait-heading">{portraitCharacter.image_url ? 'Change Portrait' : 'Add Portrait'}</h2></div><button onClick={() => { setPortraitCharacter(null); choosePortrait(null) }} aria-label="Close portrait uploader">×</button></div><OCImage src={portraitPreview ?? portraitCharacter.image_url} name={portraitCharacter.name} className="oc-portrait-preview" /><label className="oc-file-picker">Choose JPG, PNG, or WebP<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => choosePortrait(event.target.files?.[0] ?? null)} /></label><small>Maximum file size: 5 MB</small>{actionError && <p className="error-message" role="alert">{actionError}</p>}<div className="oc-modal-actions"><button className="button button-secondary" disabled={portraitPending} onClick={() => { setPortraitCharacter(null); choosePortrait(null) }}>Cancel</button><button className="button button-primary" disabled={!portraitFile || portraitPending} onClick={() => void savePortrait()}>{portraitPending ? 'Uploading...' : 'Save Portrait'}</button></div></section></div>}
+    {loreCharacter && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal oc-lore-editor" role="dialog" aria-modal="true" aria-labelledby="lore-editor-heading"><div className="oc-modal-heading"><div><p className="eyebrow">Lore / Background</p><h2 id="lore-editor-heading">{loreCharacter.name}</h2><p>{loreCharacter.verse.name} · {loreCharacter.oc_type === 'champion' ? 'Champion' : 'Sacrificial'}</p></div><button onClick={() => setLoreCharacter(null)} aria-label="Close lore editor">&times;</button></div><label><span>Character background</span><textarea value={loreDraft} maxLength={1000} onChange={(event) => setLoreDraft(event.target.value)} placeholder="Write a short background for this OC..." /></label><div className="oc-lore-editor-meta"><span>Plain text only</span><strong className={loreDraft.length >= 950 ? 'near-limit' : undefined}>{loreDraft.length} / 1000</strong></div>{loreError && <p className="error-message" role="alert">{loreError}</p>}<div className="oc-modal-actions"><button className="button button-secondary" disabled={collection.pendingId === loreCharacter.id} onClick={() => setLoreCharacter(null)}>Cancel</button><button className="button button-primary" disabled={collection.pendingId === loreCharacter.id} onClick={() => void saveLore()}>{collection.pendingId === loreCharacter.id ? 'Saving...' : 'Save Background'}</button></div></section></div>}
+    {familyEditorOpen && <div className="oc-modal-backdrop" role="presentation">
+      <section className="oc-modal oc-family-editor" role="dialog" aria-modal="true" aria-labelledby="family-editor-heading">
+        <div className="oc-modal-heading">
+          <div><p className="eyebrow">Family Identity</p><h2 id="family-editor-heading">Customize OC Family</h2><p>Give your active fighters a shared identity.</p></div>
+          <button onClick={closeFamilyEditor} aria-label="Close Family editor">&times;</button>
+        </div>
+        <div className="family-logo-editor">
+          <div className="family-logo-editor-preview">
+            {familyLogoPreview
+              ? <img src={familyLogoPreview} alt="New Family logo preview" />
+              : <FamilyLogo logoPath={removeFamilyLogo ? null : familyIdentity.identity?.logoPath ?? null} updatedAt={familyIdentity.identity?.updatedAt} name={familyName.trim() || familyDisplayName} />}
+          </div>
+          <div>
+            <label className="family-logo-picker">Choose Logo<input key={familyLogoPreview ?? (removeFamilyLogo ? 'removed' : familyIdentity.identity?.logoPath ?? 'empty')} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => chooseFamilyLogo(event.target.files?.[0] ?? null)} /></label>
+            <small>JPG, PNG, or WebP. Maximum 3 MB.</small>
+            {(familyLogoFile || (!removeFamilyLogo && familyIdentity.identity?.logoPath)) && <button type="button" className="text-button" onClick={() => { setFamilyLogoFile(null); setFamilyLogoPreview(null); setRemoveFamilyLogo(true) }}>Remove Logo</button>}
+          </div>
+        </div>
+        <label><span>Family name</span><input value={familyName} maxLength={40} onChange={(event) => setFamilyName(event.target.value)} placeholder={`${username}'s OC Family`} /></label>
+        <div className="oc-family-editor-count"><span>Optional</span><strong className={familyName.length >= 38 ? 'near-limit' : undefined}>{familyName.length} / 40</strong></div>
+        <label><span>Tagline</span><input value={familyTagline} maxLength={100} onChange={(event) => setFamilyTagline(event.target.value)} placeholder="A short motto for your Family" /></label>
+        <div className="oc-family-editor-count"><span>Optional</span><strong className={familyTagline.length >= 95 ? 'near-limit' : undefined}>{familyTagline.length} / 100</strong></div>
+        <label><span>Description</span><textarea value={familyDescription} maxLength={750} onChange={(event) => setFamilyDescription(event.target.value)} placeholder="Describe what your OC Family represents..." /></label>
+        <div className="oc-family-editor-count"><span>Plain text only</span><strong className={familyDescription.length >= 700 ? 'near-limit' : undefined}>{familyDescription.length} / 750</strong></div>
+        {familyError && <p className="error-message" role="alert">{familyError}</p>}
+        <div className="oc-modal-actions"><button className="button button-secondary" disabled={familyIdentity.pending} onClick={closeFamilyEditor}>Cancel</button><button className="button button-primary" disabled={familyIdentity.pending} onClick={() => void saveFamilyIdentity()}>{familyIdentity.pending ? 'Saving...' : 'Save Family'}</button></div>
+      </section>
+    </div>}
     {typingCharacter && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal compact" role="alertdialog" aria-modal="true" aria-labelledby="type-heading"><p className="eyebrow">One-Time Choice</p><h2 id="type-heading">Choose {typingCharacter.name}'s permanent type</h2><div className="oc-type-picker"><button type="button" className={legacyType === 'champion' ? 'selected' : ''} onClick={() => setLegacyType('champion')}><strong>Champion</strong><span>Direct fighter with Reserve or Absorb options.</span></button><button type="button" className={legacyType === 'sacrificial' ? 'selected' : ''} onClick={() => setLegacyType('sacrificial')}><strong>Sacrificial</strong><span>Support-only fighter that can empower its same-verse team.</span></button></div><p>This cannot be changed after confirmation.</p><div className="oc-modal-actions"><button className="button button-secondary" onClick={() => setTypingCharacter(null)}>Cancel</button><button className="button button-primary" disabled={collection.pendingId === typingCharacter.id} onClick={() => void confirmLegacyType()}>Confirm Permanent Type</button></div></section></div>}
   </main>
 }

@@ -772,6 +772,19 @@ Goal:
 
 Give individual OCs personality and history.
 
+#### Phase 2 implementation status — Implemented
+
+Stable Phase 2 decisions:
+
+- Lore is stored as nullable plain text on `public.player_characters`; it is not attached to a family slot, profile, or match snapshot.
+- Lore is optional, trimmed when saved, normalized to `NULL` when empty, and limited to 1000 characters in both PostgreSQL and the owner editor.
+- Owners edit lore from the `/ocs` collection through a focused modal. `public.update_player_character_lore(uuid, text)` derives ownership from `auth.uid()` and does not grant direct table UPDATE access.
+- The Phase 1 public-profile RPC remains the only public Family data source and now includes lore only for active, equipped, non-retired public Family members.
+- Public Family cards show a short clamped excerpt. Full lore opens in a read-only modal and is rendered as escaped plain text with preserved line breaks.
+- Lore remains stored when an OC is unequipped or retired, but those OCs are not added to the public Family.
+- Lore is not included in match selection, draft, preparation, battle, snapshots, leaderboards, or progression.
+- The manual migration is `docs/supabase_oc_family_social_phase2.sql`.
+
 ### Phase 3 — OC Family Identity
 
 Implement:
@@ -785,6 +798,22 @@ Implement:
 Goal:
 
 Turn the equipped OC group into a recognizable faction.
+
+#### Phase 3 implementation status — Implemented
+
+Stable Phase 3 decisions:
+
+- `public.oc_families` stores one optional branding record per persistent, non-system player. It does not store Family membership; the existing active, equipped, non-retired three-OC loadout remains authoritative.
+- Family name, tagline, and description are optional plain text, trimmed on save, normalized to `NULL` when empty, and limited to 40, 100, and 750 characters respectively in both the editor and PostgreSQL.
+- Owners customize identity from `/ocs`. Guests and the Administrator/system profile do not receive the editor and are also rejected by the server-authoritative RPCs.
+- `public.upsert_oc_family_identity(text, text, text, text)` derives the owner from `auth.uid()`. Direct browser access to `public.oc_families` remains revoked.
+- Family logos use the dedicated public `oc-family-logos` bucket with a 3 MB JPG/PNG/WebP limit. Browser mutations are restricted to the authenticated normal player's own top-level folder and deterministic `family-logo.<ext>` object.
+- `logo_url` stores the bucket object path rather than a client-supplied public URL. The frontend resolves the public URL and versions it with the Family `updated_at` value to avoid stale replacement images.
+- Replacing or removing a logo updates the database reference first and then removes an obsolete differently named object where practical. Failed new uploads are cleaned up when they are not the currently referenced object.
+- The public profile RPC remains the only public Family data source. Its nested `ocFamily` object contains the optional branding fields and the existing equipped member array in one request; no private profile fields or retired/inactive OCs are exposed.
+- Public Family pages use a responsive branded header, safe logo fallback, optional tagline, collapsible long description, and the existing Phase 2 OC cards/lore presentation.
+- Family identity and logo changes do not affect matchmaking, draft, preparation, battle snapshots, progression, ratings, or leaderboards.
+- The manual migration is `docs/supabase_oc_family_social_phase3.sql`.
 
 ### Phase 4 — Family Logo
 

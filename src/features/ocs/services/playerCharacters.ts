@@ -2,7 +2,7 @@ import { supabase } from '../../../lib/supabase'
 import type { CreatePlayerCharacterInput, PlayerCharacter } from '../types'
 
 const playerCharacterSelection = `
-  id, owner_id, verse_id, name, image_url,
+  id, owner_id, verse_id, name, image_url, lore,
   starting_overall, overall, overall_cap,
   starting_power_score, power_score, power_score_cap,
   progression_points, equipped, active, created_at, updated_at, retired_at, oc_type, type_selected_at,
@@ -43,5 +43,13 @@ export async function setPlayerCharacterEquipped(characterId: string, equipped: 
 
 export async function retirePlayerCharacter(characterId: string): Promise<void> {
   const { error } = await supabase.rpc('retire_player_character', { p_character_id: characterId })
+  if (error) throw error
+}
+
+export async function updatePlayerCharacterLore(characterId: string, lore: string): Promise<void> {
+  const { error } = await supabase.rpc('update_player_character_lore', {
+    p_player_character_id: characterId,
+    p_lore: lore,
+  })
   if (error) throw error
 }

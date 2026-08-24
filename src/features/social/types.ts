@@ -3,6 +3,7 @@ export interface PublicOcFamilyMember {
   slot: number
   name: string
   imageUrl: string | null
+  lore: string | null
   verseId: number
   verseName: string
   verseSlug: string
@@ -15,6 +16,32 @@ export interface PublicOcFamilyMember {
   growth: number
 }
 
+export interface OcFamilyIdentity {
+  name: string | null
+  tagline: string | null
+  description: string | null
+  logoPath: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface OcFamilyIdentityInput {
+  name: string
+  tagline: string
+  description: string
+  logoFile: File | null
+  removeLogo: boolean
+}
+
+export interface PublicOcFamily {
+  name: string | null
+  tagline: string | null
+  description: string | null
+  logoPath: string | null
+  updatedAt: string | null
+  members: PublicOcFamilyMember[]
+}
+
 export interface PublicPlayerProfile {
   playerId: string
   displayName: string
@@ -24,5 +51,5 @@ export interface PublicPlayerProfile {
   winRate: number
   rank: number | null
   joinedAt: string
-  ocFamily: PublicOcFamilyMember[]
+  ocFamily: PublicOcFamily
 }

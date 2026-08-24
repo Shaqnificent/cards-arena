@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { PlayerAvatar } from '../components/PlayerAvatar'
 import { OCImage } from '../features/ocs/components/OCImage'
 import { usePublicPlayerProfile } from '../features/social/hooks/usePublicPlayerProfile'
 import type { PublicOcFamilyMember } from '../features/social/types'
+import { FamilyLogo } from '../features/social/components/FamilyLogo'
 
 interface PublicPlayerProfileProps {
   currentUserId: string
@@ -14,6 +16,10 @@ interface PublicPlayerProfileProps {
 export function PublicPlayerProfile({ currentUserId, username, avatarUrl }: PublicPlayerProfileProps) {
   const { playerId } = useParams<{ playerId: string }>()
   const { profile, loading, unavailable } = usePublicPlayerProfile(playerId)
+  const [loreMember, setLoreMember] = useState<PublicOcFamilyMember | null>(null)
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false)
+  const familyName = profile?.ocFamily.name ?? (profile ? `${profile.displayName}'s OC Family` : 'OC Family')
+  const familyMembers = profile?.ocFamily.members ?? []
 
   return <main className="catalogue-page public-profile-page">
     <AppHeader active="leaderboard" username={username} avatarUrl={avatarUrl} />
@@ -41,20 +47,23 @@ export function PublicPlayerProfile({ currentUserId, username, avatarUrl }: Publ
         </header>
 
         <section className="public-family-section">
-          <div className="public-family-heading">
+          <div className="public-family-brand">
+            <FamilyLogo logoPath={profile.ocFamily.logoPath} updatedAt={profile.ocFamily.updatedAt} name={familyName} className="public-family-logo" />
             <div>
               <p className="eyebrow">Active OC Family</p>
-              <h2>{profile.displayName}&apos;s Fighters</h2>
-              <p>Currently equipped fighters from this player&apos;s active loadout.</p>
+              <h2>{familyName}</h2>
+              {profile.ocFamily.tagline && <p className="public-family-tagline">{profile.ocFamily.tagline}</p>}
             </div>
-            <strong>{profile.ocFamily.length} / 3 Equipped</strong>
+            <strong>{familyMembers.length} / 3 Equipped</strong>
           </div>
-          {profile.ocFamily.length === 0
+          {profile.ocFamily.description && <div className="public-family-description"><p className={descriptionExpanded ? 'expanded' : undefined}>{profile.ocFamily.description}</p>{profile.ocFamily.description.length > 240 && <button type="button" onClick={() => setDescriptionExpanded((value) => !value)} aria-expanded={descriptionExpanded}>{descriptionExpanded ? 'Show less' : 'Read more'}</button>}</div>}
+          {familyMembers.length === 0
             ? <div className="public-family-empty"><span aria-hidden="true">&#9823;</span><h3>No public OC Family equipped yet.</h3><p>This player&apos;s active fighters will appear here once equipped.</p></div>
-            : <div className="public-family-grid">{profile.ocFamily.map((member) => <PublicFamilyCard key={member.characterId} member={member} />)}</div>}
+            : <div className="public-family-grid">{familyMembers.map((member) => <PublicFamilyCard key={member.characterId} member={member} onReadLore={setLoreMember} />)}</div>}
         </section>
       </>}
     </section>
+    {loreMember?.lore && <div className="oc-modal-backdrop" role="presentation"><section className="oc-modal public-lore-modal" role="dialog" aria-modal="true" aria-labelledby="public-lore-heading"><div className="oc-modal-heading"><div><p className="eyebrow">OC Background</p><h2 id="public-lore-heading">{loreMember.name}</h2><p>{loreMember.ocType === 'champion' ? 'Champion' : 'Sacrificial'} · {loreMember.verseName}</p></div><button onClick={() => setLoreMember(null)} aria-label="Close OC background">&times;</button></div><div className="public-lore-summary"><OCImage src={loreMember.imageUrl} name={loreMember.name} /><div><strong>{loreMember.overall} OVR</strong><span>{loreMember.powerScore.toLocaleString()} Battle Power</span></div></div><div className="public-lore-copy"><span>Background</span><p>{loreMember.lore}</p></div><button className="button button-primary" onClick={() => setLoreMember(null)}>Close</button></section></div>}
   </main>
 }
 
@@ -62,7 +71,7 @@ function ProfileStat({ label, value }: { label: string; value: string }) {
   return <div><strong>{value}</strong><span>{label}</span></div>
 }
 
-function PublicFamilyCard({ member }: { member: PublicOcFamilyMember }) {
+function PublicFamilyCard({ member, onReadLore }: { member: PublicOcFamilyMember; onReadLore: (member: PublicOcFamilyMember) => void }) {
   return <article className="public-family-card">
     <div className="public-family-media">
       <OCImage src={member.imageUrl} name={member.name} />
@@ -80,6 +89,7 @@ function PublicFamilyCard({ member }: { member: PublicOcFamilyMember }) {
         <div><dt>Starting OVR</dt><dd>{member.startingOverall}</dd></div>
         <div><dt>Growth</dt><dd className={member.growth > 0 ? 'positive' : undefined}>+{member.growth}</dd></div>
       </dl>
+      {member.lore && <div className="public-family-lore"><p>{member.lore}</p><button type="button" onClick={() => onReadLore(member)}>Read full background</button></div>}
     </div>
   </article>
 }

@@ -8,6 +8,7 @@ export interface PlayerCharacter {
   verse_id: number
   name: string
   image_url: string | null
+  lore: string | null
   starting_overall: number
   overall: number
   overall_cap: number
