@@ -90,6 +90,7 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
       <p className="eyebrow">Match Complete</p><h1>{draw ? 'Draw' : victory ? 'Victory' : 'Defeat'}</h1>
       <div className="final-score"><span>{state.yourProfile.username} <b>{state.yourScore}</b></span><i>—</i><span><b>{state.opponentScore}</b> {state.opponentProfile.username} <SystemBadge visible={state.opponentProfile.is_system_player} /></span></div>
       <p>Your Record: {state.yourProfile.wins} Wins • {state.yourProfile.losses} Losses</p>
+      {state.boonPointsEarned > 0 && <div className="boon-match-reward"><span>Boon Points Earned</span><strong>+{state.boonPointsEarned.toLocaleString()} BP</strong><small>Balance: {state.boonPointBalance.toLocaleString()} BP</small></div>}
       <Link className="button button-primary" to="/">Return to Lobby</Link>
     </section>
   }

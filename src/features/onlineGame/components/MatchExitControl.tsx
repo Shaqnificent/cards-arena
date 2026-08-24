@@ -68,10 +68,10 @@ export function MatchExitBoundary({ matchId, currentUserId, children }: { matchI
     } finally { setPending(false) }
   }
 
-  if (leaving) return <main className="game-page match-exit-terminal"><section><p className="eyebrow">Match Update</p><h1>{leaving === 'forfeited' ? 'Match Forfeited' : 'Match Cancelled'}</h1><p>{leaving === 'forfeited' ? 'Returning to the lobby...' : 'The match has ended. Returning to the lobby...'}</p></section></main>
+  if (leaving) return <main className="game-page match-exit-terminal"><section><p className="eyebrow">Match Update</p><h1>{leaving === 'forfeited' ? 'Match Forfeited' : 'Match Cancelled'}</h1>{leaving === 'forfeited' && (match?.boon_points_earned ?? 0) > 0 && <p className="boon-forfeit-reward">+{match?.boon_points_earned.toLocaleString()} BP</p>}<p>{leaving === 'forfeited' ? 'Returning to the lobby...' : 'The match has ended. Returning to the lobby...'}</p></section></main>
 
   if (match?.status === 'completed' && match.forfeited_by && match.forfeited_by !== currentUserId) {
-    return <main className="game-page match-exit-terminal"><section><p className="eyebrow">Match Complete</p><h1>Victory</h1><p>Your opponent forfeited the match.</p><button className="button button-primary" onClick={() => navigate('/', { replace: true })}>Return to Lobby</button></section></main>
+    return <main className="game-page match-exit-terminal"><section><p className="eyebrow">Match Complete</p><h1>Victory</h1><p>Your opponent forfeited the match.</p>{match.boon_points_earned > 0 && <div className="boon-match-reward"><span>Boon Points Earned</span><strong>+{match.boon_points_earned.toLocaleString()} BP</strong><small>Balance: {match.boon_point_balance.toLocaleString()} BP</small></div>}<button className="button button-primary" onClick={() => navigate('/', { replace: true })}>Return to Lobby</button></section></main>
   }
 
   return <>

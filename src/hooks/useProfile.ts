@@ -31,18 +31,15 @@ export function useProfile(user: User | null): ProfileState {
     }
 
     const loadProfile = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle<Profile>()
+      const { data, error } = await supabase.rpc('get_my_profile')
+      const profile = data && typeof data === 'object' ? data as Profile : null
 
       if (!isCurrent) return
 
       setState({
         userId,
-        profile: data,
-        error: error?.message ?? (data ? null : 'Player profile was not found.'),
+        profile,
+        error: error?.message ?? (profile ? null : 'Player profile was not found.'),
       })
     }
 

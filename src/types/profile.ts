@@ -8,4 +8,8 @@ export interface Profile {
   wins: number
   losses: number
   created_at: string
+  boon_points: number
 }
+
+/** Safe profile shape for opponent/public multiplayer presentation. */
+export type PublicGameProfile = Omit<Profile, 'boon_points'>

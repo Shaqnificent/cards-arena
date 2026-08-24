@@ -9,13 +9,28 @@ export async function initializeOnlineBattle(matchId: string): Promise<void> {
 }
 
 export async function loadOnlineBattle(matchId: string): Promise<OnlineBattleState> {
-  const [{ data, error }, preparationResult] = await Promise.all([
+  const [{ data, error }, preparationResult, boonResult] = await Promise.all([
     supabase.rpc('get_online_battle_state', { p_match_id: matchId }),
     supabase.rpc('get_match_oc_preparation_state', { p_match_id: matchId }),
+    supabase.rpc('get_my_match_boon_result', { p_match_id: matchId }),
   ])
   if (error) throw error
   if (!data || typeof data !== 'object') throw new Error('Battle state unavailable')
   const state = data as OnlineBattleState
+  const boon = !boonResult.error && boonResult.data && typeof boonResult.data === 'object'
+    ? boonResult.data as { boonPointsEarned?: number; boonPointBalance?: number }
+    : null
+  if (boonResult.error) {
+    console.error('Match Boon reward load failed', {
+      matchId,
+      code: boonResult.error.code,
+      message: boonResult.error.message,
+      details: boonResult.error.details,
+      hint: boonResult.error.hint,
+    })
+  }
+  state.boonPointsEarned = boon?.boonPointsEarned ?? 0
+  state.boonPointBalance = boon?.boonPointBalance ?? 0
   if (!preparationResult.error && preparationResult.data && typeof preparationResult.data === 'object') {
     const preparation = preparationResult.data as {
       yourPreparation?: {

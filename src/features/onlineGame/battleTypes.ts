@@ -47,6 +47,8 @@ export interface OnlineBattleState {
   yourSelection: BattleSelectionRef | null
   opponentLocked: boolean
   latestRound: OnlineBattleRound | null
+  boonPointsEarned: number
+  boonPointBalance: number
 }
 
 export type OnlineBattleAction = 'lock' | 'advance' | null

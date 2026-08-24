@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase'
-import type { Profile } from '../../../types/profile'
+import type { PublicGameProfile } from '../../../types/profile'
 import type { Character } from '../../../types/character'
 import type { InitiativeChoice, MatchOcSelectionState, OnlineDraftState, OnlineInitiativeState, OnlineMatchCharacter, OnlineMatchPlayer, OnlineMatchRecord } from '../types'
 import type { MatchStatus } from '../../matchmaking/types'
@@ -7,8 +7,8 @@ import { loadMatchOcPortraits } from './matchOcPortraits'
 import { withSystemIdentity } from './systemIdentity'
 
 type MatchRow = Omit<OnlineMatchRecord, 'player_one' | 'player_two'> & {
-  player_one: Profile | Profile[]
-  player_two: Profile | Profile[]
+  player_one: PublicGameProfile | PublicGameProfile[]
+  player_two: PublicGameProfile | PublicGameProfile[]
 }
 
 type MatchCharacterRow = Omit<OnlineMatchCharacter, 'character'> & {
@@ -127,8 +127,12 @@ export async function loadOnlineDraft(matchId: string, currentUserId: string, at
   const [matchResult, playersResult, charactersResult] = await Promise.all([
     supabase.from('matches').select(`
       *,
-      player_one:profiles!matches_player_one_id_fkey (*),
-      player_two:profiles!matches_player_two_id_fkey (*)
+      player_one:profiles!matches_player_one_id_fkey (
+        id, username, avatar_url, is_guest, is_admin, is_system_player, wins, losses, created_at
+      ),
+      player_two:profiles!matches_player_two_id_fkey (
+        id, username, avatar_url, is_guest, is_admin, is_system_player, wins, losses, created_at
+      )
     `).eq('id', matchId).maybeSingle(),
     supabase.from('match_players').select('*').eq('match_id', matchId).order('player_number'),
     supabase.from('match_characters').select(`

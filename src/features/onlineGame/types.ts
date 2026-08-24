@@ -1,5 +1,5 @@
 import type { Character } from '../../types/character'
-import type { Profile } from '../../types/profile'
+import type { Profile, PublicGameProfile } from '../../types/profile'
 import type { MatchStatus } from '../matchmaking/types'
 
 export type OnlineDraftPhase = 'preparing' | 'decision' | 'bidding' | 'complete'
@@ -18,8 +18,8 @@ export interface OnlineMatchRecord {
   action_version: number
   initiative_player_id: string | null
   initiative_resolved_at: string | null
-  player_one: Profile
-  player_two: Profile
+  player_one: PublicGameProfile
+  player_two: PublicGameProfile
 }
 
 export interface OnlineMatchPlayer {
@@ -67,8 +67,8 @@ export interface OnlineInitiativeState {
   initiativeState: 'choosing' | 'revealed'
   yourPlayerId: string
   opponentPlayerId: string
-  yourProfile: Profile
-  opponentProfile: Profile
+  yourProfile: PublicGameProfile
+  opponentProfile: PublicGameProfile
   yourChoice: InitiativeChoice | null
   opponentLocked: boolean
   opponentChoice: InitiativeChoice | null

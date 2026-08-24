@@ -1,10 +1,10 @@
-import type { Profile } from '../../../types/profile'
+import type { PublicGameProfile } from '../../../types/profile'
 import type { OnlineMatchCharacter, OnlineMatchPlayer } from '../types'
 import { SystemBadge } from '../../../components/SystemBadge'
 
 interface OnlineTeamPanelProps {
   label: string
-  profile: Profile
+  profile: PublicGameProfile
   player: OnlineMatchPlayer
   team: OnlineMatchCharacter[]
 }

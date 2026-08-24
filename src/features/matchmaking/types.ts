@@ -1,4 +1,4 @@
-import type { Profile } from '../../types/profile'
+import type { PublicGameProfile } from '../../types/profile'
 
 export type MatchmakingState = 'checking' | 'idle' | 'joining' | 'searching' | 'matched' | 'cancelling' | 'error'
 export type MatchStatus = 'waiting' | 'initiative' | 'oc_selection' | 'draft' | 'oc_preparation' | 'battle' | 'completed' | 'cancelled'
@@ -45,6 +45,6 @@ export interface OnlineMatch {
 }
 
 export interface MatchWithPlayers extends OnlineMatch {
-  player_one: Profile
-  player_two: Profile
+  player_one: PublicGameProfile
+  player_two: PublicGameProfile
 }
