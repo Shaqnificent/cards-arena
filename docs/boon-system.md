@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 1-2 Foundation — Implemented (application + migrations ready)**
+**Phase 1-3 Foundation and Shop — Implemented (application + migrations ready)**
 
 Phase 1 is implemented by `docs/supabase_boon_phase_1.sql` and the matching
 frontend changes. The SQL must be run manually in Supabase before the new UI is
@@ -39,6 +39,15 @@ by a concurrency-safe trigger that serializes on the owner profile. Equip and
 unequip are atomic owner-only RPCs. Guests and system profiles cannot own or
 equip inventory. No inventory is granted automatically;
 `docs/supabase_boon_phase_2_test_seed.sql` is optional SQL-editor-only tooling.
+
+Phase 3 is implemented by `docs/supabase_boon_phase_3.sql`. The player-facing
+Shop charges an authoritative 300 BP per roll and selects one active, unowned
+definition using its database `roll_weight`. Inventories below two receive the
+result immediately and unequipped. A full inventory creates one durable pending
+roll that survives refresh; the player must replace one owned Boon or discard
+the new result. Replacing an equipped Boon leaves the equipped slot empty, and
+discarding never refunds the spent BP. A partial unique index permits only one
+unresolved roll per player. Phase 3 still applies no Boon gameplay effects.
 
 This document defines the first version of the Anime Arena **Boon System**, including Boon ownership, equipping, ranked-match rewards, rolling, inventory limits, temporary match effects, and future expansion rules.
 
@@ -782,12 +791,14 @@ This is large enough for variety while remaining manageable to balance and under
 - [x] atomic equip/unequip management RPCs
 - [x] `/boons` management UI
 
-### Phase 3 — Shop + Rolling
-- roll cost
-- weighted authoritative roll
-- full-inventory replacement
-- pending-roll handling
-- shop UI
+### Phase 3 — Shop + Rolling (Implemented)
+- [x] authoritative 300 BP roll cost
+- [x] weighted server-side selection from active, unowned definitions
+- [x] immediate acquisition while inventory has space
+- [x] durable full-inventory replacement/discard decision
+- [x] one unresolved roll per player
+- [x] non-refundable discard behavior
+- [x] reconnect-safe Shop UI
 
 ### Phase 4 — Ranked Match Snapshot
 - lock equipped Boon on matchmaking
