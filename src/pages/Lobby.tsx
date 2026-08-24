@@ -66,7 +66,7 @@ export function Lobby({ user, profile, profileLoading, profileError, matchmaking
           </div>
         </div>
         <Link className="ranked-loadout-summary" to="/loadout" aria-label="Review your ranked match loadout">
-          <span><small>Ranked Loadout</small><strong>Review before matchmaking</strong></span>
+          <span className="ranked-loadout-heading"><small>Ranked Loadout</small><strong>Review before matchmaking</strong><i aria-hidden="true">&rsaquo;</i></span>
           <span><small>OC Family</small><strong>{!loadout.hasLoaded || loadout.ocLoading ? '—' : `${loadout.ocMembers.length} / 3`}</strong></span>
           <span><small>Boon</small><strong>{!loadout.hasLoaded || loadout.boonLoading ? '—' : equippedBoon?.definition.name ?? 'None Equipped'}</strong>{equippedBoon && <em>{equippedBoon.definition.rarity}</em>}</span>
         </Link>

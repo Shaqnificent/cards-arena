@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
-import { LoadoutNav } from '../components/LoadoutNav'
 import { OCImage } from '../features/ocs/components/OCImage'
 import { useLoadoutSummary } from '../features/loadout/hooks/useLoadoutSummary'
 import { useActiveMatchBoon } from '../features/boons/hooks/useActiveMatchBoon'
@@ -16,7 +15,6 @@ export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: s
   return <main className="loadout-page">
     <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} />
     <section className="loadout-content" aria-labelledby="loadout-heading">
-      <LoadoutNav />
       <header className="loadout-hero">
         <p className="eyebrow">Pre-Match Build</p>
         <h1 id="loadout-heading">Your Loadout</h1>
@@ -35,7 +33,7 @@ export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: s
               : summary.ocMembers.length > 0 ? <div className="loadout-portraits">{summary.ocMembers.map((member) => <div key={member.id}><OCImage src={member.image_url} name={member.name} /><span>{member.name}</span></div>)}</div>
                 : <div className="loadout-card-empty"><strong>No OC Family equipped</strong><p>Create or equip fighters to prepare your possible match selections.</p></div>}
           <p className="loadout-card-description">Manage your OCs, progression, portraits, lore, and active Family.</p>
-          <Link className="button button-primary" to="/ocs">Manage OC Family</Link>
+          <Link className="button button-primary" to="/ocs">Manage</Link>
         </article>
 
         <article className="loadout-summary-card boon-summary-card">
@@ -48,7 +46,7 @@ export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: s
           {matchBoon.loading && boonEligible ? <ActiveMatchBoonLoading /> : matchBoon.activeMatch && <ActiveMatchBoonNotice activeMatch={matchBoon.activeMatch} />}
           {matchBoon.error && <p className="loadout-match-boon-error" role="alert">{matchBoon.error}</p>}
           <p className="loadout-card-description">Choose one reusable tactical modifier for your ranked loadout.</p>
-          {boonEligible ? <Link className="button button-primary" to="/boons">Manage Boons</Link> : <span className="button button-secondary disabled" aria-disabled="true">Boons Require Sign-In</span>}
+          {boonEligible ? <Link className="button button-primary" to="/boons">Manage</Link> : <span className="button button-secondary disabled" aria-disabled="true">Boons Require Sign-In</span>}
         </article>
       </div>}
     </section>

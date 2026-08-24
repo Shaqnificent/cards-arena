@@ -52,9 +52,10 @@ unresolved roll per player. Phase 3 still applies no Boon gameplay effects.
 Phase 4 is implemented by `docs/supabase_boon_phase_4.sql`. Entering the ranked
 queue locks an immutable snapshot of the caller's equipped Boon definition. The
 match stores one private snapshot row per participant when it is created, with
-an explicit no-Boon state for guests, the Administrator, and players who queue
-without a Boon. Replacing, unequipping, deactivating, or rebalancing the source
-Boon later cannot change an existing match snapshot.
+an explicit no-Boon state for guests and players who queue without a Boon.
+Administrator matches use the controlled system snapshot behavior documented
+below. Replacing, unequipping, deactivating, or rebalancing the source Boon
+later cannot change an existing match snapshot.
 
 The waiting player's queue snapshot is captured on the transition into
 `waiting` and is preserved by repeat matchmaking calls. The player who matches
@@ -90,6 +91,22 @@ Reserve, plus a Champion using Absorb. A Sacrificial OC activated as support is
 not playable and receives no OC-target OVR/Power effect, while Resonance still
 uses its exact verse to empower eligible canon recipients. Permanent canon and
 OC rows are never updated.
+
+Administrator system Boons are implemented by `docs/supabase_admin_boons.sql`.
+Definitions marked `system_only` never enter the player catalogue, weighted
+roll, inventory, or equip economy. Each new ranked Administrator match selects
+one of two active system definitions with an equal server-side random choice at
+the normal Phase 4 match-snapshot boundary. The selected definition and both of
+its structured stat values are immutable for that match and reveal through the
+normal initiative Boon UI without identifying the secret selected OC.
+
+The system pool contains **Sovereign Ascension** (+4 temporary OC OVR) and
+**Apex Overdrive** (+2 temporary OC OVR and +1,000 temporary OC Power). Both
+target the Administrator's actually selected playable OC, resolve after OC
+Preparation through the Phase 5 stat rows, and respect the normal 99 OVR and
+12,000 Power caps. A non-playable support OC produces the normal
+`no_eligible_target` outcome. Administrator never receives a `player_boons`
+row, spends no BP, and owns no player inventory.
 
 This document defines the first version of the Anime Arena **Boon System**, including Boon ownership, equipping, ranked-match rewards, rolling, inventory limits, temporary match effects, and future expansion rules.
 
@@ -779,16 +796,16 @@ If Boons are later previewed there for testing, effects must remain local/test-o
 
 ## 24. Administrator Opponent
 
-If the Administrator participates in ranked matches, Boon behavior should be handled explicitly.
+Administrator ranked matches use a controlled two-definition system-only pool:
 
-Possible future behavior:
+- Sovereign Ascension
+- Apex Overdrive
 
-- system-defined equipped Boon
-- controlled system Boon pool
-- normal match snapshot behavior
-- no need for player-style currency/inventory
-
-Do not automatically grant Administrator Boon Points.
+One is selected with an equal PostgreSQL random choice when the match Boon
+snapshot is created. The result is persisted and uses the normal reveal and
+Phase 5 effect paths. These definitions cannot be rolled, purchased, owned, or
+equipped by normal players. Administrator does not spend or earn Boon Points
+and does not receive player inventory rows.
 
 ---
 
@@ -855,7 +872,7 @@ This is large enough for variety while remaining manageable to balance and under
 ### Phase 4 — Ranked Match Snapshot (Implemented)
 - [x] lock equipped Boon on matchmaking commitment
 - [x] immutable per-participant definition/effect snapshot
-- [x] explicit no-Boon snapshots for guests and Administrator matches
+- [x] explicit no-Boon snapshots for guests and players without a Boon
 - [x] perspective-safe opponent reveal at initiative
 - [x] reconnect-safe initiative and active-loadout state
 - [x] no Boon gameplay effects
@@ -871,6 +888,7 @@ This is large enough for variety while remaining manageable to balance and under
 - [x] persisted random outcomes and reconnect-safe resolved rounds
 - [x] 99 temporary OVR cap and 12,000 temporary Power cap
 - [x] perspective-safe battle projection and concise Boon indicators
+- [x] controlled Administrator-only OC Boons with server-side match selection
 
 ### Phase 6 — Balance + Polish
 - rarity presentation
