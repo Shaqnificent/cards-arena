@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { CharacterArtwork } from '../../../components/CharacterArtwork'
+import type { Character } from '../../../types/character'
 import type { LocalGameState } from '../types'
 import { GameCard } from './GameCard'
 import { useGameSounds } from '../../audio/useGameSounds'
@@ -8,6 +10,32 @@ interface BattleBoardProps {
   onSelect: (id: string) => void
   onLock: () => void
   onContinue: () => void
+}
+
+function OpponentTeamCard({ character, used }: { character: Character; used: boolean }) {
+  return (
+    <article className={`local-opponent-card${used ? ' used' : ''}`} aria-label={`${character.name}, ${character.overall} overall${used ? ', used' : ''}`}>
+      <div className="local-opponent-card-media">
+        <CharacterArtwork
+          character={character}
+          imageClassName="local-opponent-card-image"
+          fallbackClassName="local-opponent-card-fallback"
+          alt={character.name}
+          loading="lazy"
+        />
+        <b className="local-opponent-card-ovr">
+          {character.overall}
+          <small>OVR</small>
+        </b>
+        {used && <span className="local-opponent-card-state" aria-hidden="true">Used</span>}
+      </div>
+      <div className="local-opponent-card-content">
+        <span>{character.verses?.name ?? 'Unknown Verse'}</span>
+        <strong>{character.name}</strong>
+        <small>{character.version ?? '\u00a0'}</small>
+      </div>
+    </article>
+  )
 }
 
 export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoardProps) {
@@ -57,14 +85,23 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
         </div>
       ) : (
         <>
-          <h2>Opponent team</h2>
-          <div className="opponent-roster">
-            {state.opponent.team.map((character) => (
-              <span key={character.id} className={battle.opponentUsedIds.includes(character.id) ? 'used' : undefined}>
-                {character.name} <b>{character.overall}</b>
-              </span>
-            ))}
-          </div>
+          <section className="local-opponent-team" aria-labelledby="local-opponent-team-title">
+            <header className="local-opponent-team-header">
+              <h2 id="local-opponent-team-title">Opponent Team</h2>
+              <small>Swipe to preview enemy fighters</small>
+            </header>
+            <div className="local-opponent-track-shell">
+              <div className="local-opponent-track">
+                {state.opponent.team.map((character) => (
+                  <OpponentTeamCard
+                    key={character.id}
+                    character={character}
+                    used={battle.opponentUsedIds.includes(character.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
           <div className="opponent-hidden"><span>?</span><p>Opponent selection hidden</p></div>
           <h2 className="local-fighter-heading">Choose your fighter</h2>
           <div className="battle-hand local-battle-hand">
