@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 1 Economy Foundation — Implemented (application + migration ready)**
+**Phase 1-2 Foundation — Implemented (application + migrations ready)**
 
 Phase 1 is implemented by `docs/supabase_boon_phase_1.sql` and the matching
 frontend changes. The SQL must be run manually in Supabase before the new UI is
@@ -21,6 +21,24 @@ non-guest human in a ranked Administrator match receives the normal result
 reward. Local Prototype never creates a persisted online match and therefore
 cannot grant BP. Owner-only RPCs expose the balance and the caller's stored
 match reward; public/opponent profile payloads omit `boon_points`.
+
+Phase 2 is implemented by `docs/supabase_boon_phase_2.sql`. It adds a
+data-driven catalogue of ten active definitions and a private `player_boons`
+inventory. Definition keys, rarities, effect types, numeric values, and target
+rules are configuration only; they do not affect matches yet.
+
+The initial catalogue contains Ascendant, OC Power Surge, Lucky Draft, Chosen
+One, Underdog, Elite Training, Resonance, Balanced Formation, Wild Card, and
+Unity. Seed updates are keyed and rerunnable; roll weights are stored for future
+use but no probability or rolling behavior exists in Phase 2.
+
+Persistent non-guest players may own at most two distinct definitions and may
+equip at most one. The duplicate rule is enforced by an owner/definition unique
+constraint, the equipped rule by a partial unique index, and the inventory cap
+by a concurrency-safe trigger that serializes on the owner profile. Equip and
+unequip are atomic owner-only RPCs. Guests and system profiles cannot own or
+equip inventory. No inventory is granted automatically;
+`docs/supabase_boon_phase_2_test_seed.sql` is optional SQL-editor-only tooling.
 
 This document defines the first version of the Anime Arena **Boon System**, including Boon ownership, equipping, ranked-match rewards, rolling, inventory limits, temporary match effects, and future expansion rules.
 
@@ -756,12 +774,13 @@ This is large enough for variety while remaining manageable to balance and under
 - [x] balance display
 - [x] no rolling yet
 
-### Phase 2 — Boon Definitions + Inventory
-- definition table
-- player inventory
-- max 2 owned
-- max 1 equipped
-- management UI
+### Phase 2 — Boon Definitions + Inventory (Implemented)
+- [x] definition table and initial ten-definition catalogue
+- [x] private player inventory
+- [x] maximum 2 distinct Boons owned
+- [x] maximum 1 Boon equipped
+- [x] atomic equip/unequip management RPCs
+- [x] `/boons` management UI
 
 ### Phase 3 — Shop + Rolling
 - roll cost

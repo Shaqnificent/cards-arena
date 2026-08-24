@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { AppHeader } from '../components/AppHeader'
 import { LoadingScreen } from '../components/LoadingScreen'
@@ -50,7 +51,7 @@ export function Lobby({ user, profile, profileLoading, profileError, matchmaking
     <div className="lobby-dashboard">
       <section className="lobby-hero" aria-labelledby="lobby-title"><div className="lobby-energy" aria-hidden="true" /><div className="lobby-hero-content">
         <p className="eyebrow">Player Lobby</p><h1 id="lobby-title">ANIME ARENA</h1>
-        <div className="lobby-player"><PlayerAvatar username={profile.username} avatarUrl={avatarUrl} /><div><h2>{profile.username}</h2><p className="record">{profile.wins} {profile.wins === 1 ? 'Win' : 'Wins'} <span>•</span> {profile.losses} {profile.losses === 1 ? 'Loss' : 'Losses'} <span>•</span> {winRate}% Win Rate</p><div className="boon-balance" aria-label={`${boonBalance.balance.toLocaleString()} Boon Points`}><span aria-hidden="true">✦</span><b>{boonBalance.loading ? '—' : boonBalance.balance.toLocaleString()}</b><small>BP</small></div></div></div>
+        <div className="lobby-player"><PlayerAvatar username={profile.username} avatarUrl={avatarUrl} /><div><h2>{profile.username}</h2><p className="record">{profile.wins} {profile.wins === 1 ? 'Win' : 'Wins'} <span>•</span> {profile.losses} {profile.losses === 1 ? 'Loss' : 'Losses'} <span>•</span> {winRate}% Win Rate</p><Link className="boon-balance" to="/boons" aria-label={`${boonBalance.balance.toLocaleString()} Boon Points. Manage Boons.`}><span aria-hidden="true">✦</span><b>{boonBalance.loading ? '—' : boonBalance.balance.toLocaleString()}</b><small>BP</small><em>Manage</em></Link></div></div>
         <MatchmakingControls {...matchmaking} />
       </div></section>
 
