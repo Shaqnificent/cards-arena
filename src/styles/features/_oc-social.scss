@@ -1,0 +1,455 @@
+@use '../abstracts' as *;
+
+/* OC Family Social System - Phase 2 lore */
+.oc-success-message {
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.oc-lore-button {
+  border-color: #c4b5fd !important;
+  color: #6d28d9 !important;
+  background: #faf8ff !important;
+}
+
+.oc-retired-list article {
+  grid-template-columns: minmax(200px,1fr) auto auto auto auto;
+}
+
+.oc-retired-lore-button {
+  margin: 0;
+  color: #6d28d9;
+  font-size: .7rem;
+}
+
+.oc-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.oc-card-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.oc-card-heading-row>.oc-identity {
+  min-width: 0;
+}
+
+.oc-card-heading-row>.oc-identity>div {
+  min-width: 0;
+}
+
+.oc-card-heading-row>.oc-identity h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oc-card-utilities {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.oc-card-icon-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  color: #6d28d9;
+  background: #faf8ff;
+  cursor: pointer;
+  transition: border-color 140ms ease,background 140ms ease,transform 140ms ease;
+}
+
+.oc-card-icon-button:hover {
+  border-color: #a78bfa;
+  background: #f3eefe;
+  transform: translateY(-1px);
+}
+
+.oc-card-icon-button:focus-visible, .oc-card-overflow button:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.oc-card-icon-button svg {
+  width: 18px;
+  height: 18px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.oc-card-icon-button svg circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.oc-card-menu {
+  position: relative;
+}
+
+.oc-card-overflow {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  display: grid;
+  width: max-content;
+  min-width: 164px;
+  overflow: hidden;
+  padding: 5px;
+  border: 1px solid #ddd6fe;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(31,18,59,.18);
+  z-index: 20;
+}
+
+.oc-card-overflow button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #24202d;
+  background: transparent;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.oc-card-overflow button:hover {
+  background: #f5f1ff;
+}
+
+.oc-card-overflow button.destructive {
+  color: #b4232f;
+}
+
+.oc-card-overflow button.destructive:hover {
+  background: #fff1f2;
+}
+
+.oc-card-overflow button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.oc-card .oc-card-badges {
+  margin-top: 18px;
+}
+
+.oc-card .oc-growth {
+  margin-top: 0;
+}
+
+.oc-card .oc-stat-grid {
+  margin-bottom: 20px;
+}
+
+.oc-card .oc-card-actions {
+  grid-template-columns: 1fr;
+  margin-top: auto;
+}
+
+.oc-card .oc-card-actions .button {
+  width: 100%;
+  min-height: 42px;
+}
+
+.oc-card .oc-develop-button {
+  grid-column: 1;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+  background: #fff;
+}
+
+.oc-card .oc-develop-button:hover {
+  background: #faf8ff;
+}
+
+.oc-card .oc-unequip-button {
+  border-color: $color-accent;
+  color: #6d28d9;
+  background: #f3eefe;
+}
+
+.oc-card .oc-unequip-button:hover {
+  background: #ebe2ff;
+}
+
+.oc-lore-editor {
+  width: min(100%,650px);
+}
+
+.oc-lore-editor>label {
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.oc-lore-editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 230px;
+  padding: 15px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-sizing: border-box;
+  outline: none;
+  color: var(--text-h);
+  background: #fff;
+  font: inherit;
+  font-size: .86rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.oc-lore-editor textarea:focus {
+  border-color: $color-purple;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.oc-lore-editor-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 9px;
+  color: var(--text-muted);
+  font-size: .68rem;
+}
+
+.oc-lore-editor-meta strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.oc-lore-editor-meta .near-limit {
+  color: #be185d;
+}
+
+.public-family-lore {
+  margin-top: 16px;
+  padding: 15px 4px 0 15px;
+  border-top: 0;
+  border-left: 3px solid #a855f7;
+}
+
+.public-family-lore p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: #c1bacd;
+  font-size: .74rem;
+  font-style: italic;
+  line-height: 1.65;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.public-family-lore p::before {
+  color: #a855f7;
+  content: '“';
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.public-family-lore p::after {
+  color: #a855f7;
+  content: '”';
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.public-family-lore button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  color: #b96cff;
+  background: transparent;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 850;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.public-family-lore button span {
+  font-size: 1.2rem;
+  text-decoration: none;
+  transition: transform 150ms ease;
+}
+
+.public-family-lore button:hover span {
+  transform: translateX(3px);
+}
+
+.public-family-lore button:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
+}
+
+.public-lore-modal {
+  width: min(100%,680px);
+}
+
+.public-lore-summary {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 18px;
+  margin-top: 23px;
+  padding: 14px;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  background: #f7f4ff;
+}
+
+.public-lore-summary .oc-image {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 11px;
+  color: #e9d5ff;
+  background: #211538;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.public-lore-summary .oc-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.public-lore-summary>div {
+  display: grid;
+  gap: 7px;
+}
+
+.public-lore-summary strong {
+  color: #6d28d9;
+  font-size: 1.2rem;
+}
+
+.public-lore-summary span {
+  color: var(--text-muted);
+  font-size: .76rem;
+}
+
+.public-lore-copy {
+  margin: 22px 0;
+  padding: 20px;
+  border-left: 4px solid $color-accent;
+  border-radius: 0 12px 12px 0;
+  background: #faf8ff;
+}
+
+.public-lore-copy>span {
+  color: $color-purple;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.public-lore-copy p {
+  margin: 12px 0 0;
+  overflow-wrap: anywhere;
+  color: #34313e;
+  font-size: .88rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.public-lore-modal>.button {
+  width: 100%;
+}
+
+@include respond-down(mobile) {
+  .oc-lore-editor textarea {
+    min-height: 180px;
+  }
+  .oc-lore-editor-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .public-lore-summary {
+    grid-template-columns: 68px 1fr;
+    gap: 13px;
+  }
+  .public-lore-summary .oc-image {
+    width: 68px;
+    height: 68px;
+  }
+  .public-lore-copy {
+    padding: 16px 14px;
+  }
+  .public-lore-copy p {
+    font-size: .82rem;
+  }
+  .public-lore-modal {
+    padding: 23px 17px;
+  }
+}
+
+@include respond-down(mobile) {
+  .oc-card {
+    padding: 18px;
+  }
+  .oc-card-heading-row {
+    gap: 9px;
+  }
+  .oc-card-utilities {
+    gap: 4px;
+  }
+  .oc-card-icon-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+  .oc-card-overflow {
+    top: 42px;
+  }
+  .oc-card .oc-stat-grid {
+    gap: 14px 10px;
+  }
+  .oc-card .oc-card-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include respond-down(tablet-small) {
+  .oc-retired-list article {
+    grid-template-columns: 1fr 1fr;
+  }
+  .oc-retired-list .oc-identity {
+    grid-column: 1/-1;
+  }
+  .oc-retired-lore-button {
+    justify-self: end;
+  }
+}

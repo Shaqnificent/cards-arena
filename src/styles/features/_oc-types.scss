@@ -1,0 +1,302 @@
+@use '../abstracts' as *;
+
+.oc-type-badge {
+  display: inline-flex !important;
+  align-items: center;
+  width: max-content;
+  padding: 5px 9px;
+  border: 1px solid #c4b5fd;
+  border-radius: 999px;
+  color: #6d28d9 !important;
+  background: #f5f3ff;
+  font-size: .58rem !important;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.oc-type-badge.sacrificial {
+  border-color: #f9a8d4;
+  color: #be185d !important;
+  background: #fdf2f8;
+}
+
+.oc-card-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.oc-legacy-type {
+  margin: -4px 0 10px;
+  color: $color-purple;
+}
+
+.oc-type-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.oc-type-picker legend {
+  grid-column: 1/-1;
+  margin-bottom: 7px;
+  font-weight: 800;
+}
+
+.oc-type-picker button {
+  display: grid;
+  gap: 7px;
+  padding: 15px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text-h);
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.oc-type-picker button span {
+  color: var(--text-muted);
+  font-size: .7rem;
+  line-height: 1.45;
+}
+
+.oc-type-picker button.selected {
+  border-color: $color-purple;
+  box-shadow: 0 0 0 2px #ddd6fe;
+  background: #faf8ff;
+}
+
+.oc-type-picker>small {
+  grid-column: 1/-1;
+  color: var(--text-muted);
+  font-size: .68rem;
+}
+
+.empower-preview {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+  max-height: 140px;
+  overflow: auto;
+}
+
+.empower-preview>span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #191626;
+}
+
+.empower-preview small {
+  color: #c4b5fd;
+}
+
+.strategy-card:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+.create-oc-modal {
+  width: min(100%,720px);
+  padding: 36px 38px;
+  border-radius: 20px;
+}
+
+.create-oc-modal .oc-modal-heading {
+  align-items: center;
+}
+
+.create-oc-modal .oc-modal-heading h2 {
+  margin: 7px 0 0;
+  font-size: 2rem;
+  line-height: 1.05;
+}
+
+.create-oc-modal .oc-modal-heading>button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 2rem;
+  line-height: 1;
+  transition: color 150ms ease,background 150ms ease;
+}
+
+.create-oc-modal .oc-modal-heading>button:hover {
+  color: #4b435b;
+  background: #f4f1f8;
+}
+
+.create-oc-modal>label.create-oc-field {
+  gap: 10px;
+  margin-top: 27px;
+  font-size: .83rem;
+}
+
+.create-oc-field>span, .create-oc-type-picker legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #292532;
+  font-weight: 850;
+}
+
+.create-oc-field svg, .create-oc-type-picker legend svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: $color-accent;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.create-oc-modal input, .create-oc-modal select {
+  min-height: 58px;
+  padding: 0 18px;
+  border-color: #d8d7e1;
+  border-radius: 12px;
+  font-weight: 650;
+}
+
+.create-oc-modal input::placeholder {
+  color: #8c8b99;
+  font-weight: 600;
+}
+
+.create-oc-type-picker {
+  gap: 12px;
+  margin-top: 27px;
+}
+
+.create-oc-type-picker legend {
+  margin-bottom: 10px;
+  font-size: .83rem;
+}
+
+.create-oc-type-picker button {
+  position: relative;
+  align-content: start;
+  min-height: 170px;
+  gap: 20px;
+  padding: 24px 28px;
+  border-color: #d8d7e1;
+  border-radius: 13px;
+  transition: border-color 150ms ease,box-shadow 150ms ease,background 150ms ease,transform 150ms ease;
+}
+
+.create-oc-type-picker button:hover {
+  border-color: #a78bfa;
+  transform: translateY(-1px);
+}
+
+.create-oc-type-picker button strong {
+  font-size: 1.05rem;
+}
+
+.create-oc-type-picker button>span:not(.oc-type-check) {
+  color: #5f5d69;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.create-oc-type-picker button.selected {
+  border-color: $color-accent;
+  background: linear-gradient(145deg,#fbfaff,#f4efff);
+  box-shadow: 0 0 0 1px $color-accent,0 8px 22px rgba(124,58,237,.08);
+}
+
+.create-oc-type-picker .oc-type-check {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: none;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: .8rem;
+  line-height: 1;
+  background: $color-purple;
+}
+
+.create-oc-type-picker button.selected .oc-type-check {
+  display: grid;
+}
+
+.create-oc-type-picker>small {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 3px;
+  color: #777582;
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.create-oc-type-picker>small i {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: .6rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.create-oc-modal .oc-modal-actions {
+  gap: 18px;
+  margin-top: 23px;
+  padding-top: 20px;
+  border-top: 1px solid #e6e3eb;
+}
+
+.create-oc-modal .oc-modal-actions .button {
+  min-height: 52px;
+}
+
+.create-fighter-sparkle {
+  margin-left: 4px;
+}
+
+.create-oc-modal .error-message {
+  margin-top: 14px;
+}
+
+@include respond-down(handheld-wide) {
+  .oc-type-picker {
+    grid-template-columns: 1fr;
+  }
+  .create-oc-modal {
+    padding: 26px 20px;
+  }
+  .create-oc-modal .oc-modal-heading h2 {
+    font-size: 1.75rem;
+  }
+  .create-oc-modal>label.create-oc-field, .create-oc-type-picker {
+    margin-top: 22px;
+  }
+  .create-oc-type-picker button {
+    min-height: 145px;
+    padding: 20px;
+  }
+  .create-oc-modal .oc-modal-actions {
+    grid-template-columns: 1fr;
+  }
+}

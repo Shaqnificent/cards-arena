@@ -1,0 +1,468 @@
+@use '../abstracts' as *;
+
+@include respond-down(mobile-wide) {
+  .screen {
+    padding: 16px;
+  }
+  .panel {
+    padding: 36px 24px;
+  }
+  .panel h1 {
+    font-size: 2rem;
+  }
+  .catalogue-header {
+    width: calc(100% - 32px);
+    align-items: flex-start;
+    gap: 18px;
+    padding: 20px 0;
+  }
+  .catalogue-header nav {
+    gap: 13px;
+  }
+  .catalogue-content {
+    width: calc(100% - 32px);
+    padding: 38px 0 60px;
+  }
+  .catalogue-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .fighter-count {
+    min-width: 0;
+    padding: 13px 17px;
+  }
+  .catalogue-controls {
+    grid-template-columns: 1fr;
+  }
+  .verse-chips {
+    margin-right: -16px;
+  }
+  .rating-info {
+    align-items: flex-start;
+    font-size: .76rem;
+    line-height: 1.55;
+  }
+  .rating-info i {
+    padding: 0 5px;
+  }
+  .character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .character-details {
+    min-height: 134px;
+    padding: 12px;
+  }
+  .character-details h2 {
+    font-size: 1rem;
+  }
+  .character-power {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 12px;
+  }
+  .catalogue-pagination {
+    gap: 4px;
+  }
+  .catalogue-pagination button {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+    padding: 0;
+  }
+  .catalogue-pagination-ellipsis {
+    width: 12px;
+    height: 32px;
+    flex-basis: 12px;
+    font-size: .78rem;
+  }
+  .leaderboard-content {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+  .leaderboard-table th, .leaderboard-table td {
+    padding: 12px 14px;
+  }
+}
+
+@include respond-between(mobile-wide, desktop-small) {
+  .catalogue-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .catalogue-controls .field:first-child {
+    grid-column: 1 / -1;
+  }
+  .character-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  .catalogue-pagination {
+    gap: 6px;
+  }
+  .catalogue-pagination button {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+  .catalogue-pagination-ellipsis {
+    width: 16px;
+    height: 36px;
+    flex-basis: 16px;
+  }
+}
+
+@include respond-down(desktop-content) {
+  .lobby-dashboard {
+    padding-top: 38px;
+  }
+  .lobby-hero {
+    grid-column: 1 / 13;
+  }
+  .lobby-page .leaderboard-preview {
+    grid-column: 1 / 13;
+    min-height: auto;
+  }
+  .queue-card {
+    grid-column: 1 / 7;
+  }
+  .stats-card {
+    grid-column: 7 / 13;
+  }
+  .features-card {
+    grid-column: 1 / 13;
+  }
+  .features-card ul {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@include respond-down(tablet-small) {
+  .app-header {
+    grid-template-columns: 1fr auto;
+    width: calc(100% - 32px);
+    gap: 16px;
+  }
+  .app-header .lobby-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+  }
+  .app-header > .avatar {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .lobby-dashboard {
+    width: calc(100% - 32px);
+    padding-top: 28px;
+  }
+  .lobby-hero {
+    min-height: 0;
+  }
+  .lobby-energy {
+    width: 100%;
+    opacity: .18;
+    background-position: left top;
+  }
+  .lobby-hero-content {
+    padding: 22px 4px 28px;
+  }
+  .lobby-hero h1 {
+    margin-bottom: 26px;
+    font-size: clamp(2.45rem, 13vw, 3.4rem);
+    white-space: normal;
+  }
+  .lobby-player {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .lobby-player .avatar {
+    width: 88px;
+    height: 88px;
+  }
+  .lobby-player h2 {
+    font-size: 1.4rem;
+  }
+  .ranked-loadout-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ranked-loadout-summary>span:first-child {
+    grid-column: 1/-1;
+    border-left: 0;
+    border-bottom: 1px solid #e6e1ed;
+  }
+  .ranked-loadout-summary>span:nth-child(2) {
+    border-left: 0;
+  }
+  .lobby-hero .matchmaking-controls {
+    margin-left: 0;
+  }
+  .queue-card, .stats-card, .features-card {
+    grid-column: 1 / 13;
+    min-height: auto;
+    padding: 20px;
+  }
+  .queue-content {
+    gap: 18px;
+  }
+  .queue-radar {
+    width: 88px;
+    height: 88px;
+  }
+  .features-card ul {
+    grid-template-columns: 1fr;
+  }
+  .lobby-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 22px 16px;
+  }
+  .lobby-footer .text-button {
+    align-self: flex-end;
+  }
+  .suggestions-content {
+    width: calc(100% - 32px);
+    padding-top: 38px;
+  }
+  .suggestions-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .suggestions-hero .button {
+    width: 100%;
+  }
+  .suggestions-filters {
+    grid-template-columns: 1fr;
+  }
+  .suggestion-card {
+    grid-template-columns: 1fr;
+  }
+  .suggestion-vote {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 18px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .suggestion-body {
+    padding: 18px;
+  }
+  .suggestion-form {
+    padding: 20px 16px;
+  }
+  .suggestion-form-actions {
+    grid-template-columns: 1fr;
+  }
+  .oc-content {
+    width: calc(100% - 32px);
+    padding: 38px 0 60px;
+  }
+  .oc-hero {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .oc-hero-actions {
+    justify-content: space-between;
+  }
+  .oc-family-grid {
+    grid-template-columns: 1fr;
+  }
+  .oc-family-slot {
+    min-height: 125px;
+  }
+  .oc-retired-list article {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .oc-retired-list .oc-identity {
+    grid-column: 1 / -1;
+  }
+  .oc-modal {
+    padding: 24px 18px;
+  }
+  .oc-reward-list article {
+    grid-template-columns: 1fr;
+  }
+  .oc-upgrade-list article {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include respond-down(mobile) {
+  .app-header .lobby-nav {
+    gap: 7px;
+  }
+  .app-header .nav-link {
+    font-size: .68rem;
+  }
+  .ranked-loadout-summary {
+    grid-template-columns: 1fr;
+  }
+  .ranked-loadout-summary>span, .ranked-loadout-summary>span:nth-child(2) {
+    grid-column: auto;
+    border-left: 0;
+    border-bottom: 1px solid #e6e1ed;
+  }
+  .ranked-loadout-summary>span:first-child {
+    grid-column: auto;
+  }
+  .ranked-loadout-summary>span:last-child {
+    border-bottom: 0;
+  }
+  .oc-hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .oc-collection-count {
+    padding-right: 0;
+    border-right: 0;
+  }
+  .oc-hero-actions small {
+    display: inline;
+    margin-left: 4px;
+  }
+  .oc-hero-actions .button {
+    width: 100%;
+  }
+  .oc-collection-grid {
+    grid-template-columns: 1fr;
+  }
+  .oc-card-actions, .oc-modal-actions {
+    grid-template-columns: 1fr;
+  }
+  .oc-reveal-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include respond-down(desktop-small) {
+  .oc-selection-layout {
+    grid-template-columns: 1fr;
+  }
+  .draft-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  .auction-stage {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    max-width: 390px;
+    margin: 0 auto;
+  }
+  .battle-hand {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .battle-reveal {
+    grid-template-columns: minmax(130px, 1fr) 70px minmax(130px, 1fr);
+    gap: 10px;
+  }
+}
+
+@include respond-down(handheld) {
+  .oc-selection-content {
+    width: calc(100% - 24px);
+    padding-top: 28px;
+  }
+  .oc-selection-panel {
+    padding: 18px 14px;
+  }
+  .match-oc-card {
+    padding: 12px;
+  }
+  .match-oc-card-copy > div {
+    gap: 10px;
+  }
+  .game-header {
+    padding: 18px 14px;
+  }
+  .game-header > span {
+    display: none;
+  }
+  .draft-board, .battle-board {
+    padding: 20px 12px;
+  }
+  .game-phase-header, .battle-score {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+  .game-phase-header > p, .battle-score > p {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .draft-layout {
+    gap: 10px;
+  }
+  .team-panel {
+    padding: 12px;
+  }
+  .team-panel li {
+    padding: 7px;
+    font-size: .62rem;
+  }
+  .battle-hand {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+  }
+  .battle-reveal {
+    grid-template-columns: 1fr 1fr;
+  }
+  .versus-result {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .match-result {
+    margin: 30px 12px 0;
+    padding: 38px 20px;
+  }
+  .match-progression > div {
+    grid-template-columns: 1fr;
+  }
+  .match-progression select {
+    min-height: 46px;
+  }
+  .match-progression .button {
+    width: 100%;
+  }
+  .result-actions {
+    grid-template-columns: 1fr;
+  }
+  .online-draft-complete {
+    margin: 25px 12px 0;
+    padding: 34px 16px;
+  }
+  .completed-team-grid {
+    grid-template-columns: 1fr;
+  }
+  .online-match-page {
+    padding: 14px;
+  }
+  .online-match-card {
+    padding: 38px 18px;
+  }
+  .online-versus {
+    grid-template-columns: 1fr 44px 1fr;
+    gap: 6px;
+  }
+  .online-versus .avatar {
+    width: 70px;
+    height: 70px;
+  }
+  .online-versus h2 {
+    font-size: .9rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+@include reduced-motion {
+  .spinner {
+    animation-duration: 1400ms;
+  }
+  .button {
+    transition: none;
+  }
+}

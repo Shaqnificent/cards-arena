@@ -1,0 +1,47 @@
+@use '../abstracts' as *;
+
+.leaderboard-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+  color: var(--text-h);
+  font-weight: 700;
+}
+
+.leaderboard-player > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leaderboard-player small {
+  padding: 2px 6px;
+  border-radius: 20px;
+  color: #6d28d9;
+  background: #f3eefe;
+  font-size: 0.56rem;
+  text-transform: uppercase;
+}
+
+.rank {
+  color: var(--text-muted);
+  font-weight: 850;
+}
+
+.rank-1 {
+  color: #fbbf24;
+}
+
+.rank-2 {
+  color: #cbd5e1;
+}
+
+.rank-3 {
+  color: #d97706;
+}
+
+.win-rate {
+  color: #c4b5fd !important;
+  font-weight: 800;
+}

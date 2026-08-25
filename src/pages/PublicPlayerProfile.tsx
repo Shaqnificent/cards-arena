@@ -75,21 +75,16 @@ function PublicFamilyCard({ member, onReadLore }: { member: PublicOcFamilyMember
   return <article className="public-family-card">
     <div className="public-family-media">
       <OCImage src={member.imageUrl} name={member.name} />
-      <span>Slot {member.slot}</span>
-      <strong>{member.overall}<small>OVR</small></strong>
+      <span className="public-family-slot">Slot {member.slot}</span>
+      <strong className="public-family-overall"><i aria-hidden="true" />{member.overall}<small>OVR</small></strong>
     </div>
     <div className="public-family-card-body">
       <div className="public-family-card-heading">
-        <div><small>{member.verseName}</small><h3>{member.name}</h3></div>
-        <span className={`public-oc-type ${member.ocType}`}>{member.ocType}</span>
+        <small>{member.verseName}</small>
+        <h3>{member.name}</h3>
+        <span className={`public-oc-type ${member.ocType}`}><i aria-hidden="true">{member.ocType === 'champion' ? '♛' : '◆'}</i>{member.ocType}</span>
       </div>
-      <dl>
-        <div><dt>Overall</dt><dd>{member.overall} / {member.overallCap}</dd></div>
-        <div><dt>Battle Power</dt><dd>{member.powerScore.toLocaleString()} / {member.powerScoreCap.toLocaleString()}</dd></div>
-        <div><dt>Starting OVR</dt><dd>{member.startingOverall}</dd></div>
-        <div><dt>Growth</dt><dd className={member.growth > 0 ? 'positive' : undefined}>+{member.growth}</dd></div>
-      </dl>
-      {member.lore && <div className="public-family-lore"><p>{member.lore}</p><button type="button" onClick={() => onReadLore(member)}>Read full background</button></div>}
+      {member.lore && <div className="public-family-lore"><p>{member.lore}</p><button type="button" onClick={() => onReadLore(member)}>Read full background <span aria-hidden="true">›</span></button></div>}
     </div>
   </article>
 }

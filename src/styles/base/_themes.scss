@@ -1,0 +1,21 @@
+@use '../abstracts' as *;
+
+.catalogue-page, .suggestions-page, .oc-page, .boons-page, .loadout-page {
+  --page-bg: $color-page;
+  --surface: #fff;
+  --surface-muted: #f2f1f7;
+  --text-h: $color-ink;
+  --text: #30313d;
+  --text-muted: $color-muted-light;
+  --border: $color-border-light;
+  --border-strong: #c9cad4;
+  --accent-soft: rgba(124, 58, 237, .14);
+  --error: #991b1b;
+  --error-bg: #fef2f2;
+  color: var(--text);
+}
+
+.catalogue-page .app-header, .suggestions-page .app-header, .oc-page .app-header, .boons-page .app-header, .loadout-page .app-header {
+  --text-h: #fff;
+  --text-muted: #aaa6b8;
+}

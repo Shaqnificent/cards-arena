@@ -1,0 +1,209 @@
+@use '../abstracts' as *;
+
+.battle-score {
+  max-width: 720px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.battle-score strong {
+  color: var(--text-h);
+  font-size: 2rem;
+}
+
+.battle-score > p {
+  color: #c4b5fd;
+  font-size: .85rem;
+  font-weight: 850;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.battle-score p small {
+  display: block;
+  color: var(--text-muted);
+  font-size: .55rem;
+}
+
+.battle-board > h2 {
+  margin: 28px 0 16px;
+  text-align: center;
+}
+
+.opponent-roster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 22px;
+}
+
+.opponent-roster span {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: var(--panel-bg);
+  font-size: .65rem;
+}
+
+.opponent-roster span b {
+  margin-left: 5px;
+  color: #c4b5fd;
+}
+
+.opponent-roster span.used {
+  opacity: .38;
+  text-decoration: line-through;
+}
+
+.opponent-hidden {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 180px;
+  margin: 0 auto;
+  border: 1px dashed var(--border-strong);
+  border-radius: 16px;
+  color: var(--text-muted);
+  background: rgba(20, 21, 36, .65);
+}
+
+.opponent-hidden span {
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+.opponent-hidden p {
+  margin-top: -35px;
+  font-size: .62rem;
+}
+
+.battle-hand {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+.game-card.compact {
+  cursor: pointer;
+  transition: border-color 150ms, transform 150ms, opacity 150ms;
+}
+
+.game-card.compact:hover:not(:disabled), .game-card.compact.selected {
+  border-color: var(--accent);
+  transform: translateY(-5px);
+}
+
+.game-card.compact.selected {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.game-card.compact.used {
+  opacity: .38;
+  filter: grayscale(.8);
+}
+
+.game-card.compact em {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: rgba(9,10,18,.62);
+  font-size: 1rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .15em;
+}
+
+.game-card.compact .game-card-image {
+  aspect-ratio: 1;
+}
+
+.game-card.compact > strong {
+  font-size: .82rem;
+}
+
+.lock-button {
+  display: block;
+  max-width: 320px;
+  margin: 24px auto 0;
+}
+
+.battle-reveal {
+  display: grid;
+  grid-template-columns: minmax(220px, 330px) 150px minmax(220px, 330px);
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.battle-reveal > .button {
+  grid-column: 1 / -1;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.battle-lock-status {
+  margin: 20px auto;
+  color: #c4b5fd;
+  font-weight: 800;
+  text-align: center;
+}
+
+.match-result {
+  max-width: 720px;
+  margin: 70px auto;
+  padding: 42px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(20, 21, 36, .9);
+  text-align: center;
+}
+
+.match-result h1 {
+  margin: 8px 0 28px;
+  font-size: clamp(2.4rem, 8vw, 5rem);
+}
+
+.match-result .button {
+  display: inline-flex;
+  margin-top: 22px;
+}
+
+.boon-match-reward {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  width: min(100%, 280px);
+  margin: 22px 0 2px;
+  padding: 16px 22px;
+  border: 1px solid rgba(167, 139, 250, .4);
+  border-radius: 14px;
+  background: rgba(124, 58, 237, .12);
+}
+
+.boon-match-reward span {
+  color: #c4b5fd;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.boon-match-reward strong {
+  color: #f0abfc;
+  font-size: 1.45rem;
+}
+
+.boon-match-reward small {
+  color: #aaa6b8;
+}
+
+.boon-forfeit-reward {
+  margin: 8px 0 !important;
+  color: #f0abfc !important;
+  font-size: 1.4rem !important;
+  font-weight: 850;
+}

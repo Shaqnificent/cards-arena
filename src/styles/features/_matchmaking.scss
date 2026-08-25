@@ -1,0 +1,183 @@
+@use '../abstracts' as *;
+
+.matchmaking-controls {
+  display: grid;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.matchmaking-controls .find-match {
+  margin-top: 0;
+  text-transform: uppercase;
+}
+
+.local-match-link {
+  color: var(--text-muted);
+  font-size: .68rem;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.local-match-link:hover {
+  color: var(--text-h);
+}
+
+.searching-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(139, 92, 246, .08);
+}
+
+.searching-indicator span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 800ms ease-in-out infinite alternate;
+}
+
+.searching-indicator p {
+  color: #c4b5fd;
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+.searching-indicator > div {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.searching-indicator small {
+  color: $color-accent;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.system-player-badge {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  padding: 3px 7px;
+  border: 1px solid rgba(192, 132, 252, .5);
+  border-radius: 999px;
+  color: #d8b4fe;
+  background: rgba(124, 58, 237, .16);
+  font-size: .52rem;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.leaderboard-preview .system-player-badge {
+  margin-left: -2px;
+  white-space: nowrap;
+}
+
+.leaderboard-player .system-player-badge {
+  color: #6d28d9;
+  border-color: #c4b5fd;
+  background: #f3eefe;
+}
+
+.leaderboard-profile-link {
+  width: max-content;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.leaderboard-profile-link:hover {
+  color: #6d28d9;
+  transform: translateX(2px);
+}
+
+.leaderboard-profile-link:focus-visible {
+  outline: 3px solid rgba(124, 58, 237, .28);
+  outline-offset: 4px;
+}
+
+.matchmaking-error {
+  padding: 9px;
+  border-radius: 8px;
+  color: var(--error);
+  background: var(--error-bg);
+  font-size: .7rem;
+  text-align: center;
+}
+
+.online-match-page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: radial-gradient(circle at 50% 15%, rgba(139, 92, 246, .32), transparent 48%);
+}
+
+.online-match-card {
+  width: min(100%, 820px);
+  padding: 54px;
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.online-match-card > h1 {
+  margin: 8px 0 44px;
+}
+
+.online-versus {
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.online-versus > strong {
+  color: #f9a8d4;
+  font-size: 1.45rem;
+  font-style: italic;
+}
+
+.online-versus .avatar {
+  width: 96px;
+  height: 96px;
+}
+
+.online-versus h2 {
+  margin: 18px 0 4px;
+}
+
+.online-versus span {
+  color: var(--text-muted);
+  font-size: .68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.preparing-message {
+  margin-top: 42px;
+  color: #c4b5fd;
+}
+
+.match-id {
+  display: block;
+  margin-top: 16px;
+  padding: 10px;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  background: rgba(9, 10, 18, .55);
+  font-size: .65rem;
+}
