@@ -33,6 +33,22 @@ function CharacterIdentity({ character }: { character: PlayerCharacter }) {
 
 function OcTypeBadge({ type }: { type: OcType }) { return <span className={`oc-type-badge ${type}`}>{type === 'champion' ? 'Champion' : 'Sacrificial'}</span> }
 
+function LoreIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Z" /><path d="M8 8h7M8 11.5h7M8 15h4.5M18 7h1v12.5h-1" /></svg>
+}
+
+function MoreIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" /></svg>
+}
+
+function EditIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l3.8-.8L19 8a2.1 2.1 0 0 0-3-3L4.8 16.2 4 20Z" /></svg>
+}
+
+function AddIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+}
+
 function CreationFieldIcon({ type }: { type: 'name' | 'verse' | 'fighter' }) {
   if (type === 'name') return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg>
   if (type === 'verse') return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z" /></svg>
@@ -75,10 +91,27 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, 
   const [removeFamilyLogo, setRemoveFamilyLogo] = useState(false)
   const [familyError, setFamilyError] = useState<string | null>(null)
   const [familyMessage, setFamilyMessage] = useState<string | null>(null)
+  const [openCardMenuId, setOpenCardMenuId] = useState<string | null>(null)
 
   useEffect(() => () => {
     if (familyLogoPreview) URL.revokeObjectURL(familyLogoPreview)
   }, [familyLogoPreview])
+
+  useEffect(() => {
+    if (!openCardMenuId) return
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!(event.target instanceof Element) || !event.target.closest('[data-oc-card-menu]')) setOpenCardMenuId(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenCardMenuId(null)
+    }
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [openCardMenuId])
 
   const ocSelectableVerses = useMemo(() => verses.filter(isOcSelectableVerse), [verses])
   const active = useMemo(() => collection.characters.filter((character) => character.active), [collection.characters])
@@ -179,6 +212,13 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, 
     setLoreMessage(null)
   }
 
+  const openPortraitEditor = (character: PlayerCharacter) => {
+    setPortraitCharacter(character)
+    setPortraitFile(null)
+    setPortraitPreview(null)
+    setActionError(null)
+  }
+
   const saveLore = async () => {
     if (!loreCharacter || collection.pendingId === loreCharacter.id) return
     if (loreDraft.length > 1000) return setLoreError('OC lore cannot exceed 1000 characters.')
@@ -256,7 +296,7 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, 
     <AppHeader active="loadout" username={username} avatarUrl={avatarUrl} />
     <section className="oc-content" aria-labelledby="oc-heading">
       <LoadoutNav active="ocs" />
-      <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong>{canCustomizeFamily && <button className="button button-secondary oc-customize-family" onClick={openFamilyEditor} disabled={familyIdentity.loading}>{familyIdentity.identity ? 'Edit Family' : 'Customize Family'}</button>}<button className="button button-primary" onClick={openCreation} disabled={versesLoading || Boolean(versesError) || ocSelectableVerses.length === 0 || collectionAtCapacity}>{collectionAtCapacity ? 'Collection Full' : '+ Create OC'}</button></div></header>
+      <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong>{canCustomizeFamily && <button className="button button-secondary oc-customize-family oc-hero-icon-button" title={familyIdentity.identity ? 'Edit Family' : 'Customize Family'} aria-label={familyIdentity.identity ? 'Edit OC Family' : 'Customize OC Family'} onClick={openFamilyEditor} disabled={familyIdentity.loading}><EditIcon /></button>}<button className="button button-primary oc-hero-icon-button" title={collectionAtCapacity ? 'OC collection is full' : 'Create OC'} aria-label={collectionAtCapacity ? 'OC collection is full' : 'Create OC'} onClick={openCreation} disabled={versesLoading || Boolean(versesError) || ocSelectableVerses.length === 0 || collectionAtCapacity}><AddIcon /></button></div></header>
 
       {actionError && <p className="oc-message error-message" role="alert">{actionError}</p>}
       {loreMessage && <p className="oc-message oc-success-message" role="status">{loreMessage}</p>}
@@ -278,7 +318,32 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, 
         <section className="oc-section" aria-labelledby="collection-heading"><div className="oc-section-heading"><div><p className="eyebrow">Your Fighters</p><h2 id="collection-heading">OC Collection</h2></div></div>
           {collection.loading ? <div className="catalogue-state oc-state"><h2>Loading your OC family...</h2></div>
             : active.length === 0 ? <div className="catalogue-state oc-state"><h2>No OC fighters yet.</h2><p>Create your first fighter and discover their potential.</p><button className="button button-primary" onClick={openCreation}>Create Your First OC</button></div>
-            : <div className="oc-collection-grid">{active.map((character) => <article className={`oc-card${character.equipped ? ' equipped' : ''}`} key={character.id}><CharacterIdentity character={character} /><div className="oc-card-badges"><span className="oc-growth">{getGrowthType(character.starting_overall)}</span><OcTypeBadge type={character.oc_type} /></div>{!character.type_selected_at && <button className="text-button oc-legacy-type" onClick={() => { setTypingCharacter(character); setLegacyType(character.oc_type) }}>Choose permanent type</button>}<div className="oc-stat-grid"><div><span>Current OVR</span><strong>{character.overall} <small>/ {character.overall_cap}</small></strong></div><div><span>Battle Power</span><strong>{formatPower(character.power_score)} <small>/ {formatPower(character.power_score_cap)}</small></strong></div><div><span>Starting OVR</span><strong>{character.starting_overall}</strong></div><div><span>Progression Points</span><strong>{character.progression_points}</strong></div></div><div className="oc-card-actions"><button className="button oc-develop-button" onClick={() => { setDeveloping(character); setDevelopmentMessage(null); setActionError(null) }}>Develop</button><button className="button button-secondary oc-lore-button" onClick={() => openLoreEditor(character)}>{character.lore ? 'Edit Lore' : 'Add Lore'}</button><button className="button button-primary" disabled={collection.pendingId === character.id} onClick={() => void toggleEquipped(character)}>{character.equipped ? 'Unequip' : 'Equip'}</button><button className="button oc-retire-button" disabled={collection.pendingId === character.id} onClick={() => setRetiring(character)}>Retire</button></div></article>)}</div>}
+            : <div className="oc-collection-grid">{active.map((character) => {
+              const menuOpen = openCardMenuId === character.id
+              const pending = collection.pendingId === character.id
+              return <article className={`oc-card${character.equipped ? ' equipped' : ''}`} key={character.id}>
+                <div className="oc-card-heading-row">
+                  <CharacterIdentity character={character} />
+                  <div className="oc-card-utilities">
+                    <button className="oc-card-icon-button" type="button" title={character.lore ? 'Edit Lore' : 'Add Lore'} aria-label={`${character.lore ? 'Edit' : 'Add'} lore for ${character.name}`} onClick={() => openLoreEditor(character)}><LoreIcon /></button>
+                    <div className="oc-card-menu" data-oc-card-menu>
+                      <button className="oc-card-icon-button" type="button" title="More actions" aria-label={`More actions for ${character.name}`} aria-expanded={menuOpen} aria-haspopup="menu" aria-controls={`oc-card-menu-${character.id}`} onClick={() => setOpenCardMenuId(menuOpen ? null : character.id)}><MoreIcon /></button>
+                      {menuOpen && <div className="oc-card-overflow" id={`oc-card-menu-${character.id}`} role="menu" aria-label={`Actions for ${character.name}`}>
+                        <button type="button" role="menuitem" onClick={() => { setOpenCardMenuId(null); setDeveloping(character); setDevelopmentMessage(null); setActionError(null) }}>Develop</button>
+                        <button type="button" role="menuitem" disabled={!character.equipped} title={character.equipped ? undefined : 'Equip this OC before updating its portrait'} onClick={() => { setOpenCardMenuId(null); openPortraitEditor(character) }}>{character.image_url ? 'Update Portrait' : 'Add Portrait'}{!character.equipped ? ' · Equip first' : ''}</button>
+                        <button className="destructive" type="button" role="menuitem" disabled={pending} onClick={() => { setOpenCardMenuId(null); setRetiring(character) }}>Retire OC</button>
+                      </div>}
+                    </div>
+                  </div>
+                </div>
+                <div className="oc-card-badges"><span className="oc-growth">{getGrowthType(character.starting_overall)}</span><OcTypeBadge type={character.oc_type} /></div>
+                {!character.type_selected_at && <button className="text-button oc-legacy-type" onClick={() => { setTypingCharacter(character); setLegacyType(character.oc_type) }}>Choose permanent type</button>}
+                <div className="oc-stat-grid"><div><span>Current OVR</span><strong>{character.overall} <small>/ {character.overall_cap}</small></strong></div><div><span>Battle Power</span><strong>{formatPower(character.power_score)} <small>/ {formatPower(character.power_score_cap)}</small></strong></div><div><span>Starting OVR</span><strong>{character.starting_overall}</strong></div><div><span>Progression Points</span><strong>{character.progression_points}</strong></div></div>
+                <div className="oc-card-actions">
+                  <button className={`button ${character.equipped ? 'oc-unequip-button' : 'button-primary'}`} disabled={pending} onClick={() => void toggleEquipped(character)}>{character.equipped ? 'Unequip' : 'Equip'}</button>
+                </div>
+              </article>
+            })}</div>}
         </section>
 
         {retired.length > 0 && <section className="oc-retired"><button className="text-button" onClick={() => setShowRetired((value) => !value)} aria-expanded={showRetired}>Retired OCs ({retired.length}) <span>{showRetired ? '−' : '+'}</span></button>{showRetired && <div className="oc-retired-list">{retired.map((character) => <article key={character.id}><CharacterIdentity character={character} /><span>{character.overall} OVR</span><span>{formatPower(character.power_score)} Power</span><time dateTime={character.retired_at ?? ''}>Retired {character.retired_at ? new Date(character.retired_at).toLocaleDateString() : '—'}</time><button className="text-button oc-retired-lore-button" onClick={() => openLoreEditor(character)}>{character.lore ? 'Edit Lore' : 'Add Lore'}</button></article>)}</div>}</section>}
