@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { AppHeader } from '../components/AppHeader'
 import { LoadoutNav } from '../components/LoadoutNav'
 import { BoonCard } from '../features/boons/components/BoonCard'
@@ -5,11 +6,38 @@ import { BoonRollDialog } from '../features/boons/components/BoonRollDialog'
 import { useBoons } from '../features/boons/hooks/useBoons'
 import { useActiveMatchBoon } from '../features/boons/hooks/useActiveMatchBoon'
 import { ActiveMatchBoonLoading, ActiveMatchBoonNotice } from '../features/boons/components/ActiveMatchBoonNotice'
+import type { BoonDefinition } from '../features/boons/types'
 import type { Profile } from '../types/profile'
 
 interface BoonsProps {
   profile: Profile
   avatarUrl: string | null
+}
+
+type RarityFilter = 'all' | BoonDefinition['rarity']
+type EffectFilter = 'all' | 'overall' | 'power' | 'oc' | 'draft' | 'verse' | 'random'
+
+const effectFilterOptions: ReadonlyArray<{ value: EffectFilter; label: string }> = [
+  { value: 'all', label: 'All Effects' },
+  { value: 'overall', label: 'OVR Boost' },
+  { value: 'power', label: 'Power Boost' },
+  { value: 'oc', label: 'OC Boost' },
+  { value: 'draft', label: 'Draft Fighter Boost' },
+  { value: 'verse', label: 'Team / Verse Boost' },
+  { value: 'random', label: 'Random Effect' },
+]
+
+function matchesEffectFilter(definition: BoonDefinition, filter: EffectFilter): boolean {
+  if (filter === 'all') return true
+  const effectType = definition.effectType.toLowerCase()
+  const targetRule = definition.targetRule.toLowerCase()
+  const combined = `${effectType} ${targetRule}`
+  if (filter === 'overall') return combined.includes('overall') || combined.includes('ovr')
+  if (filter === 'power') return combined.includes('power')
+  if (filter === 'oc') return effectType.startsWith('oc_') || targetRule.includes('selected_oc')
+  if (filter === 'draft') return /draft|canon|lowest|highest|multi/.test(combined)
+  if (filter === 'verse') return combined.includes('verse')
+  return combined.includes('random')
 }
 
 export function Boons({ profile, avatarUrl }: BoonsProps) {
@@ -23,6 +51,21 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
   const addedRoll = boons.rollResult?.status === 'added' ? boons.rollResult.roll : null
   const needsMorePoints = boons.dashboard.boonPoints < boons.dashboard.rollCost
   const poolExhausted = !needsMorePoints && !pendingRoll && !boons.dashboard.canRoll
+  const [searchQuery, setSearchQuery] = useState('')
+  const [rarityFilter, setRarityFilter] = useState<RarityFilter>('all')
+  const [effectFilter, setEffectFilter] = useState<EffectFilter>('all')
+  const normalizedSearch = searchQuery.trim().toLowerCase()
+  const filtersActive = searchQuery.length > 0 || rarityFilter !== 'all' || effectFilter !== 'all'
+  const filteredCatalogue = useMemo(() => boons.catalogue.filter((definition) => {
+    const matchesSearch = !normalizedSearch || `${definition.name} ${definition.description} ${definition.key}`.toLowerCase().includes(normalizedSearch)
+    const matchesRarity = rarityFilter === 'all' || definition.rarity === rarityFilter
+    return matchesSearch && matchesRarity && matchesEffectFilter(definition, effectFilter)
+  }), [boons.catalogue, effectFilter, normalizedSearch, rarityFilter])
+  const clearFilters = () => {
+    setSearchQuery('')
+    setRarityFilter('all')
+    setEffectFilter('all')
+  }
 
   return <main className="boons-page">
     <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} />
@@ -60,7 +103,18 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
                     : <p className="boon-roll-status ready"><strong>{boons.dashboard.boonPoints.toLocaleString()} BP available</strong><span>{boons.dashboard.inventoryCount === 2 ? 'Your inventory is full; a roll will create a replacement decision.' : 'A new result will be added to your inventory unequipped.'}</span></p>}
             </section>
 
-            <section className="boon-section boon-catalogue" aria-labelledby="boon-catalogue-heading"><div className="boon-section-heading"><div><p className="eyebrow">Active Catalogue</p><h2 id="boon-catalogue-heading">Discover Boons</h2></div><small>{boons.catalogue.length} Available</small></div><div className="boon-grid catalogue">{boons.catalogue.map((definition) => <BoonCard key={definition.id} definition={definition} compact />)}</div></section>
+            <section className="boon-section boon-catalogue" aria-labelledby="boon-catalogue-heading">
+              <div className="boon-section-heading"><div><p className="eyebrow">Active Catalogue</p><h2 id="boon-catalogue-heading">Discover Boons</h2></div><small aria-live="polite">{filtersActive ? `${filteredCatalogue.length} of ${boons.catalogue.length}` : `${boons.catalogue.length} Available`}</small></div>
+              <div className="boon-catalogue-toolbar" role="search" aria-label="Filter the Boon catalogue">
+                <label className="boon-search-control"><span>Search</span><input type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search Boons..." /></label>
+                <label className="boon-filter-control"><span>Rarity</span><select value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value as RarityFilter)}><option value="all">All Rarities</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option></select></label>
+                <label className="boon-filter-control"><span>Effect</span><select value={effectFilter} onChange={(event) => setEffectFilter(event.target.value as EffectFilter)}>{effectFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                {filtersActive && <button type="button" className="boon-clear-filters" onClick={clearFilters}>Clear Filters</button>}
+              </div>
+              {filteredCatalogue.length > 0
+                ? <div className="boon-grid catalogue">{filteredCatalogue.map((definition) => <BoonCard key={definition.id} definition={definition} compact />)}</div>
+                : <div className="boon-catalogue-empty" role="status"><span aria-hidden="true">◇</span><h3>No Boons Found</h3><p>Try changing your search or filters.</p><button type="button" className="button button-secondary" onClick={clearFilters}>Clear Filters</button></div>}
+            </section>
           </>}
     </div>
     {addedRoll && <BoonRollDialog roll={addedRoll} mode="added" ownedBoons={boons.dashboard.boons} resolvingId={boons.resolvingId} onClose={boons.closeReveal} onReplace={() => undefined} onDiscard={() => undefined} />}

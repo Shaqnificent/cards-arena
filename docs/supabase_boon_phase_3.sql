@@ -38,14 +38,14 @@ create policy "Owners can read their Boon roll history"
   using (owner_id = (select auth.uid()));
 
 -- 2. Central backend price decision. Player-facing RPCs call this function so
--- the V1 300 BP cost is defined once rather than repeated across SQL/UI logic.
+-- the 100 BP cost is defined once rather than repeated across SQL/UI logic.
 create or replace function public.get_boon_roll_cost()
 returns bigint
 language sql
 immutable
 set search_path = ''
 as $$
-  select 300::bigint;
+  select 100::bigint;
 $$;
 
 -- Intentional initial weights. With the ten Phase 2 definitions these total

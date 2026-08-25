@@ -41,7 +41,7 @@ equip inventory. No inventory is granted automatically;
 `docs/supabase_boon_phase_2_test_seed.sql` is optional SQL-editor-only tooling.
 
 Phase 3 is implemented by `docs/supabase_boon_phase_3.sql`. The player-facing
-Shop charges an authoritative 300 BP per roll and selects one active, unowned
+Shop charges an authoritative 100 BP per roll and selects one active, unowned
 definition using its database `roll_weight`. Inventories below two receive the
 result immediately and unequipped. A full inventory creates one durable pending
 roll that survives refresh; the player must replace one owned Boon or discard
@@ -262,16 +262,16 @@ A player spends Boon Points to roll one Boon from the active Boon pool.
 Suggested initial roll cost:
 
 ```text
-300 BP
+100 BP
 ```
 
 This is a balance value and may change after testing.
 
 At the initial recommended ranked rewards, this means approximately:
 
-- 3 wins for one roll
-- 5 losses for one roll
-- roughly 3–4 mixed-result ranked matches per roll
+- 1 win for one roll
+- 2 losses for one roll
+- roughly 1–2 mixed-result ranked matches per roll
 
 ### 5.2 Inventory Below Capacity
 
@@ -861,7 +861,7 @@ This is large enough for variety while remaining manageable to balance and under
 - [x] `/boons` management UI
 
 ### Phase 3 — Shop + Rolling (Implemented)
-- [x] authoritative 300 BP roll cost
+- [x] authoritative 100 BP roll cost
 - [x] weighted server-side selection from active, unowned definitions
 - [x] immediate acquisition while inventory has space
 - [x] durable full-inventory replacement/discard decision
