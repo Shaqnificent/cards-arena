@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppHeader } from '../components/AppHeader'
 import { LoadoutNav } from '../components/LoadoutNav'
 import { BoonCard } from '../features/boons/components/BoonCard'
@@ -8,6 +8,7 @@ import { useActiveMatchBoon } from '../features/boons/hooks/useActiveMatchBoon'
 import { ActiveMatchBoonLoading, ActiveMatchBoonNotice } from '../features/boons/components/ActiveMatchBoonNotice'
 import type { BoonDefinition } from '../features/boons/types'
 import type { Profile } from '../types/profile'
+import { getPaginationItems } from '../lib/pagination'
 
 interface BoonsProps {
   profile: Profile
@@ -16,6 +17,14 @@ interface BoonsProps {
 
 type RarityFilter = 'all' | BoonDefinition['rarity']
 type EffectFilter = 'all' | 'overall' | 'power' | 'oc' | 'draft' | 'verse' | 'random'
+const cataloguePageSize = 12
+
+const getResponsiveSiblingCount = () => {
+  if (typeof window === 'undefined') return 3
+  if (window.matchMedia('(max-width: 520px)').matches) return 1
+  if (window.matchMedia('(max-width: 900px)').matches) return 2
+  return 3
+}
 
 const effectFilterOptions: ReadonlyArray<{ value: EffectFilter; label: string }> = [
   { value: 'all', label: 'All Effects' },
@@ -54,6 +63,8 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>('all')
   const [effectFilter, setEffectFilter] = useState<EffectFilter>('all')
+  const [cataloguePage, setCataloguePage] = useState(1)
+  const [paginationSiblingCount, setPaginationSiblingCount] = useState(getResponsiveSiblingCount)
   const normalizedSearch = searchQuery.trim().toLowerCase()
   const filtersActive = searchQuery.length > 0 || rarityFilter !== 'all' || effectFilter !== 'all'
   const filteredCatalogue = useMemo(() => boons.catalogue.filter((definition) => {
@@ -61,10 +72,36 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
     const matchesRarity = rarityFilter === 'all' || definition.rarity === rarityFilter
     return matchesSearch && matchesRarity && matchesEffectFilter(definition, effectFilter)
   }), [boons.catalogue, effectFilter, normalizedSearch, rarityFilter])
+  const cataloguePageCount = Math.max(1, Math.ceil(filteredCatalogue.length / cataloguePageSize))
+  const currentCataloguePage = Math.min(cataloguePage, cataloguePageCount)
+  const paginatedCatalogue = filteredCatalogue.slice(
+    (currentCataloguePage - 1) * cataloguePageSize,
+    currentCataloguePage * cataloguePageSize,
+  )
+  const paginationItems = useMemo(() => getPaginationItems({
+    currentPage: currentCataloguePage,
+    totalPages: cataloguePageCount,
+    siblingCount: paginationSiblingCount,
+  }), [cataloguePageCount, currentCataloguePage, paginationSiblingCount])
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 520px)')
+    const tabletQuery = window.matchMedia('(max-width: 900px)')
+    const updateSiblingCount = () => setPaginationSiblingCount(
+      mobileQuery.matches ? 1 : tabletQuery.matches ? 2 : 3)
+    mobileQuery.addEventListener('change', updateSiblingCount)
+    tabletQuery.addEventListener('change', updateSiblingCount)
+    return () => {
+      mobileQuery.removeEventListener('change', updateSiblingCount)
+      tabletQuery.removeEventListener('change', updateSiblingCount)
+    }
+  }, [])
+
   const clearFilters = () => {
     setSearchQuery('')
     setRarityFilter('all')
     setEffectFilter('all')
+    setCataloguePage(1)
   }
 
   return <main className="boons-page">
@@ -106,13 +143,22 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
             <section className="boon-section boon-catalogue" aria-labelledby="boon-catalogue-heading">
               <div className="boon-section-heading"><div><p className="eyebrow">Active Catalogue</p><h2 id="boon-catalogue-heading">Discover Boons</h2></div><small aria-live="polite">{filtersActive ? `${filteredCatalogue.length} of ${boons.catalogue.length}` : `${boons.catalogue.length} Available`}</small></div>
               <div className="boon-catalogue-toolbar" role="search" aria-label="Filter the Boon catalogue">
-                <label className="boon-search-control"><span>Search</span><input type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search Boons..." /></label>
-                <label className="boon-filter-control"><span>Rarity</span><select value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value as RarityFilter)}><option value="all">All Rarities</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option></select></label>
-                <label className="boon-filter-control"><span>Effect</span><select value={effectFilter} onChange={(event) => setEffectFilter(event.target.value as EffectFilter)}>{effectFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                <label className="boon-search-control"><span>Search</span><input type="search" value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setCataloguePage(1) }} placeholder="Search Boons..." /></label>
+                <label className="boon-filter-control"><span>Rarity</span><select value={rarityFilter} onChange={(event) => { setRarityFilter(event.target.value as RarityFilter); setCataloguePage(1) }}><option value="all">All Rarities</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option></select></label>
+                <label className="boon-filter-control"><span>Effect</span><select value={effectFilter} onChange={(event) => { setEffectFilter(event.target.value as EffectFilter); setCataloguePage(1) }}>{effectFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
                 {filtersActive && <button type="button" className="boon-clear-filters" onClick={clearFilters}>Clear Filters</button>}
               </div>
               {filteredCatalogue.length > 0
-                ? <div className="boon-grid catalogue">{filteredCatalogue.map((definition) => <BoonCard key={definition.id} definition={definition} compact />)}</div>
+                ? <>
+                  <div className="boon-grid catalogue">{paginatedCatalogue.map((definition) => <BoonCard key={definition.id} definition={definition} compact />)}</div>
+                  {filteredCatalogue.length > cataloguePageSize && <nav className="catalogue-pagination" aria-label="Boon catalogue pages">
+                    <button type="button" aria-label="Previous page" disabled={currentCataloguePage === 1} onClick={() => setCataloguePage((value) => Math.max(1, value - 1))}>‹</button>
+                    {paginationItems.map((item) => typeof item === 'number'
+                      ? <button type="button" key={item} className={item === currentCataloguePage ? 'active' : ''} aria-current={item === currentCataloguePage ? 'page' : undefined} aria-label={`Page ${item}`} onClick={() => setCataloguePage(item)}>{item}</button>
+                      : <span className="catalogue-pagination-ellipsis" key={item} aria-hidden="true">&hellip;</span>)}
+                    <button type="button" aria-label="Next page" disabled={currentCataloguePage === cataloguePageCount} onClick={() => setCataloguePage((value) => Math.min(cataloguePageCount, value + 1))}>›</button>
+                  </nav>}
+                </>
                 : <div className="boon-catalogue-empty" role="status"><span aria-hidden="true">◇</span><h3>No Boons Found</h3><p>Try changing your search or filters.</p><button type="button" className="button button-secondary" onClick={clearFilters}>Clear Filters</button></div>}
             </section>
           </>}
