@@ -619,8 +619,9 @@ button.strategy-card {
 .preparation-warning i {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 25px;
+  min-width: 25px;
+  height: 25px;
   border: 2px solid #f59e0b;
   border-radius: 50%;
   color: #f59e0b;
@@ -631,6 +632,7 @@ button.strategy-card {
 .preparation-warning p {
   margin: 0;
   line-height: 1.5;
+  font-size: 12px;
 }
 
 .oc-preparation.waiting {

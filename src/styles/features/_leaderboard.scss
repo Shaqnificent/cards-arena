@@ -207,7 +207,7 @@
 
 .oc-rank-list article.current-player {
   background: #faf8ff;
-  box-shadow: inset 3px 0 $color-purple;
+  // box-shadow: inset 3px 0 $color-purple;
 }
 
 .oc-rank-list h2 {
@@ -532,9 +532,13 @@
 .oc-rank-list .oc-ranking-card {
   grid-template-columns: 76px 78px minmax(220px,1.25fr) minmax(170px,.7fr) minmax(270px,1fr);
   min-height: 120px;
-  padding: 18px 26px;
+  padding: 15px;
   border-left: 5px solid #dfe2eb;
   border-radius: 16px;
+}
+
+.oc-rank-list .family-card {
+  grid-template-columns: 76px 78px minmax(220px,1fr) minmax(280px,.7fr);
 }
 
 .oc-rank-list .rank-card-1 {
@@ -670,6 +674,42 @@
   color: #169344;
 }
 
+.family-averages {
+  display: grid;
+  grid-template-columns: minmax(150px,1fr);
+  gap: 12px;
+  padding-left: 32px;
+  border-left: 1px solid var(--border);
+}
+
+.family-averages>span {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #faf8ff;
+  justify-content: flex-end;
+}
+
+.family-averages small {
+  color: #74798a;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.family-averages strong {
+  overflow: hidden;
+  color: #6d28d9;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .family-preview em {
   display: flex;
   justify-content: space-between;
@@ -760,6 +800,9 @@
   .oc-rank-list .oc-ranking-card {
     grid-template-columns: 60px 70px 1fr 180px;
   }
+  .oc-rank-list .family-card {
+    grid-template-columns: 60px 70px 1fr minmax(250px,.8fr);
+  }
   .rank-details {
     grid-column: 3/-1;
     border-left: 0;
@@ -820,6 +863,13 @@
   .rank-details {
     grid-column: 1/-1;
   }
+  .family-averages {
+    grid-column: 2/-1;
+    margin-top: 7px;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
   .ranking-skeleton>div {
     grid-template-columns: 50px 1fr;
   }
@@ -840,5 +890,12 @@
   .leaderboard-refresh {
     grid-column: 1;
     width: 100%;
+  }
+  .family-averages {
+    grid-column: 1/-1;
+    gap: 8px;
+  }
+  .family-averages>span {
+    padding: 10px 12px;
   }
 }
