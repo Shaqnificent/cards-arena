@@ -201,12 +201,14 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface);
-  box-shadow: 0 4px 14px rgba(20, 15, 40, .05);
+  box-shadow: 0 4px 14px rgba(20, 15, 40, .125);
 }
 
 .oc-card.equipped {
-  border-color: #a78bfa;
-  box-shadow: inset 3px 0 $color-purple, 0 4px 14px rgba(20, 15, 40, .06);
+  border: 1px solid #b99dffd2 !important;
+  border-color: #0e0e0f;
+  background-color: #a78bfa19;
+  // box-shadow: inset 3px 0 $color-purple, 0 4px 14px rgba(20, 15, 40, .06);
 }
 
 .oc-growth {
