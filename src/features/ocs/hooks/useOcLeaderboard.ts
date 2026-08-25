@@ -7,6 +7,7 @@ export function useOcLeaderboard(kind:'individual'|'family', sort:OcLeaderboardS
   const [loadedKey,setLoadedKey]=useState<string|null>(null)
   const [loading,setLoading]=useState(false)
   const [error,setError]=useState<string|null>(null)
+  const [refreshKey,setRefreshKey]=useState(0)
   const requestKey=`${kind}:${sort}`
   useEffect(()=>{
     if(!enabled)return
@@ -20,7 +21,7 @@ export function useOcLeaderboard(kind:'individual'|'family', sort:OcLeaderboardS
       setLoading(false)
     }
     void load();return()=>{current=false}
-  },[enabled,kind,requestKey,sort])
+  },[enabled,kind,refreshKey,requestKey,sort])
   const queryChanged=enabled&&loadedKey!==requestKey
-  return {rows:queryChanged?[]:rows,loading:loading||queryChanged,error:queryChanged?null:error}
+  return {rows:queryChanged?[]:rows,loading:loading||queryChanged,error:queryChanged?null:error,refresh:()=>setRefreshKey((value)=>value+1)}
 }
