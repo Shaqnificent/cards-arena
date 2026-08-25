@@ -38,7 +38,7 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
             {boons.error && <div className="boon-error error-message" role="alert"><span>{boons.error}</span><button className="button button-secondary" onClick={() => void boons.refresh()}>Retry</button></div>}
 
             <section className="boon-section" aria-labelledby="equipped-boon-heading"><div className="boon-section-heading"><div><p className="eyebrow">Active Loadout</p><h2 id="equipped-boon-heading">Equipped Boon</h2></div><small>Maximum 1</small></div>{equipped
-              ? <div className="boon-equipped-slot"><BoonCard definition={equipped.definition} owned={equipped} pending={boons.pendingId === equipped.id} actionsDisabled={busy} onUnequip={() => void boons.unequip(equipped)} /></div>
+              ? <div className="boon-equipped-slot"><BoonCard definition={equipped.definition} owned={equipped} summary /></div>
               : <div className="boon-empty-slot"><span aria-hidden="true">✦</span><div><strong>No Boon equipped</strong><p>You may keep your loadout empty or equip one from your inventory.</p></div></div>}
             </section>
 
