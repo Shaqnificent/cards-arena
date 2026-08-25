@@ -7,14 +7,12 @@
 }
 
 .local-battle-hand {
-  display: grid !important;
-  grid-template-columns: repeat(5,minmax(0,1fr));
-  grid-auto-rows: 1fr;
-  align-items: stretch;
+  align-items: flex-end;
   min-width: 0;
 }
 
-.local-battle-hand>.game-card {
+.local-battle-hand>.battle-hand-card,
+.local-battle-hand>.battle-hand-card>.game-card {
   width: 100%;
   min-width: 0;
   height: 100%;
@@ -28,7 +26,13 @@
 
 @include respond-down(desktop-small) {
   .local-battle-hand {
+    display: grid !important;
     grid-template-columns: repeat(3,minmax(0,1fr));
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+  }
+  .local-battle-hand>.battle-hand-card {
+    height: 100%;
   }
 }
 
@@ -38,28 +42,31 @@
     padding: 18px 0 max(84px,calc(env(safe-area-inset-bottom) + 70px));
   }
   .local-battle-hand {
-    display: grid !important;
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 10px;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
-    scroll-snap-type: none;
+    display: flex !important;
+    align-items: center;
+    gap: 14px;
+    width: 100vw;
+    max-width: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
   }
-  .local-battle-hand>.game-card {
-    min-width: 0;
-    min-height: 300px;
-    scroll-snap-align: none;
+  .local-battle-hand>.battle-hand-card {
+    width: min(76vw,300px);
+    min-width: min(76vw,300px);
+    min-height: 430px;
+    flex: 0 0 min(76vw,300px);
+    scroll-snap-align: center;
   }
   .local-battle-hand .game-card-image, .local-battle-hand .game-card.compact .game-card-image {
-    height: clamp(160px,46vw,190px);
-    min-height: clamp(160px,46vw,190px);
+    height: 300px;
+    min-height: 300px;
   }
   .local-battle-hand .game-card-content {
-    grid-template-rows: 30px 38px 34px;
+    grid-template-rows: 22px 42px 28px;
     gap: 4px;
-    min-height: 132px;
-    padding: 10px 11px 12px;
+    min-height: 130px;
+    padding: 14px 16px 16px;
   }
   .local-battle-hand .game-card-verse {
     display: -webkit-box !important;
@@ -104,10 +111,10 @@
     line-height: 1.1;
   }
   .local-lock-button {
-    width: 100%;
-    max-width: 100%;
+    width: calc(100% - 24px);
+    max-width: 480px;
     min-height: 56px;
-    margin-top: 24px;
+    margin-top: 12px;
   }
   .game-page:has(.local-battle-board) .sound-toggle {
     bottom: max(16px,env(safe-area-inset-bottom));

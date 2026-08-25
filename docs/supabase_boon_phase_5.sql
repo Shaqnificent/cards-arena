@@ -232,8 +232,10 @@ begin
       on boost.match_id = mc.match_id and boost.match_character_id = mc.id
     where mc.match_id = p_match_id and mc.owner_player_id = current_player;
 
-    -- Every OC can use Reserve under the current rules. Champion Absorb is
-    -- playable; a Sacrificial OC becomes support-only only when sacrificed.
+    -- Every selected OC can use Reserve under the current rules. Join the
+    -- private selection snapshot so the no-OC `decision = none` preparation
+    -- row is not mistaken for a fighter and the match verse remains
+    -- authoritative even for matches created before preparation hardening.
     insert into public.match_boon_fighter_stats (
       match_id, player_id, fighter_type, player_character_id,
       verse_id_snapshot, roster_order, eligible_for_battle, boon_targeted,
@@ -244,21 +246,27 @@ begin
       p_match_id,
       current_player,
       'oc',
-      prep.player_character_id,
-      prep.verse_id,
+      oc_selection.player_character_id,
+      oc_selection.verse_id,
       1000,
-      prep.decision in ('reserve', 'absorb') and not prep.oc_sacrificed,
+      prep.decision in ('reserve', 'absorb') and not coalesce(prep.oc_sacrificed, false),
       false,
-      prep.base_overall,
-      greatest(0, prep.match_overall - prep.base_overall),
+      oc_selection.base_overall,
+      greatest(0, coalesce(prep.match_overall, oc_selection.base_overall) - oc_selection.base_overall),
       0,
-      prep.match_overall,
-      prep.base_power_score,
+      coalesce(prep.match_overall, oc_selection.base_overall),
+      oc_selection.base_power_score,
       0,
       0,
-      least(12000, prep.base_power_score)
+      least(12000, oc_selection.base_power_score)
     from public.match_oc_preparations prep
-    where prep.match_id = p_match_id and prep.player_id = current_player;
+    join public.match_oc_selections oc_selection
+      on oc_selection.match_id = prep.match_id
+      and oc_selection.player_id = prep.player_id
+      and oc_selection.player_character_id = prep.player_character_id
+    where prep.match_id = p_match_id
+      and prep.player_id = current_player
+      and prep.decision <> 'none';
 
     if snapshot_row.boon_definition_id_snapshot is null then
       continue;
@@ -380,9 +388,11 @@ begin
       get diagnostics target_count = row_count;
 
     elsif snapshot_row.boon_effect_type_snapshot = 'same_verse_power' then
-      select prep.verse_id into selected_verse
-      from public.match_oc_preparations prep
-      where prep.match_id = p_match_id and prep.player_id = current_player;
+      select oc_selection.verse_id into selected_verse
+      from public.match_oc_selections oc_selection
+      where oc_selection.match_id = p_match_id
+        and oc_selection.player_id = current_player
+        and oc_selection.player_character_id is not null;
       update public.match_boon_fighter_stats fs set
         boon_targeted = true,
         boon_power_bonus = least(requested_value, greatest(0, 12000 - fs.base_power_score - fs.preparation_power_bonus)),

@@ -330,8 +330,9 @@ begin
       on boost.match_id = mc.match_id and boost.match_character_id = mc.id
     where mc.match_id = p_match_id and mc.owner_player_id = current_player;
 
-    -- Reserve is playable for both OC types. Champion Absorb is playable;
-    -- Sacrificial support is reference-only after it is sacrificed.
+    -- Reserve is playable for both OC types. Join the private selection
+    -- snapshot so a legitimate no-OC `decision = none` preparation row is
+    -- never inserted as a fighter with null identity/verse/stat values.
     insert into public.match_boon_fighter_stats (
       match_id, player_id, fighter_type, player_character_id,
       verse_id_snapshot, roster_order, eligible_for_battle, boon_targeted,
@@ -339,15 +340,22 @@ begin
       base_power_score, preparation_power_bonus, boon_power_bonus, final_power_score
     )
     select
-      p_match_id, current_player, 'oc', prep.player_character_id,
-      prep.verse_id, 1000,
-      prep.decision in ('reserve', 'absorb') and not prep.oc_sacrificed,
+      p_match_id, current_player, 'oc', oc_selection.player_character_id,
+      oc_selection.verse_id, 1000,
+      prep.decision in ('reserve', 'absorb') and not coalesce(prep.oc_sacrificed, false),
       false,
-      prep.base_overall, greatest(0, prep.match_overall - prep.base_overall),
-      0, prep.match_overall,
-      prep.base_power_score, 0, 0, least(12000, prep.base_power_score)
+      oc_selection.base_overall,
+      greatest(0, coalesce(prep.match_overall, oc_selection.base_overall) - oc_selection.base_overall),
+      0, coalesce(prep.match_overall, oc_selection.base_overall),
+      oc_selection.base_power_score, 0, 0, least(12000, oc_selection.base_power_score)
     from public.match_oc_preparations prep
-    where prep.match_id = p_match_id and prep.player_id = current_player;
+    join public.match_oc_selections oc_selection
+      on oc_selection.match_id = prep.match_id
+      and oc_selection.player_id = prep.player_id
+      and oc_selection.player_character_id = prep.player_character_id
+    where prep.match_id = p_match_id
+      and prep.player_id = current_player
+      and prep.decision <> 'none';
 
     if snapshot_row.boon_definition_id_snapshot is null then
       continue;
@@ -912,9 +920,11 @@ begin
     ) candidate;
 
   elsif p_target_rule in ('same_verse_canon', 'same_verse_canon_as_selected_oc') then
-    select prep.verse_id into selected_verse
-    from public.match_oc_preparations prep
-    where prep.match_id = p_match_id and prep.player_id = p_player_id;
+    select oc_selection.verse_id into selected_verse
+    from public.match_oc_selections oc_selection
+    where oc_selection.match_id = p_match_id
+      and oc_selection.player_id = p_player_id
+      and oc_selection.player_character_id is not null;
     select coalesce(array_agg(fs.id order by fs.roster_order), array[]::uuid[]) into target_ids
     from public.match_boon_fighter_stats fs
     where fs.match_id = p_match_id and fs.player_id = p_player_id
@@ -923,9 +933,11 @@ begin
       and not (fs.id = any(coalesce(p_excluded_ids, array[]::uuid[])));
 
   elsif p_target_rule in ('canon_different_verse_from_selected_oc', 'random_canon_different_verse_from_selected_oc') then
-    select prep.verse_id into selected_verse
-    from public.match_oc_preparations prep
-    where prep.match_id = p_match_id and prep.player_id = p_player_id;
+    select oc_selection.verse_id into selected_verse
+    from public.match_oc_selections oc_selection
+    where oc_selection.match_id = p_match_id
+      and oc_selection.player_id = p_player_id
+      and oc_selection.player_character_id is not null;
     select coalesce(array_agg(candidate.id), array[]::uuid[]) into target_ids
     from (
       select fs.id
@@ -944,9 +956,11 @@ begin
     'lowest_same_verse_canon_as_selected_oc',
     'highest_canon_different_verse_from_selected_oc'
   ) then
-    select prep.verse_id into selected_verse
-    from public.match_oc_preparations prep
-    where prep.match_id = p_match_id and prep.player_id = p_player_id;
+    select oc_selection.verse_id into selected_verse
+    from public.match_oc_selections oc_selection
+    where oc_selection.match_id = p_match_id
+      and oc_selection.player_id = p_player_id
+      and oc_selection.player_character_id is not null;
     select coalesce(array_agg(candidate.id), array[]::uuid[]) into target_ids
     from (
       select fs.id

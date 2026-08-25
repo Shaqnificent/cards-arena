@@ -43,6 +43,7 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
   const matchPoint = battle.playerScore >= 3 || battle.opponentScore >= 3 || battle.round >= 5
   const sounds = useGameSounds()
   const soundedRound = useRef<number | null>(null)
+  const battleHandRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!battle.reveal || soundedRound.current === battle.round) return
@@ -56,6 +57,16 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
     }, 280)
     return () => { window.clearTimeout(revealTimer); window.clearTimeout(resultTimer) }
   }, [battle.reveal, battle.round, sounds])
+
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 600px)').matches) return
+    const centerId = battle.selectedPlayerId ?? state.player.team[Math.floor(state.player.team.length / 2)]?.id
+    battleHandRef.current?.querySelector<HTMLElement>(`[data-fighter-id="${centerId}"]`)?.scrollIntoView({
+      behavior: battle.selectedPlayerId ? 'smooth' : 'auto',
+      block: 'nearest',
+      inline: 'center',
+    })
+  }, [battle.selectedPlayerId, state.player.team])
 
   const selectCard = (id: string) => {
     if (battle.selectedPlayerId === id) return
@@ -104,18 +115,27 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
           </section>
           <div className="opponent-hidden"><span>?</span><p>Opponent selection hidden</p></div>
           <h2 className="local-fighter-heading">Choose your fighter</h2>
-          <div className="battle-hand local-battle-hand">
+          <div className="battle-hand local-battle-hand" ref={battleHandRef}>
             {state.player.team.map((character) => (
-              <GameCard
-                key={character.id} character={character} compact
-                selected={battle.selectedPlayerId === character.id}
-                used={battle.playerUsedIds.includes(character.id)}
-                onHover={sounds.playCardHover}
-                onClick={() => selectCard(character.id)}
-              />
+              <div className="battle-hand-card" data-fighter-id={character.id} key={character.id}>
+                <GameCard
+                  character={character} compact
+                  selected={battle.selectedPlayerId === character.id}
+                  used={battle.playerUsedIds.includes(character.id)}
+                  onHover={sounds.playCardHover}
+                  onClick={() => selectCard(character.id)}
+                />
+              </div>
             ))}
           </div>
-          <button className="button button-primary lock-button local-lock-button" disabled={!battle.selectedPlayerId} onClick={onLock}>Lock In</button>
+          <div className="battle-hand-pagination" aria-label="Fighter selection">
+            {state.player.team.map((character) => {
+              const used = battle.playerUsedIds.includes(character.id)
+              return <button key={character.id} type="button" aria-label={`Select ${character.name}`} aria-current={battle.selectedPlayerId === character.id ? 'true' : undefined} disabled={used} onClick={() => selectCard(character.id)} />
+            })}
+          </div>
+          <button className="button button-primary lock-button local-lock-button" disabled={!battle.selectedPlayerId} onClick={onLock}><span className="lock-button-icon" aria-hidden="true">▣</span>Lock In</button>
+          <p className="battle-select-helper"><i aria-hidden="true">i</i>Select one fighter to battle</p>
         </>
       )}
     </section>

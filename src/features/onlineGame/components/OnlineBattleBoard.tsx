@@ -73,6 +73,7 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   const sounds = useGameSounds()
   const lockSeen = useRef(Boolean(state.yourSelection))
   const soundedRound = useRef<number | null>(null)
+  const battleHandRef = useRef<HTMLDivElement | null>(null)
   const yourSelection = state.yourSelection
   const revealed = state.battleState !== 'selecting' ? state.latestRound : null
   const victory = state.matchWinnerId === state.yourPlayerId
@@ -105,6 +106,17 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
   useEffect(() => {
     if (finalResultVisible) onFinalResultVisible?.()
   }, [finalResultVisible, onFinalResultVisible])
+
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 600px)').matches) return
+    const selectedCanonId = selection?.type === 'canon' ? selection.id : yourSelection?.type === 'canon' ? yourSelection.id : null
+    const centerId = selectedCanonId ?? state.yourTeam[Math.floor(state.yourTeam.length / 2)]?.id
+    battleHandRef.current?.querySelector<HTMLElement>(`[data-fighter-id="${centerId}"]`)?.scrollIntoView({
+      behavior: selectedCanonId ? 'smooth' : 'auto',
+      block: 'nearest',
+      inline: 'center',
+    })
+  }, [selection, state.yourTeam, yourSelection])
 
   const selectFighter = (type: 'canon' | 'oc', id: string) => {
     if (selection?.type === type && selection.id === id) return
@@ -145,10 +157,11 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
     </div> : <>
       <div className="opponent-roster"><h2>Opponent Team</h2><div>{state.opponentTeam.map((item) => <span key={item.id} className={item.used ? 'used' : undefined}>{item.character.name}</span>)}</div></div>
       <h2 className="fighter-heading">{yourSelection ? 'Fighter Locked In' : 'Choose Your Fighter'}</h2>
-      <div className="battle-options"><div className="battle-hand">{state.yourTeam.map((item) => <div key={item.id} className={`${item.sacrificed ? 'battle-card-sacrificed' : ''}${item.empowered ? ' battle-card-empowered' : ''}${hasBoonEffect(item) ? ' battle-card-boon-enhanced' : ''}`}><GameCard character={item.character} compact showPower used={item.used || item.sacrificed} selected={(yourSelection?.id ?? selection?.id) === item.id} onHover={sounds.playCardHover} onClick={yourSelection || item.sacrificed || item.used ? undefined : () => selectFighter('canon', item.id)} />{item.sacrificed && <strong>ABSORBED</strong>}{item.empowered && <span><b>EMPOWERED</b><small>+{item.powerBoost?.toLocaleString()} Power</small></span>}{hasBoonEffect(item) && <span className="battle-card-boon" title={`Base ${item.baseOverall ?? item.character.overall} OVR · Boon ${signedValue(item.boonOverallBonus ?? 0)} OVR · Boon ${signedValue(item.boonPowerBonus ?? 0)} Power`}><b>BOON</b><small>{boonBonusText(item)}</small></span>}</div>)}</div>
+      <div className="battle-options"><div className="battle-hand" ref={battleHandRef}>{state.yourTeam.map((item) => <div key={item.id} data-fighter-id={item.id} className={`battle-hand-card${item.sacrificed ? ' battle-card-sacrificed' : ''}${item.empowered ? ' battle-card-empowered' : ''}${hasBoonEffect(item) ? ' battle-card-boon-enhanced' : ''}`}><GameCard character={item.character} compact showPower used={item.used || item.sacrificed} selected={(yourSelection?.id ?? selection?.id) === item.id} onHover={sounds.playCardHover} onClick={yourSelection || item.sacrificed || item.used ? undefined : () => selectFighter('canon', item.id)} />{item.sacrificed && <strong>ABSORBED</strong>}{item.empowered && <span><b>EMPOWERED</b><small>+{item.powerBoost?.toLocaleString()} Power</small></span>}{hasBoonEffect(item) && <span className="battle-card-boon" title={`Base ${item.baseOverall ?? item.character.overall} OVR · Boon ${signedValue(item.boonOverallBonus ?? 0)} OVR · Boon ${signedValue(item.boonPowerBonus ?? 0)} Power`}><b>BOON</b><small>{boonBonusText(item)}</small></span>}</div>)}</div>
+      <div className="battle-hand-pagination" aria-label="Fighter selection">{state.yourTeam.map((item) => <button key={item.id} type="button" aria-label={`Select ${item.character.name}`} aria-current={(yourSelection?.id ?? selection?.id) === item.id ? 'true' : undefined} disabled={Boolean(yourSelection) || item.sacrificed || item.used} onClick={() => selectFighter('canon', item.id)} />)}</div>
       {state.yourOC && <button type="button" className={`oc-reserve-card ${state.yourOC.used ? 'used' : ''} ${selection?.type === 'oc' ? 'selected' : ''}`} disabled={Boolean(yourSelection) || state.yourOC.used} onMouseEnter={sounds.playCardHover} onClick={() => selectFighter('oc', state.yourOC!.id)}><small>OC Reserve</small><i>✦</i><strong>{state.yourOC.name}</strong><span className="oc-reserve-verse">{state.yourOC.verseName}</span><b>{state.yourOC.overall} OVR</b><span className="oc-reserve-power">{state.yourOC.powerScore.toLocaleString()} Power</span>{state.yourOC.boost > 0 && <em>Boosted +{state.yourOC.boost} OVR</em>}{hasBoonEffect(state.yourOC) && <span className="oc-boon-effect" title={`Base ${state.yourOC.baseOverall ?? state.yourOC.overall} OVR · Prep +${state.yourOC.preparationOverallBonus ?? 0} · Boon ${signedValue(state.yourOC.boonOverallBonus ?? 0)} OVR · Boon ${signedValue(state.yourOC.boonPowerBonus ?? 0)} Power`}>Boon · {boonBonusText(state.yourOC)}</span>}{selection?.type === 'oc' && <u>✓</u>}{state.yourOC.used && <u>Used</u>}</button>}</div>
       {yourSelection ? <p className="battle-lock-status">{state.opponentLocked ? 'Opponent locked in. Resolving round...' : 'Waiting for opponent...'}</p>
-        : <><button className="button button-primary lock-button" disabled={!selection || pendingAction !== null} onClick={() => selection && void onLock(selection.type, selection.id)}>{pendingAction === 'lock' ? 'Locking...' : 'Lock In'}</button><p className="battle-secret-note">▣ Your selection is secret until revealed</p></>}
+        : <><button className="button button-primary lock-button" disabled={!selection || pendingAction !== null} onClick={() => selection && void onLock(selection.type, selection.id)}><span className="lock-button-icon" aria-hidden="true">▣</span>{pendingAction === 'lock' ? 'Locking...' : 'Lock In'}</button><p className="battle-secret-note">▣ Your selection is secret until revealed</p></>}
       {!yourSelection && state.opponentLocked && <p className="battle-lock-status">Opponent has locked in.</p>}
     </>}
   </section>
