@@ -24,7 +24,7 @@ export interface MatchBoonResolutionTarget {
 
 export interface MatchBoonResolution {
   boonKey: string | null
-  status: 'applied' | 'no_eligible_target' | 'no_boon'
+  status: 'applied' | 'no_eligible_target' | 'condition_not_met' | 'configuration_error' | 'no_boon'
   resolvedValue: number | null
   resolvedVerseId: number | null
   targets: MatchBoonResolutionTarget[]

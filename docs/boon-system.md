@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 1-5 Foundation, Shop, Snapshot, and Match Effects — Implemented (application + migrations ready)**
+**Phase 1-5 Foundation, Shop, Snapshot, Match Effects, and Resolver V2 — Implemented (application + migrations ready)**
 
 Phase 1 is implemented by `docs/supabase_boon_phase_1.sql` and the matching
 frontend changes. The SQL must be run manually in Supabase before the new UI is
@@ -973,3 +973,59 @@ It should not make them ask:
 > Which Boon is mathematically mandatory?
 
 The feature succeeds when Boons increase strategy, replayability, and ranked-match engagement without overpowering drafting, OCs, or the core Anime Arena battle system.
+
+---
+
+## 31. Boon Resolver V2
+
+`docs/supabase_boon_resolver_v2.sql` upgrades the existing Phase 5 resolver in
+place for the 100-Boon catalogue. It does not add or rebalance definitions.
+For V2 definitions, the immutable `effect_config` copied into the match
+snapshot is authoritative; descriptions and legacy classification fields are
+never parsed into gameplay.
+
+Supported config roots are a shared `target`/optional `condition` with one
+`effect`, a shared target with several `effects`, or an `effects` array whose
+entries each define their own target. The strict resolver allowlists every
+target, condition, and effect mode used by `boon_catalogue_v2_100.sql`.
+Supported calculations are flat, Power percent (floor rounding), tiered,
+target-OVR/Power tiered, gap steps, roster-highest gaps, percentage Power gaps,
+random ranges, and stat floors. Configured `cap`, `floor`, `cap_bonus`,
+`min_bonus`, and `max_bonus` are applied inside the global temporary limits of
+1-99 OVR and 0-12,000 Power.
+
+Conditions and target ordering use stable pre-Boon values:
+
+```text
+base match snapshot + OC Preparation = pre-Boon reference
+pre-Boon reference + accumulated Boon modifier = final match stat
+```
+
+Canon targets are drafted, still-playable canon fighters. A playable Reserve
+OC or Champion Absorb OC can be targeted as `selected_oc`; a sacrificed
+Sacrificial support OC cannot be targeted for battle stats, but its exact
+BIGINT `verse_id` and type can still satisfy reference-only rules. AU verses
+remain distinct from their canon universes.
+
+Multi-target and multi-effect results are accumulated in the existing private
+fighter-stat rows. Each effect/target application also receives a private audit
+row containing its stable reference, requested and actually applied delta,
+random value, selected verse/branch, and final value. Positive and negative
+modifiers are temporary; permanent `characters` and `player_characters` stats
+are never updated. Risk/reward configs with separate per-effect targets exclude
+previous targets, which guarantees the seeded `other`/distinct semantics.
+
+PostgreSQL resolves target ties, random targets, random branches, and random
+values once during the existing `oc_preparation` to `battle` transaction. The
+match marker, resolution rows, fighter rows, and application rows make retries,
+refreshes, and reconnects idempotent. These private tables have RLS enabled, no
+browser grants, and no Realtime publication; the existing perspective-safe
+battle RPC remains the only client projection.
+
+If an owned inactive legacy Boon is already equipped, it remains eligible for
+a future queue snapshot but cannot return to the active Shop/roll pool. A
+snapshot without `effect_config` follows the original Phase 5 legacy mapping,
+including Administrator-only definitions. A V2 snapshot created before this
+migration that lacks structured config is recorded as `configuration_error`
+with no effect, and the match continues; it is never reinterpreted from a live
+definition. Historical battle/completed matches are not resolved or changed.
