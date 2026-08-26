@@ -1,4 +1,4 @@
-export type BoonRarity = 'common' | 'rare' | 'epic' | 'legendary'
+export type BoonRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic'
 
 export interface BoonDefinition {
   id: string

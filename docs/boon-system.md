@@ -980,6 +980,12 @@ The feature succeeds when Boons increase strategy, replayability, and ranked-mat
 
 `docs/supabase_boon_resolver_v2.sql` upgrades the existing Phase 5 resolver in
 place for the 100-Boon catalogue. It does not add or rebalance definitions.
+Administrator-only Mythic definitions are supported by the live-definition and
+match-snapshot rarity constraints. Existing deployments can apply only that
+compatibility change first through `docs/supabase_boon_mythic_rarity.sql`.
+The unchanged Tyrant's Verdict seed is provided separately in
+`docs/supabase_admin_tyrants_verdict.sql` so compatibility can be installed
+before its `mythic` rarity and zero system-only roll weight are validated.
 For V2 definitions, the immutable `effect_config` copied into the match
 snapshot is authoritative; descriptions and legacy classification fields are
 never parsed into gameplay.

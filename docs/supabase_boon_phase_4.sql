@@ -28,7 +28,7 @@ create table if not exists public.match_boon_snapshots (
   primary key (match_id, player_id),
   constraint match_boon_snapshots_rarity_check check (
     boon_rarity_snapshot is null
-    or boon_rarity_snapshot in ('common', 'rare', 'epic', 'legendary')
+    or boon_rarity_snapshot in ('common', 'rare', 'epic', 'legendary', 'mythic')
   ),
   constraint match_boon_snapshots_complete_definition_check check (
     (boon_definition_id_snapshot is null

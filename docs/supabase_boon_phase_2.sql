@@ -21,7 +21,7 @@ create table if not exists public.boon_definitions (
   constraint boon_definitions_key_format check (key = btrim(key) and key ~ '^[a-z][a-z0-9_]{1,49}$'),
   constraint boon_definitions_name_check check (name = btrim(name) and char_length(name) between 2 and 80),
   constraint boon_definitions_description_check check (description = btrim(description) and char_length(description) between 2 and 500),
-  constraint boon_definitions_rarity_check check (rarity in ('common', 'rare', 'epic', 'legendary')),
+  constraint boon_definitions_rarity_check check (rarity in ('common', 'rare', 'epic', 'legendary', 'mythic')),
   constraint boon_definitions_effect_type_format check (effect_type = btrim(effect_type) and effect_type ~ '^[a-z][a-z0-9_]{1,49}$'),
   constraint boon_definitions_effect_value_check check (effect_value is null or effect_value > 0),
   constraint boon_definitions_target_rule_format check (target_rule = btrim(target_rule) and target_rule ~ '^[a-z][a-z0-9_]{1,79}$'),

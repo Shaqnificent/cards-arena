@@ -9,6 +9,16 @@ alter table public.boon_definitions
   add column if not exists overall_effect_value integer,
   add column if not exists power_effect_value integer;
 
+-- System-only definitions never participate in player rolls, so an explicit
+-- zero roll weight is valid for them. Player-facing weights remain positive.
+alter table public.boon_definitions
+  drop constraint if exists boon_definitions_roll_weight_check;
+alter table public.boon_definitions
+  add constraint boon_definitions_roll_weight_check check (
+    (system_only = false and roll_weight > 0)
+    or (system_only = true and roll_weight >= 0)
+  );
+
 alter table public.boon_definitions
   drop constraint if exists boon_definitions_overall_effect_value_check,
   drop constraint if exists boon_definitions_power_effect_value_check;

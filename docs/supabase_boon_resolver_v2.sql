@@ -4,6 +4,31 @@
 
 begin;
 
+-- Administrator-only Mythic definitions must satisfy both the live catalogue
+-- and immutable match-snapshot rarity constraints. No balance data is changed.
+alter table public.boon_definitions
+  drop constraint if exists boon_definitions_rarity_check;
+alter table public.boon_definitions
+  add constraint boon_definitions_rarity_check check (
+    rarity in ('common', 'rare', 'epic', 'legendary', 'mythic')
+  );
+
+alter table public.boon_definitions
+  drop constraint if exists boon_definitions_roll_weight_check;
+alter table public.boon_definitions
+  add constraint boon_definitions_roll_weight_check check (
+    (system_only = false and roll_weight > 0)
+    or (system_only = true and roll_weight >= 0)
+  );
+
+alter table public.match_boon_snapshots
+  drop constraint if exists match_boon_snapshots_rarity_check;
+alter table public.match_boon_snapshots
+  add constraint match_boon_snapshots_rarity_check check (
+    boon_rarity_snapshot is null
+    or boon_rarity_snapshot in ('common', 'rare', 'epic', 'legendary', 'mythic')
+  );
+
 -- Immutable structured definition snapshot for future matches.
 alter table public.match_boon_snapshots
   add column if not exists boon_effect_config_snapshot jsonb;
