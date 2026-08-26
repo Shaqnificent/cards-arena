@@ -53,7 +53,6 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
   const eligible = !profile.is_guest && !profile.is_system_player
   const boons = useBoons(eligible)
   const matchBoon = useActiveMatchBoon(eligible)
-  const equipped = boons.dashboard.boons.find((boon) => boon.equipped) ?? null
   const displayedPoints = boons.loading || boons.error ? profile.boon_points : boons.dashboard.boonPoints
   const busy = boons.pendingId !== null || boons.rolling || boons.resolvingId !== null
   const pendingRoll = boons.dashboard.pendingRoll
@@ -117,14 +116,9 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
           : <>
             {boons.error && <div className="boon-error error-message" role="alert"><span>{boons.error}</span><button className="button button-secondary" onClick={() => void boons.refresh()}>Retry</button></div>}
 
-            <section className="boon-section" aria-labelledby="equipped-boon-heading"><div className="boon-section-heading"><div><p className="eyebrow">Active Loadout</p><h2 id="equipped-boon-heading">Equipped Boon</h2></div><small>Maximum 1</small></div>{equipped
-              ? <div className="boon-equipped-slot"><BoonCard definition={equipped.definition} owned={equipped} summary /></div>
-              : <div className="boon-empty-slot"><span aria-hidden="true">✦</span><div><strong>No Boon equipped</strong><p>You may keep your loadout empty or equip one from your inventory.</p></div></div>}
-            </section>
-
-            <section className="boon-section" aria-labelledby="owned-boons-heading"><div className="boon-section-heading"><div><p className="eyebrow">Your Collection</p><h2 id="owned-boons-heading">Your Boons</h2></div><strong>{boons.dashboard.inventoryCount} / {boons.dashboard.inventoryCapacity}<small> Inventory</small></strong></div>{boons.dashboard.boons.length === 0
+            <section className="boon-section boon-owned-section" aria-labelledby="owned-boons-heading"><div className="boon-section-heading"><div><p className="eyebrow">Your Boons</p><h2 id="owned-boons-heading">Your Boons</h2></div><strong>{boons.dashboard.inventoryCount} / {boons.dashboard.inventoryCapacity}<small> Owned</small></strong></div>{boons.dashboard.boons.length === 0
               ? <div className="boon-empty-inventory"><h3>No Boons owned yet</h3><p>Roll below to discover your first Boon.</p></div>
-              : <div className="boon-grid">{boons.dashboard.boons.map((boon) => <BoonCard key={boon.id} definition={boon.definition} owned={boon} pending={boons.pendingId === boon.id} actionsDisabled={busy} onEquip={() => void boons.equip(boon)} onUnequip={() => void boons.unequip(boon)} />)}</div>}
+              : <div className="boon-owned-grid">{boons.dashboard.boons.map((boon) => <BoonCard key={boon.id} definition={boon.definition} owned={boon} pending={boons.pendingId === boon.id} actionsDisabled={busy} onEquip={() => void boons.equip(boon)} onUnequip={() => void boons.unequip(boon)} />)}</div>}
             </section>
 
             <section className="boon-roll-shop" aria-labelledby="roll-boon-heading">

@@ -453,62 +453,106 @@
   }
 }
 
-.boon-equipped-slot {
-  width: 100%;
+.boon-owned-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 16px;
 }
 
-.boon-equipped-summary {
-  display: flex;
+.boon-owned-card {
+  display: grid;
+  grid-template-columns: 58px minmax(0,1fr) auto;
   align-items: center;
-  gap: 14px;
-  min-height: 98px;
-  padding: 20px 24px;
+  gap: 16px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 19px 20px;
   border: 1px solid var(--border);
-  border-left: 3px solid #9ca3af;
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 7px 20px rgba(30,22,52,.055);
-  box-sizing: border-box;
+  box-shadow: 0 7px 20px rgba(30,22,52,.06);
+  transition: border-color 180ms ease,box-shadow 180ms ease,transform 180ms ease;
 }
 
-.boon-equipped-summary.rarity-rare {
-  border-left-color: #3b82f6;
+.boon-owned-card.equipped {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 2px rgba(139,92,246,.09),0 10px 24px rgba(91,33,182,.1);
 }
 
-.boon-equipped-summary.rarity-epic {
-  border-left-color: $color-accent;
+@media(hover:hover) {
+  .boon-owned-card:hover {
+    border-color: #c4b5fd;
+    box-shadow: 0 12px 28px rgba(67,39,108,.12);
+    transform: translateY(-2px);
+  }
 }
 
-.boon-equipped-summary.rarity-legendary {
-  border-left-color: #d97706;
-}
-
-.boon-equipped-summary>.boon-mark {
-  width: 46px;
-  height: 46px;
-}
-
-.boon-equipped-summary>div {
+.boon-owned-mark {
   display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  color: #7c3aed;
+  background: #f3eefe;
+  font-size: 1.35rem;
+}
+
+.boon-owned-card.rarity-rare .boon-owned-mark {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.boon-owned-card.rarity-epic .boon-owned-mark {
+  color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.boon-owned-card.rarity-legendary .boon-owned-mark {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.boon-owned-card.rarity-mythic .boon-owned-mark {
+  color: #c026d3;
+  background: #fdf4ff;
+}
+
+.boon-owned-copy {
+  display: grid;
+  grid-template-columns: max-content minmax(0,1fr);
+  align-items: center;
   justify-items: start;
-  gap: 7px;
+  gap: 7px 9px;
   min-width: 0;
 }
 
-.boon-equipped-summary h3 {
+.boon-owned-copy h3 {
+  grid-column: 1/-1;
+  grid-row: 2;
   overflow: hidden;
   margin: 0;
   color: var(--text-h);
-  font-size: 1rem;
+  font-size: 1.05rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.boon-equipped-summary>.boon-equipped-badge {
-  margin-left: auto;
+.boon-owned-copy .boon-equipped-badge {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
 }
 
-.boon-empty-slot, .boon-empty-inventory {
+.boon-owned-card>.button {
+  width: auto;
+  min-width: 94px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: .72rem;
+}
+
+.boon-empty-inventory {
   display: flex;
   align-items: center;
   gap: 17px;
@@ -519,22 +563,11 @@
   background: #faf9ff;
 }
 
-.boon-empty-slot>span {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  flex: 0 0 auto;
-  border-radius: 12px;
-  color: $color-purple;
-  background: #f3eefe;
-}
-
-.boon-empty-slot strong, .boon-empty-inventory h3 {
+.boon-empty-inventory h3 {
   color: var(--text-h);
 }
 
-.boon-empty-slot p, .boon-empty-inventory p {
+.boon-empty-inventory p {
   margin: 5px 0 0;
   font-size: .78rem;
 }
@@ -1017,7 +1050,7 @@
   .boon-points-card {
     min-width: 0;
   }
-  .boon-grid, .boon-grid.catalogue {
+  .boon-grid, .boon-grid.catalogue, .boon-owned-grid {
     grid-template-columns: 1fr;
   }
   .boon-card>footer {
@@ -1073,16 +1106,21 @@
   .boon-card {
     padding: 18px;
   }
-  .boon-equipped-summary {
-    min-height: 86px;
-    padding: 16px;
-  }
-  .boon-equipped-summary>.boon-mark {
-    width: 40px;
-    height: 40px;
-  }
   .boon-equipped-badge {
     font-size: .57rem;
+  }
+  .boon-owned-card {
+    grid-template-columns: 50px minmax(0,1fr);
+    gap: 13px;
+    padding: 16px;
+  }
+  .boon-owned-mark {
+    width: 50px;
+    height: 50px;
+  }
+  .boon-owned-card>.button {
+    grid-column: 1/-1;
+    width: 100%;
   }
   .boon-section-heading h2 {
     font-size: 1.45rem;
