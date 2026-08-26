@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { PlayerAvatar } from './PlayerAvatar'
+import { cancelMatchmaking } from '../features/matchmaking/services/matchmaking'
+import { supabase } from '../lib/supabase'
 
 type ActivePage = 'play' | 'characters' | 'loadout' | 'leaderboard' | 'suggestions'
 
@@ -21,30 +23,89 @@ const navigation: Array<{ key: ActivePage; label: string; to: string }> = [
 export function AppHeader({ active, username, avatarUrl }: AppHeaderProps) {
   const location = useLocation()
   const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null)
+  const [profileMenuPath, setProfileMenuPath] = useState<string | null>(null)
+  const [signingOut, setSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuOpen = mobileMenuPath === location.pathname
+  const profileMenuOpen = profileMenuPath === location.pathname
 
   useEffect(() => {
-    if (!mobileMenuOpen) return
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMobileMenuPath(null)
+      if (event.key === 'Escape') {
+        setMobileMenuPath(null)
+        setProfileMenuPath(null)
+      }
     }
     document.addEventListener('keydown', closeOnEscape)
     return () => document.removeEventListener('keydown', closeOnEscape)
-  }, [mobileMenuOpen])
+  }, [])
+
+  useEffect(() => {
+    if (!profileMenuOpen) return
+    const closeOutside = (event: PointerEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) setProfileMenuPath(null)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [profileMenuOpen])
+
+  const handleSignOut = async () => {
+    if (signingOut) return
+    setSigningOut(true)
+    setSignOutError(null)
+    try {
+      try { await cancelMatchmaking() } catch { /* Sign-out remains available if matchmaking is unavailable. */ }
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        setSignOutError(error.message)
+        setSigningOut(false)
+      }
+    } catch (error) {
+      setSignOutError(error instanceof Error ? error.message : 'Could not sign out. Try again.')
+      setSigningOut(false)
+    }
+  }
 
   return <header className="app-header">
     <Link className="brand-link" to="/" onClick={() => setMobileMenuPath(null)}>ANIME ARENA</Link>
     <nav className="lobby-nav" aria-label="Primary navigation">
       {navigation.map((item) => <Link key={item.key} className={`nav-link${active === item.key ? ' active' : ''}`} aria-current={active === item.key ? 'page' : undefined} to={item.to}>{item.label}</Link>)}
     </nav>
-    <PlayerAvatar compact username={username} avatarUrl={avatarUrl} />
+    <div className="header-profile-menu" ref={profileMenuRef}>
+      <button
+        type="button"
+        className={`header-profile-trigger${profileMenuOpen ? ' open' : ''}`}
+        aria-label={`${username} profile menu`}
+        aria-haspopup="menu"
+        aria-expanded={profileMenuOpen}
+        onClick={() => {
+          setMobileMenuPath(null)
+          setSignOutError(null)
+          setProfileMenuPath((path) => path === location.pathname ? null : location.pathname)
+        }}
+      >
+        <PlayerAvatar compact username={username} avatarUrl={avatarUrl} />
+        <span className="header-profile-chevron" aria-hidden="true" />
+      </button>
+      {profileMenuOpen && <div className="header-profile-popover" role="menu">
+        <button type="button" role="menuitem" disabled={signingOut} onClick={() => void handleSignOut()}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10M14.5 8.5 18 12l-3.5 3.5M9 12h9" /></svg>
+          <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
+        </button>
+        {signOutError && <p role="alert">{signOutError}</p>}
+      </div>}
+    </div>
     <button
       type="button"
       className={`mobile-nav-toggle${mobileMenuOpen ? ' open' : ''}`}
       aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
       aria-controls="mobile-primary-navigation"
       aria-expanded={mobileMenuOpen}
-      onClick={() => setMobileMenuPath((path) => path === location.pathname ? null : location.pathname)}
+      onClick={() => {
+        setProfileMenuPath(null)
+        setMobileMenuPath((path) => path === location.pathname ? null : location.pathname)
+      }}
     >
       <span /><span /><span />
     </button>

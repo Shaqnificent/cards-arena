@@ -41,7 +41,16 @@ export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: s
           {!boonEligible ? <div className="loadout-card-empty"><strong>Sign in to earn Boons</strong><p>Guest profiles can manage OCs, but persistent Boon Points and inventory require a player account.</p></div>
             : summary.boonLoading ? <p className="loadout-card-state">Loading your Boon inventory...</p>
               : summary.boonError ? <div className="loadout-card-state error" role="alert"><span>{summary.boonError}</span><button type="button" className="text-button" onClick={() => void summary.refresh()}>Try again</button></div>
-                : equippedBoon ? <div className={`loadout-equipped-boon rarity-${equippedBoon.definition.rarity}`}><span aria-hidden="true">✦</span><div><span className={`boon-rarity ${equippedBoon.definition.rarity}`}>{equippedBoon.definition.rarity}</span><h3>{equippedBoon.definition.name}</h3><small>Equipped</small></div></div>
+                : equippedBoon ? <div className={`loadout-equipped-boon rarity-${equippedBoon.definition.rarity}`}>
+                  <span className="loadout-boon-mark" aria-hidden="true">✦</span>
+                  <div className="loadout-equipped-boon-copy">
+                    <span className={`boon-rarity ${equippedBoon.definition.rarity}`}>{equippedBoon.definition.rarity}</span>
+                    <h3>{equippedBoon.definition.name}</h3>
+                    <span className="loadout-boon-equipped"><span aria-hidden="true">✓</span> Equipped</span>
+                    <p>{equippedBoon.definition.description}</p>
+                  </div>
+                  <span className="loadout-boon-watermark" aria-hidden="true">✦</span>
+                </div>
                   : <div className="loadout-card-empty"><strong>No Boon equipped</strong><p>Inventory {summary.boonDashboard?.inventoryCount ?? 0} / 2</p></div>}
           {matchBoon.loading && boonEligible ? <ActiveMatchBoonLoading /> : matchBoon.activeMatch && <ActiveMatchBoonNotice activeMatch={matchBoon.activeMatch} />}
           {matchBoon.error && <p className="loadout-match-boon-error" role="alert">{matchBoon.error}</p>}
