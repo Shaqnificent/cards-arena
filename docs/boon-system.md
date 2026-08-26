@@ -1015,6 +1015,16 @@ modifiers are temporary; permanent `characters` and `player_characters` stats
 are never updated. Risk/reward configs with separate per-effect targets exclude
 previous targets, which guarantees the seeded `other`/distinct semantics.
 
+Ordered effect arrays can also name a single resolved target with `group`,
+reuse it without another roll through `same_resolved_target` plus
+`source_group`, or exclude it from a later target pool with `exclude_group`.
+The group map stores the private, match-scoped fighter-stat UUID—not a display
+name—in `match_boon_effect_applications.metadata` and in the final resolution
+summary. Missing source/exclusion groups and ambiguous grouped multi-targets
+become safe `configuration_error` diagnostics. An exclusion that leaves no
+candidate becomes `no_eligible_target` for that effect while the match keeps
+advancing.
+
 PostgreSQL resolves target ties, random targets, random branches, and random
 values once during the existing `oc_preparation` to `battle` transaction. The
 match marker, resolution rows, fighter rows, and application rows make retries,

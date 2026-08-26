@@ -144,7 +144,11 @@ begin
     ) into result
     from public.boon_definitions d
     where d.active = true and d.system_only = true
-      and d.key in ('admin_sovereign_ascension', 'admin_apex_overdrive')
+      and d.key in (
+        'admin_sovereign_ascension',
+        'admin_apex_overdrive',
+        'admin_tyrants_verdict'
+      )
     order by random()
     limit 1;
     return result;
@@ -264,6 +268,12 @@ declare
   first_resolved_branch text;
   audit_summary jsonb;
   diagnostic_entries jsonb;
+  resolved_groups jsonb;
+  group_name text;
+  source_group_name text;
+  exclude_group_name text;
+  grouped_target_id uuid;
+  side_already_resolved boolean;
 begin
   select * into match_row
   from public.matches m
@@ -271,21 +281,27 @@ begin
   for update;
 
   if not found then raise exception 'Match unavailable'; end if;
+  if match_row.boon_effects_resolved_at is not null then return; end if;
   if match_row.status <> 'oc_preparation' then
     raise exception 'Boon effects require completed OC preparation';
   end if;
-  if match_row.boon_effects_resolved_at is not null then return; end if;
   if (select count(*) from public.match_oc_preparations prep
       where prep.match_id = p_match_id) <> 2 then
     raise exception 'Both OC preparations are required before Boon resolution';
   end if;
-  if exists (select 1 from public.match_boon_resolutions resolution
-      where resolution.match_id = p_match_id) then
-    raise exception 'Incomplete Boon resolution state already exists';
-  end if;
-
   foreach current_player in array array[match_row.player_one_id, match_row.player_two_id]
   loop
+    -- A completed side is immutable. This makes a repeated direct invocation or
+    -- a resumed transition reuse the durable result instead of rolling again.
+    select coalesce(resolution.metadata ? 'applications', false)
+      into side_already_resolved
+    from public.match_boon_resolutions resolution
+    where resolution.match_id = p_match_id
+      and resolution.player_id = current_player;
+    if coalesce(side_already_resolved, false) then
+      continue;
+    end if;
+
     select * into snapshot_row
     from public.match_boon_snapshots snapshot
     where snapshot.match_id = p_match_id
@@ -303,7 +319,8 @@ begin
       snapshot_row.boon_effect_value_snapshot,
       case when snapshot_row.boon_definition_id_snapshot is null
         then 'no_boon' else 'no_eligible_target' end
-    );
+    )
+    on conflict (match_id, player_id) do nothing;
 
     -- Canon stats are immutable draft snapshots plus the already-resolved
     -- Sacrificial preparation transfer. Absorbed fighters remain unavailable.
@@ -328,7 +345,8 @@ begin
     from public.match_characters mc
     left join public.match_oc_power_boosts boost
       on boost.match_id = mc.match_id and boost.match_character_id = mc.id
-    where mc.match_id = p_match_id and mc.owner_player_id = current_player;
+    where mc.match_id = p_match_id and mc.owner_player_id = current_player
+    on conflict do nothing;
 
     -- Reserve is playable for both OC types. Join the private selection
     -- snapshot so a legitimate no-OC `decision = none` preparation row is
@@ -355,9 +373,20 @@ begin
       and oc_selection.player_character_id = prep.player_character_id
     where prep.match_id = p_match_id
       and prep.player_id = current_player
-      and prep.decision <> 'none';
+      and prep.decision <> 'none'
+    on conflict do nothing;
 
     if snapshot_row.boon_definition_id_snapshot is null then
+      update public.match_boon_resolutions resolution set
+        metadata = jsonb_build_object(
+          'targetCount', 0,
+          'overallCap', 99,
+          'powerCap', 12000,
+          'resolvedGroups', '{}'::jsonb,
+          'applications', '[]'::jsonb
+        )
+      where resolution.match_id = p_match_id
+        and resolution.player_id = current_player;
       continue;
     end if;
 
@@ -374,7 +403,9 @@ begin
           'rolloutSafe', true,
           'targetCount', 0,
           'overallCap', 99,
-          'powerCap', 12000
+          'powerCap', 12000,
+          'resolvedGroups', '{}'::jsonb,
+          'applications', '[]'::jsonb
         )
       where resolution.match_id = p_match_id
         and resolution.player_id = current_player;
@@ -431,7 +462,9 @@ begin
           'reason', 'unsupported_legacy_effect_type',
           'targetCount', 0,
           'overallCap', 99,
-          'powerCap', 12000
+          'powerCap', 12000,
+          'resolvedGroups', '{}'::jsonb,
+          'applications', '[]'::jsonb
         )
       where resolution.match_id = p_match_id
         and resolution.player_id = current_player;
@@ -483,7 +516,9 @@ begin
           'reason', 'invalid_effect_config_shape',
           'targetCount', 0,
           'overallCap', 99,
-          'powerCap', 12000
+          'powerCap', 12000,
+          'resolvedGroups', '{}'::jsonb,
+          'applications', '[]'::jsonb
         )
       where resolution.match_id = p_match_id
         and resolution.player_id = current_player;
@@ -502,13 +537,71 @@ begin
     first_resolved_branch := null;
     used_ids := array[]::uuid[];
     diagnostic_entries := '[]'::jsonb;
+    resolved_groups := '{}'::jsonb;
+
+    -- Recover any durable partial result before continuing. Normal execution is
+    -- atomic, but this also makes repair/retry workflows deterministic.
+    select
+      count(*),
+      coalesce(sum(application.requested_delta)
+        filter (where application.stat = 'overall'), 0),
+      coalesce(sum(application.requested_delta)
+        filter (where application.stat = 'power'), 0),
+      (array_agg(application.resolved_random_value order by application.effect_index,
+        application.target_order) filter (where application.resolved_random_value is not null))[1],
+      (array_agg(application.resolved_verse_id order by application.effect_index,
+        application.target_order) filter (where application.resolved_verse_id is not null))[1],
+      (array_agg(application.resolved_branch order by application.effect_index,
+        application.target_order) filter (where application.resolved_branch is not null))[1],
+      coalesce(array_agg(distinct application.fighter_stat_id), array[]::uuid[])
+    into applied_count, requested_overall_total, requested_power_total,
+      first_random_value, first_resolved_verse, first_resolved_branch, used_ids
+    from public.match_boon_effect_applications application
+    where application.match_id = p_match_id
+      and application.player_id = current_player;
+
+    select coalesce(jsonb_object_agg(grouped.group_key, grouped.fighter_stat_id), '{}'::jsonb)
+      into resolved_groups
+    from (
+      select distinct on (application.metadata ->> 'group')
+        application.metadata ->> 'group' as group_key,
+        application.fighter_stat_id::text as fighter_stat_id
+      from public.match_boon_effect_applications application
+      where application.match_id = p_match_id
+        and application.player_id = current_player
+        and jsonb_typeof(application.metadata -> 'group') = 'string'
+        and nullif(btrim(application.metadata ->> 'group'), '') is not null
+      order by application.metadata ->> 'group', application.effect_index,
+        application.target_order
+    ) grouped;
 
     for effect_item in select value from jsonb_array_elements(effect_items)
     loop
       target_rule := effect_item ->> 'target';
       condition_config := effect_item -> 'condition';
+      group_name := case when jsonb_typeof(effect_item -> 'group') = 'string'
+        then nullif(btrim(effect_item ->> 'group'), '') else null end;
+      source_group_name := case when jsonb_typeof(effect_item -> 'source_group') = 'string'
+        then nullif(btrim(effect_item ->> 'source_group'), '') else null end;
+      exclude_group_name := case when jsonb_typeof(effect_item -> 'exclude_group') = 'string'
+        then nullif(btrim(effect_item ->> 'exclude_group'), '') else null end;
+      -- Preserve V2's legacy per-effect de-duplication, except for deterministic
+      -- targets that are explicitly meant to be reused across effects.
       excluded_ids := case when not root_has_target and effect_index_value > 0
+          and target_rule not in ('selected_oc', 'same_resolved_target')
         then used_ids else array[]::uuid[] end;
+
+      -- Effects already committed to the private audit table are complete and
+      -- must never be recalculated or rerolled.
+      if exists (
+        select 1 from public.match_boon_effect_applications application
+        where application.match_id = p_match_id
+          and application.player_id = current_player
+          and application.effect_index = effect_index_value
+      ) then
+        effect_index_value := effect_index_value + 1;
+        continue;
+      end if;
 
       if target_rule is null or effect_item ->> 'stat' not in ('overall', 'power')
         or effect_item ->> 'mode' is null then
@@ -520,10 +613,82 @@ begin
         continue;
       end if;
 
-      target_result := public.resolve_match_boon_targets_v2(
-        target_rule, p_match_id, current_player, condition_config,
-        effect_item -> 'options', excluded_ids
-      );
+      if (effect_item ? 'group' and group_name is null)
+        or (effect_item ? 'source_group' and source_group_name is null)
+        or (effect_item ? 'exclude_group' and exclude_group_name is null)
+        or coalesce(length(group_name), 0) > 64
+        or coalesce(length(source_group_name), 0) > 64
+        or coalesce(length(exclude_group_name), 0) > 64 then
+        configuration_error_count := configuration_error_count + 1;
+        diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+          'effectIndex', effect_index_value, 'reason', 'invalid_target_group'
+        ));
+        effect_index_value := effect_index_value + 1;
+        continue;
+      end if;
+
+      if exclude_group_name is not null then
+        if not (resolved_groups ? exclude_group_name) then
+          configuration_error_count := configuration_error_count + 1;
+          diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+            'effectIndex', effect_index_value, 'reason', 'unresolved_exclude_group',
+            'excludeGroup', exclude_group_name
+          ));
+          effect_index_value := effect_index_value + 1;
+          continue;
+        end if;
+        grouped_target_id := (resolved_groups ->> exclude_group_name)::uuid;
+        excluded_ids := array_append(excluded_ids, grouped_target_id);
+      end if;
+
+      if group_name is not null and resolved_groups ? group_name then
+        configuration_error_count := configuration_error_count + 1;
+        diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+          'effectIndex', effect_index_value, 'reason', 'duplicate_target_group',
+          'group', group_name
+        ));
+        effect_index_value := effect_index_value + 1;
+        continue;
+      end if;
+
+      if target_rule = 'same_resolved_target' then
+        if source_group_name is null or not (resolved_groups ? source_group_name) then
+          configuration_error_count := configuration_error_count + 1;
+          diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+            'effectIndex', effect_index_value, 'reason', 'unresolved_source_group',
+            'sourceGroup', source_group_name
+          ));
+          effect_index_value := effect_index_value + 1;
+          continue;
+        end if;
+        grouped_target_id := (resolved_groups ->> source_group_name)::uuid;
+        if not exists (
+          select 1 from public.match_boon_fighter_stats fighter_stat
+          where fighter_stat.id = grouped_target_id
+            and fighter_stat.match_id = p_match_id
+            and fighter_stat.player_id = current_player
+            and fighter_stat.eligible_for_battle
+        ) then
+          configuration_error_count := configuration_error_count + 1;
+          diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+            'effectIndex', effect_index_value, 'reason', 'invalid_source_group_target',
+            'sourceGroup', source_group_name
+          ));
+          effect_index_value := effect_index_value + 1;
+          continue;
+        end if;
+        target_result := jsonb_build_object(
+          'valid', true,
+          'targetIds', case when grouped_target_id = any(excluded_ids)
+            then '[]'::jsonb else jsonb_build_array(grouped_target_id) end,
+          'branch', 'same_resolved_target'
+        );
+      else
+        target_result := public.resolve_match_boon_targets_v2(
+          target_rule, p_match_id, current_player, condition_config,
+          effect_item -> 'options', excluded_ids
+        );
+      end if;
       if coalesce((target_result ->> 'valid')::boolean, false) = false then
         configuration_error_count := configuration_error_count + 1;
         diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
@@ -537,6 +702,16 @@ begin
       select coalesce(array_agg(target_value::uuid), array[]::uuid[])
         into target_ids
       from jsonb_array_elements_text(target_result -> 'targetIds') target_value;
+
+      if group_name is not null and coalesce(array_length(target_ids, 1), 0) > 1 then
+        configuration_error_count := configuration_error_count + 1;
+        diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+          'effectIndex', effect_index_value, 'reason', 'ambiguous_group_target',
+          'group', group_name
+        ));
+        effect_index_value := effect_index_value + 1;
+        continue;
+      end if;
 
       -- Matching targets are filtered individually, rather than requiring
       -- every drafted fighter to satisfy the predicate.
@@ -567,6 +742,9 @@ begin
         continue;
       elsif coalesce(array_length(target_ids, 1), 0) = 0 then
         no_target_count := no_target_count + 1;
+        diagnostic_entries := diagnostic_entries || jsonb_build_array(jsonb_build_object(
+          'effectIndex', effect_index_value, 'reason', 'no_eligible_target'
+        ));
         effect_index_value := effect_index_value + 1;
         continue;
       end if;
@@ -676,10 +854,35 @@ begin
           (target_result ->> 'resolvedVerseId')::bigint,
           target_result ->> 'branch',
           coalesce(calculation -> 'metadata', '{}'::jsonb)
+            || jsonb_strip_nulls(jsonb_build_object(
+              'boonDefinitionId', snapshot_row.boon_definition_id_snapshot,
+              'boonKey', snapshot_row.boon_key_snapshot,
+              'effectIndex', effect_index_value,
+              'targetId', target_id,
+              'group', group_name,
+              'sourceGroup', source_group_name,
+              'excludeGroup', exclude_group_name,
+              'stat', effect_item ->> 'stat',
+              'resolvedValue', value_after,
+              'random', target_rule like 'random%'
+            ))
         );
         applied_count := applied_count + 1;
         target_order_value := target_order_value + 1;
       end loop;
+      if group_name is not null and exists (
+        select 1 from public.match_boon_effect_applications application
+        where application.match_id = p_match_id
+          and application.player_id = current_player
+          and application.effect_index = effect_index_value
+      ) then
+        resolved_groups := jsonb_set(
+          resolved_groups,
+          array[group_name],
+          to_jsonb(target_ids[1]::text),
+          true
+        );
+      end if;
       effect_index_value := effect_index_value + 1;
     end loop;
 
@@ -695,7 +898,8 @@ begin
       'finalValue', application.final_value,
       'randomValue', application.resolved_random_value,
       'resolvedVerseId', application.resolved_verse_id,
-      'resolvedBranch', application.resolved_branch
+      'resolvedBranch', application.resolved_branch,
+      'metadata', application.metadata
     ) order by application.effect_index, application.target_order), '[]'::jsonb)
       into audit_summary
     from public.match_boon_effect_applications application
@@ -723,6 +927,7 @@ begin
         'overallFloor', 1,
         'powerCap', 12000,
         'powerFloor', 0,
+        'resolvedGroups', resolved_groups,
         'diagnostics', diagnostic_entries,
         'applications', audit_summary
       )
