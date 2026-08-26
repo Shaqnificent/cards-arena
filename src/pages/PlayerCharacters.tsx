@@ -12,11 +12,16 @@ import { isOcSelectableVerse } from '../lib/randomCharacterTheme'
 import { useOcFamilyIdentity } from '../features/social/hooks/useOcFamilyIdentity'
 import { FamilyLogo } from '../features/social/components/FamilyLogo'
 import { validateFamilyLogo } from '../features/social/services/ocFamilyIdentity'
+import type { AvatarMode } from '../types/profile'
 
 interface PlayerCharactersProps {
   currentUserId: string
   username: string
   avatarUrl: string | null
+  avatarMode: AvatarMode
+  avatarBgColor: string
+  avatarTextColor: string
+  profileId?: string
   isGuest: boolean
   isSystemPlayer: boolean
 }
@@ -55,7 +60,7 @@ function CreationFieldIcon({ type }: { type: 'name' | 'verse' | 'fighter' }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 6 6-2 2-6-6 2-2Zm14 0-6 6 2 2 6-6-2-2ZM7 13l4 4-4 4-4-4 4-4Zm10 0 4 4-4 4-4-4 4-4Z" /></svg>
 }
 
-export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, isSystemPlayer }: PlayerCharactersProps) {
+export function PlayerCharacters({ currentUserId, username, avatarUrl, avatarMode, avatarBgColor, avatarTextColor, profileId, isGuest, isSystemPlayer }: PlayerCharactersProps) {
   const collection = usePlayerCharacters()
   const progression = useOcProgression()
   const { verses, loading: versesLoading, error: versesError } = useVerses()
@@ -293,7 +298,7 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, isGuest, 
   }
 
   return <main className="oc-page">
-    <AppHeader active="loadout" username={username} avatarUrl={avatarUrl} />
+    <AppHeader active="loadout" username={username} avatarUrl={avatarUrl} avatarMode={avatarMode} avatarBgColor={avatarBgColor} avatarTextColor={avatarTextColor} profileId={profileId} />
     <section className="oc-content" aria-labelledby="oc-heading">
       <LoadoutNav active="ocs" />
       <header className="oc-hero"><div><p className="eyebrow">My Fighters</p><h1 id="oc-heading">OC Family</h1><p>Create and develop your own fighters across the Anime Arena universes.</p></div><div className="oc-hero-actions"><span className="oc-collection-count">{active.length} / {MAX_ACTIVE_OCS}<small>Collection</small></span><strong>{equipped.length} / 3 <small>Equipped</small></strong>{canCustomizeFamily && <button className="button button-secondary oc-customize-family oc-hero-icon-button" title={familyIdentity.identity ? 'Edit Family' : 'Customize Family'} aria-label={familyIdentity.identity ? 'Edit OC Family' : 'Customize OC Family'} onClick={openFamilyEditor} disabled={familyIdentity.loading}><EditIcon /></button>}<button className="button button-primary oc-hero-icon-button" title={collectionAtCapacity ? 'OC collection is full' : 'Create OC'} aria-label={collectionAtCapacity ? 'OC collection is full' : 'Create OC'} onClick={openCreation} disabled={versesLoading || Boolean(versesError) || ocSelectableVerses.length === 0 || collectionAtCapacity}><AddIcon /></button></div></header>

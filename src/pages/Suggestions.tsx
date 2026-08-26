@@ -39,7 +39,7 @@ const faqs = [
 
 export function Suggestions({ currentUserId, profile, avatarUrl }: Props) {
   const [tab, setTab] = useState<CommunityTab>('guide')
-  return <main className="suggestions-page community-page"><AppHeader active="suggestions" username={profile.username} avatarUrl={avatarUrl}/><section className="suggestions-content community-content">
+  return <main className="suggestions-page community-page"><AppHeader active="suggestions" username={profile.username} avatarUrl={avatarUrl} avatarMode={profile.avatar_mode} avatarBgColor={profile.avatar_bg_color} avatarTextColor={profile.avatar_text_color} profileId={!profile.is_guest && !profile.is_system_player ? profile.id : undefined}/><section className="suggestions-content community-content">
     <header className="community-hero"><div><p className="eyebrow">Community</p><h1>Game Guide</h1><p>Learn how Anime Arena works, review common questions, and share ideas for improving the game.</p></div><div className="community-guide-art" aria-hidden="true"><span>✦</span><div><b>⌑</b><i>⚔</i></div><span>✦</span></div></header>
     <div className="community-tabs" role="tablist" aria-label="Community sections">{([['guide','▣','How to Play'],['faq','?','FAQ'],['suggestions','♧','Suggestions']] as Array<[CommunityTab,string,string]>).map(([key,icon,label])=><button key={key} role="tab" aria-selected={tab===key} className={tab===key?'active':''} onClick={()=>setTab(key)}><i aria-hidden="true">{icon}</i>{label}</button>)}</div>
     {tab==='guide'?<HowToPlay/>:tab==='faq'?<Faq/>:<SuggestionsBoard currentUserId={currentUserId} profile={profile}/>} 

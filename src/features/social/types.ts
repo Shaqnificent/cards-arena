@@ -46,6 +46,10 @@ export interface PublicPlayerProfile {
   playerId: string
   displayName: string
   avatarUrl: string | null
+  avatarMode: AvatarMode
+  avatarBgColor: string
+  avatarTextColor: string
+  usernameChangesRemaining: number | null
   wins: number
   losses: number
   winRate: number
@@ -53,3 +57,4 @@ export interface PublicPlayerProfile {
   joinedAt: string
   ocFamily: PublicOcFamily
 }
+import type { AvatarMode } from '../../types/profile'

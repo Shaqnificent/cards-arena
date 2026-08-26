@@ -104,7 +104,7 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
   }
 
   return <main className="boons-page">
-    <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} />
+    <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} avatarMode={profile.avatar_mode} avatarBgColor={profile.avatar_bg_color} avatarTextColor={profile.avatar_text_color} profileId={!profile.is_guest && !profile.is_system_player ? profile.id : undefined} />
     <div className="boon-content">
       <LoadoutNav active="boons" />
       <header className="boon-hero"><div><p className="eyebrow">Boon Shop</p><h1>Boons</h1><p>Spend Boon Points to discover reusable arena modifiers and manage your two-slot collection.</p></div><div className="boon-points-card"><span aria-hidden="true">✦</span><div><small>Boon Points</small><strong>{(eligible ? displayedPoints : 0).toLocaleString()} BP</strong></div></div></header>

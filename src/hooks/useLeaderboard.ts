@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { LeaderboardPlayer } from '../types/leaderboard'
+import type { AvatarMode } from '../types/profile'
 
 interface LeaderboardProfileRow {
   id: string
   username: string
   avatar_url: string | null
+  avatar_mode: AvatarMode
+  avatar_bg_color: string
+  avatar_text_color: string
   is_guest: boolean
   is_system_player: boolean
   wins: number
@@ -27,7 +31,7 @@ export function useLeaderboard(limit = 100): LeaderboardState {
     const loadLeaderboard = async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, is_guest, is_system_player, wins, losses')
+        .select('id, username, avatar_url, avatar_mode, avatar_bg_color, avatar_text_color, is_guest, is_system_player, wins, losses')
         .eq('is_guest', false)
 
       if (!isCurrent) return
@@ -44,6 +48,9 @@ export function useLeaderboard(limit = 100): LeaderboardState {
             id: profile.id,
             username: profile.username,
             avatarUrl: profile.avatar_url,
+            avatarMode: profile.avatar_mode,
+            avatarBgColor: profile.avatar_bg_color,
+            avatarTextColor: profile.avatar_text_color,
             wins: profile.wins,
             losses: profile.losses,
             gamesPlayed,

@@ -31,7 +31,7 @@
   box-shadow: 0 0 0 3px rgba(124,58,237,.1);
 }
 
-.header-profile-trigger:focus-visible, .header-profile-popover button:focus-visible {
+.header-profile-trigger:focus-visible, .header-profile-popover button:focus-visible, .header-profile-popover a:focus-visible {
   outline: 3px solid rgba(167,139,250,.42);
   outline-offset: 3px;
 }
@@ -80,7 +80,7 @@
   transform: rotate(45deg);
 }
 
-.header-profile-popover>button {
+.header-profile-popover>button, .header-profile-popover>a {
   position: relative;
   z-index: 1;
   display: flex;
@@ -98,11 +98,21 @@
   font-weight: 750;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .header-profile-popover>button:hover {
   color: #be185d;
   background: #fff1f7;
+}
+
+.header-profile-popover>a:hover {
+  color: #6d28d9;
+  background: #f5f1ff;
+}
+
+.header-profile-popover>a svg {
+  stroke: #7c3aed;
 }
 
 .header-profile-popover>button:disabled {

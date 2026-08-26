@@ -13,7 +13,7 @@ export function Loadout({ profile, avatarUrl }: { profile: Profile; avatarUrl: s
   const equippedBoon = summary.boonDashboard?.boons.find((boon) => boon.equipped) ?? null
 
   return <main className="loadout-page">
-    <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} />
+    <AppHeader active="loadout" username={profile.username} avatarUrl={avatarUrl} avatarMode={profile.avatar_mode} avatarBgColor={profile.avatar_bg_color} avatarTextColor={profile.avatar_text_color} profileId={!profile.is_guest && !profile.is_system_player ? profile.id : undefined} />
     <section className="loadout-content" aria-labelledby="loadout-heading">
       <header className="loadout-hero">
         <p className="eyebrow">Pre-Match Build</p>

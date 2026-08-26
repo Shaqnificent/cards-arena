@@ -6,6 +6,7 @@ import { LoadingScreen } from '../components/LoadingScreen'
 import { useCharacters } from '../hooks/useCharacters'
 import type { CharacterVerse } from '../types/verse'
 import { getPaginationItems } from '../lib/pagination'
+import type { AvatarMode } from '../types/profile'
 
 type CharacterSort = 'overall-desc' | 'overall-asc' | 'power-desc' | 'power-asc'
 
@@ -15,7 +16,7 @@ const pageSize = 24
 const getLegacyVerseFilterKey = (verse: { id: string; slug: string | null }) =>
   verse.slug?.trim() || `verse-${verse.id}`
 
-interface CharactersProps { username: string; avatarUrl: string | null }
+interface CharactersProps { username: string; avatarUrl: string | null; avatarMode: AvatarMode; avatarBgColor: string; avatarTextColor: string; profileId?: string }
 
 const getResponsiveSiblingCount = () => {
   if (typeof window === 'undefined') return 3
@@ -24,7 +25,7 @@ const getResponsiveSiblingCount = () => {
   return 3
 }
 
-export function Characters({ username, avatarUrl }: CharactersProps) {
+export function Characters({ username, avatarUrl, avatarMode, avatarBgColor, avatarTextColor, profileId }: CharactersProps) {
   const { characters, loading: charactersLoading, error: charactersError } = useCharacters()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -109,7 +110,7 @@ export function Characters({ username, avatarUrl }: CharactersProps) {
 
   return (
     <main className="catalogue-page">
-      <AppHeader active="characters" username={username} avatarUrl={avatarUrl} />
+      <AppHeader active="characters" username={username} avatarUrl={avatarUrl} avatarMode={avatarMode} avatarBgColor={avatarBgColor} avatarTextColor={avatarTextColor} profileId={profileId} />
 
       <section className="catalogue-content" aria-labelledby="characters-heading">
         <div className="catalogue-hero">

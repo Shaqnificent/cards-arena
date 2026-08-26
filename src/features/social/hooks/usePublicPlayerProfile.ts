@@ -6,15 +6,17 @@ interface PublicPlayerProfileState {
   profile: PublicPlayerProfile | null
   loading: boolean
   unavailable: boolean
+  refresh: () => void
 }
 
-interface LoadedPublicPlayerProfileState extends PublicPlayerProfileState {
+interface LoadedPublicPlayerProfileState extends Omit<PublicPlayerProfileState, 'refresh'> {
   playerId: string | null
 }
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export function usePublicPlayerProfile(playerId: string | undefined): PublicPlayerProfileState {
+  const [revision, setRevision] = useState(0)
   const [state, setState] = useState<LoadedPublicPlayerProfileState>({
     playerId: null,
     profile: null,
@@ -37,9 +39,11 @@ export function usePublicPlayerProfile(playerId: string | undefined): PublicPlay
       })
 
     return () => { isCurrent = false }
-  }, [playerId])
+  }, [playerId, revision])
 
-  if (!playerId || !uuidPattern.test(playerId)) return { profile: null, loading: false, unavailable: true }
-  if (state.playerId !== playerId) return { profile: null, loading: true, unavailable: false }
-  return state
+  const refresh = () => setRevision((value) => value + 1)
+
+  if (!playerId || !uuidPattern.test(playerId)) return { profile: null, loading: false, unavailable: true, refresh }
+  if (state.playerId !== playerId) return { profile: null, loading: true, unavailable: false, refresh }
+  return { ...state, refresh }
 }

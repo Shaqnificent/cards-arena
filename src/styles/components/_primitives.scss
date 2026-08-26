@@ -104,8 +104,8 @@
 .avatar-fallback {
   display: grid;
   place-items: center;
-  color: white;
-  background: black;
+  color: var(--avatar-text, white);
+  background: var(--avatar-bg, #7c3aed);
   font-size: 2.2rem;
   font-weight: 800;
 }

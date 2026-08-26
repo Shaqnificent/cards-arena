@@ -26,7 +26,7 @@ export function LeaderboardPreview() {
             <li key={player.id}>
               <span>
                 <strong className={player.rank === 1 ? 'preview-rank first' : 'preview-rank'}>{player.rank === 1 ? '♛' : player.rank}</strong>
-                <PlayerAvatar compact username={player.username} avatarUrl={player.avatarUrl} />
+                <PlayerAvatar compact username={player.username} avatarUrl={player.avatarUrl} avatarMode={player.avatarMode} avatarBgColor={player.avatarBgColor} avatarTextColor={player.avatarTextColor} />
                 <span className="preview-player-name"><em>{player.username}</em><SystemBadge visible={player.isSystemPlayer} /></span>
               </span>
               <b>{player.winRate.toFixed(1)}%</b>

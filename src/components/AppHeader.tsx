@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { PlayerAvatar } from './PlayerAvatar'
 import { cancelMatchmaking } from '../features/matchmaking/services/matchmaking'
 import { supabase } from '../lib/supabase'
+import type { AvatarMode } from '../types/profile'
 
 type ActivePage = 'play' | 'characters' | 'loadout' | 'leaderboard' | 'suggestions'
 
@@ -10,6 +11,10 @@ interface AppHeaderProps {
   active: ActivePage
   username: string
   avatarUrl: string | null
+  avatarMode?: AvatarMode
+  avatarBgColor?: string
+  avatarTextColor?: string
+  profileId?: string
 }
 
 const navigation: Array<{ key: ActivePage; label: string; to: string }> = [
@@ -20,7 +25,7 @@ const navigation: Array<{ key: ActivePage; label: string; to: string }> = [
   { key: 'suggestions', label: 'Community', to: '/community' },
 ]
 
-export function AppHeader({ active, username, avatarUrl }: AppHeaderProps) {
+export function AppHeader({ active, username, avatarUrl, avatarMode, avatarBgColor, avatarTextColor, profileId }: AppHeaderProps) {
   const location = useLocation()
   const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null)
   const [profileMenuPath, setProfileMenuPath] = useState<string | null>(null)
@@ -85,10 +90,14 @@ export function AppHeader({ active, username, avatarUrl }: AppHeaderProps) {
           setProfileMenuPath((path) => path === location.pathname ? null : location.pathname)
         }}
       >
-        <PlayerAvatar compact username={username} avatarUrl={avatarUrl} />
+        <PlayerAvatar compact username={username} avatarUrl={avatarUrl} avatarMode={avatarMode} avatarBgColor={avatarBgColor} avatarTextColor={avatarTextColor} />
         <span className="header-profile-chevron" aria-hidden="true" />
       </button>
       {profileMenuOpen && <div className="header-profile-popover" role="menu">
+        {profileId && <Link role="menuitem" to={`/profile/${profileId}`} onClick={() => setProfileMenuPath(null)}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.5-4 2.7-6 6.5-6s6 2 6.5 6"/></svg>
+          <span>View profile</span>
+        </Link>}
         <button type="button" role="menuitem" disabled={signingOut} onClick={() => void handleSignOut()}>
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10M14.5 8.5 18 12l-3.5 3.5M9 12h9" /></svg>
           <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>

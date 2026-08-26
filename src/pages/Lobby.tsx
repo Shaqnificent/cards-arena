@@ -52,13 +52,13 @@ export function Lobby({ user, profile, profileLoading, profileError, matchmaking
   const displayedBoonPoints = loadout.boonDashboard?.boonPoints ?? profile.boon_points
 
   return <main className="lobby-page">
-    <AppHeader active="play" username={profile.username} avatarUrl={avatarUrl} />
+    <AppHeader active="play" username={profile.username} avatarUrl={avatarUrl} avatarMode={profile.avatar_mode} avatarBgColor={profile.avatar_bg_color} avatarTextColor={profile.avatar_text_color} profileId={!profile.is_guest && !profile.is_system_player ? profile.id : undefined} />
 
     <div className="lobby-dashboard">
       <section className="lobby-hero" aria-labelledby="lobby-title"><div className="lobby-energy" aria-hidden="true" /><div className="lobby-hero-content">
         <p className="eyebrow">Player Lobby</p><h1 id="lobby-title">ANIME ARENA</h1>
         <div className="lobby-player">
-          <PlayerAvatar username={profile.username} avatarUrl={avatarUrl} />
+          <PlayerAvatar username={profile.username} avatarUrl={avatarUrl} avatarMode={profile.avatar_mode} avatarBgColor={profile.avatar_bg_color} avatarTextColor={profile.avatar_text_color} />
           <div>
             <h2>{profile.username}</h2>
             <p className="record">{profile.wins} {profile.wins === 1 ? 'Win' : 'Wins'} <span>•</span> {profile.losses} {profile.losses === 1 ? 'Loss' : 'Losses'} <span>•</span> {winRate}% Win Rate</p>
