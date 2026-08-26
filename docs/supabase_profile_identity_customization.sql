@@ -47,20 +47,13 @@ language sql
 immutable
 set search_path = ''
 as $$
-  select (upper(coalesce(p_background, '')), upper(coalesce(p_foreground, ''))) in (
-    ('#151126', '#FFFFFF'),
-    ('#151126', '#FBBF24'),
-    ('#151126', '#C4B5FD'),
-    ('#151126', '#F9A8D4'),
-    ('#C92A5B', '#FFFFFF'),
-    ('#7C3AED', '#FFFFFF'),
-    ('#D61F7C', '#FFFFFF'),
-    ('#2563EB', '#FFFFFF'),
-    ('#0891B2', '#11111A'),
-    ('#059669', '#11111A'),
-    ('#B7791F', '#11111A'),
-    ('#6B7280', '#FFFFFF')
-  );
+  select upper(coalesce(p_background, '')) = any (array[
+    '#151126', '#C92A5B', '#7C3AED', '#D61F7C', '#2563EB',
+    '#0891B2', '#059669', '#B7791F', '#6B7280'
+  ]::text[])
+  and upper(coalesce(p_foreground, '')) = any (array[
+    '#FFFFFF', '#FBBF24', '#C4B5FD', '#F9A8D4', '#11111A'
+  ]::text[]);
 $$;
 
 -- Preserve the earliest valid case-insensitive name. Invalid, reserved, or
@@ -139,7 +132,8 @@ alter table public.profiles
   drop constraint if exists profiles_google_avatar_mode_check,
   drop constraint if exists profiles_avatar_bg_color_check,
   drop constraint if exists profiles_avatar_text_color_check,
-  drop constraint if exists profiles_avatar_contrast_check;
+  drop constraint if exists profiles_avatar_contrast_check,
+  drop constraint if exists profiles_avatar_palette_check;
 
 alter table public.profiles
   add constraint profiles_username_format_check
@@ -154,7 +148,7 @@ alter table public.profiles
     check (avatar_bg_color ~ '^#[0-9A-F]{6}$'),
   add constraint profiles_avatar_text_color_check
     check (avatar_text_color ~ '^#[0-9A-F]{6}$'),
-  add constraint profiles_avatar_contrast_check
+  add constraint profiles_avatar_palette_check
     check (public.is_valid_profile_avatar_pair(avatar_bg_color, avatar_text_color));
 
 create unique index if not exists profiles_username_case_insensitive_unique_idx
@@ -303,7 +297,7 @@ begin
   if normalized_bg !~ '^#[0-9A-F]{6}$' or normalized_text !~ '^#[0-9A-F]{6}$'
     or not public.is_valid_profile_avatar_pair(normalized_bg, normalized_text)
   then
-    raise exception using errcode = '22023', message = 'Choose a supported avatar color combination.';
+    raise exception using errcode = '22023', message = 'Choose colors from the supported avatar palette.';
   end if;
 
   username_changed := lower(normalized_username) <> lower(profile_row.username);

@@ -22,14 +22,11 @@ export const avatarForegrounds = [
   { label: 'Ink', value: '#11111A' },
 ] as const
 
-const validPairs = new Set([
-  '#151126:#FFFFFF', '#151126:#FBBF24', '#151126:#C4B5FD', '#151126:#F9A8D4',
-  '#C92A5B:#FFFFFF', '#7C3AED:#FFFFFF', '#D61F7C:#FFFFFF', '#2563EB:#FFFFFF',
-  '#0891B2:#11111A', '#059669:#11111A', '#B7791F:#11111A', '#6B7280:#FFFFFF',
-])
+const allowedBackgrounds = new Set(avatarBackgrounds.map((color) => color.value as string))
+const allowedForegrounds = new Set(avatarForegrounds.map((color) => color.value as string))
 
 export const isAvatarColorPairValid = (background: string, foreground: string) =>
-  validPairs.has(`${background.toUpperCase()}:${foreground.toUpperCase()}`)
+  allowedBackgrounds.has(background.toUpperCase()) && allowedForegrounds.has(foreground.toUpperCase())
 
 export const preferredForeground = (background: string) =>
   ['#0891B2', '#059669', '#B7791F'].includes(background.toUpperCase()) ? '#11111A' : '#FFFFFF'
