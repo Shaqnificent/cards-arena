@@ -621,6 +621,16 @@
   object-fit: cover;
 }
 
+.oc-rank-family-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 18px;
+}
+
+.oc-rank-family-logo>span {
+  font-size: 1.15rem;
+}
+
 .rank-identity h2 {
   display: flex;
   align-items: center;
@@ -864,6 +874,11 @@
   .oc-rank-avatar {
     width: 58px;
     height: 58px;
+  }
+  .oc-rank-family-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 15px;
   }
   .rank-primary {
     grid-column: 2/-1;
