@@ -367,6 +367,10 @@
   box-shadow: 0 8px 24px rgba(31,24,48,.05);
 }
 
+.player-leaderboard-filter-panel {
+  grid-template-columns: minmax(220px,280px) minmax(16px,1fr) auto;
+}
+
 .leaderboard-select-filter {
   display: grid;
   gap: 7px;
@@ -855,9 +859,15 @@
     grid-template-columns: minmax(0,1fr) minmax(0,1fr);
     gap: 14px;
   }
+  .player-leaderboard-filter-panel {
+    grid-template-columns: minmax(0,1fr) minmax(16px,1fr) auto;
+  }
   .leaderboard-refresh {
     grid-column: 1/-1;
     justify-self: end;
+  }
+  .player-leaderboard-filter-panel .leaderboard-refresh {
+    grid-column: 3;
   }
   .oc-rank-list .oc-ranking-card {
     grid-template-columns: 54px 62px 1fr;
@@ -911,9 +921,15 @@
     grid-template-columns: 1fr;
     padding: 14px;
   }
+  .player-leaderboard-filter-panel {
+    grid-template-columns: 1fr;
+  }
   .leaderboard-refresh {
     grid-column: 1;
     width: 100%;
+  }
+  .player-leaderboard-filter-panel .leaderboard-refresh {
+    grid-column: 1;
   }
   .family-averages {
     grid-column: 1/-1;

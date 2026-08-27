@@ -5,7 +5,7 @@ import { PlayerAvatar } from './PlayerAvatar'
 import { SystemBadge } from './SystemBadge'
 
 export function LeaderboardPreview() {
-  const { players, loading, error } = useLeaderboard(5)
+  const { players, loading, error } = useLeaderboard(5, 'all')
 
   return (
     <section className="leaderboard-preview" aria-labelledby="top-players-heading">

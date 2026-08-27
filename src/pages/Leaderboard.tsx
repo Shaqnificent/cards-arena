@@ -12,21 +12,26 @@ import { SystemBadge } from '../components/SystemBadge'
 import type { AvatarMode } from '../types/profile'
 import { ChallengeButton } from '../features/challenges/ChallengeButton'
 import { FamilyLogo } from '../features/social/components/FamilyLogo'
+import type { LeaderboardMode } from '../types/leaderboard'
 
 interface LeaderboardProps { currentUserId:string; username:string; avatarUrl:string|null; avatarMode:AvatarMode; avatarBgColor:string; avatarTextColor:string; profileId?:string }
 type Section='players'|'ocs'; type OcSection='individual'|'family'
 
 export function Leaderboard({currentUserId,username,avatarUrl,avatarMode,avatarBgColor,avatarTextColor,profileId}:LeaderboardProps){
-  const [section,setSection]=useState<Section>('players');const [ocSection,setOcSection]=useState<OcSection>('individual');const [ocSort,setOcSort]=useState<OcLeaderboardSort>('overall')
-  const playerData=useLeaderboard(100)
+  const [section,setSection]=useState<Section>('players');const [playerMode,setPlayerMode]=useState<LeaderboardMode>('all');const [ocSection,setOcSection]=useState<OcSection>('individual');const [ocSort,setOcSort]=useState<OcLeaderboardSort>('overall')
+  const playerData=useLeaderboard(100,playerMode)
   const oc=useOcLeaderboard(ocSection,ocSort,section==='ocs')
   const own=usePlayerCharacters();const equipped=own.characters.filter(c=>c.active&&c.equipped).length
-  const mode=section==='players'?'Players':ocSection==='individual'?labelSort(ocSort):`Family ${ocSort==='overall'?'OVR':labelSort(ocSort)}`
+  const mode=section==='players'?labelPlayerMode(playerMode):ocSection==='individual'?labelSort(ocSort):`Family ${ocSort==='overall'?'OVR':labelSort(ocSort)}`
   const loadedCount=section==='players'?playerData.players.length:oc.rows.length
   return <main className="catalogue-page leaderboard-page"><AppHeader active="leaderboard" username={username} avatarUrl={avatarUrl} avatarMode={avatarMode} avatarBgColor={avatarBgColor} avatarTextColor={avatarTextColor} profileId={profileId}/><section className="catalogue-content leaderboard-content">
     <header className="leaderboard-hero"><div><p className="eyebrow">Hall of Champions</p><h1>Leaderboard</h1></div><LeaderboardSummary loadedCount={loadedCount} equipped={equipped} mode={mode}/></header>
     <div className="leaderboard-filter-stack">
       <div className="leaderboard-view-switch"><Segmented options={[['players','Players'],['ocs','OC Rankings']]} value={section} onChange={setSection}/></div>
+      {section==='players'&&<div className="leaderboard-filter-panel player-leaderboard-filter-panel">
+        <SelectFilter label="Match Type" icon="target" options={[['all','All Matches'],['ranked','Ranked'],['challenges','Challenges']]} value={playerMode} onChange={setPlayerMode}/>
+        <button type="button" className="leaderboard-refresh" disabled={playerData.loading} onClick={playerData.refresh}><span aria-hidden="true">&#8635;</span>{playerData.loading?'Refreshing...':'Refresh'}</button>
+      </div>}
       {section==='ocs'&&<div className="leaderboard-filter-panel">
         <SelectFilter label="Category" icon="person" options={[['individual','Individual'],['family','Family']]} value={ocSection} onChange={setOcSection}/>
         <SelectFilter label="Sort by" icon="target" options={[['overall','Overall'],['power','Battle Power'],['growth','Growth']]} value={ocSort} onChange={setOcSort}/>
@@ -40,7 +45,7 @@ export function Leaderboard({currentUserId,username,avatarUrl,avatarMode,avatarB
   </section></main>
 }
 
-function LeaderboardSummary({loadedCount,equipped,mode}:{loadedCount:number;equipped:number;mode:string}){return <aside className="leaderboard-summary"><Summary icon="♛" label="Ranked results" value={loadedCount.toLocaleString()} note="Current top results"/><Summary icon="♙" label="Your OC family" value={`${equipped} / 3`} note="Active fighters equipped"/><Summary icon="⌖" label="Current mode" value={mode} note="Leaderboard ordering"/></aside>}
+function LeaderboardSummary({loadedCount,equipped,mode}:{loadedCount:number;equipped:number;mode:string}){return <aside className="leaderboard-summary"><Summary icon="♛" label="Player results" value={loadedCount.toLocaleString()} note="Current top results"/><Summary icon="♙" label="Your OC family" value={`${equipped} / 3`} note="Active fighters equipped"/><Summary icon="⌖" label="Current mode" value={mode} note="Leaderboard ordering"/></aside>}
 function Summary({icon,label,value,note}:{icon:string;label:string;value:string;note:string}){return <div className="summary-stat"><i>{icon}</i><span><small>{label}</small><strong>{value}</strong><em>{note}</em></span></div>}
 function Segmented<T extends string>({options,value,onChange}:{options:[T,string][];value:T;onChange:(value:T)=>void}){return <div className="segmented-control" role="group" aria-label="Leaderboard filter">{options.map(([key,label])=><button key={key} type="button" aria-pressed={value===key} className={value===key?'active':''} onClick={()=>onChange(key)}>{label}</button>)}</div>}
 function SelectFilter<T extends string>({label,icon,options,value,onChange}:{label:string;icon:'person'|'target';options:[T,string][];value:T;onChange:(value:T)=>void}){return <label className="leaderboard-select-filter"><span>{label}</span><div className="leaderboard-select-control"><FilterIcon type={icon}/><select value={value} onChange={(event)=>onChange(event.target.value as T)}>{options.map(([key,text])=><option key={key} value={key}>{text}</option>)}</select><i aria-hidden="true">⌄</i></div></label>}
@@ -57,3 +62,4 @@ function FamilyRows({rows,currentUserId,sort}:{rows:OcFamilyRank[];currentUserId
 function RankingSkeleton(){return <div className="ranking-skeleton" aria-label="Loading rankings">{[1,2,3].map(row=><div key={row}><i/><span/><b/><em/></div>)}</div>}
 function StateCard({title,text,tone}:{title:string;text:string;tone?:'error'}){return <div className={`leaderboard-state-card ${tone??''}`}><h2>{title}</h2><p>{text}</p></div>}
 function labelSort(sort:OcLeaderboardSort){return sort==='power'?'Power':sort[0].toUpperCase()+sort.slice(1)}
+function labelPlayerMode(mode:LeaderboardMode){return mode==='all'?'All Matches':mode==='ranked'?'Ranked':'Challenges'}

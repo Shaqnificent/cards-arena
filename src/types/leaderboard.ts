@@ -1,5 +1,7 @@
 import type { AvatarMode } from './profile'
 
+export type LeaderboardMode = 'all' | 'ranked' | 'challenges'
+
 export interface LeaderboardPlayer {
   id: string
   username: string
