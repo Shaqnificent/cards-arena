@@ -12,6 +12,7 @@ import { MatchExitBoundary } from '../features/onlineGame/components/MatchExitCo
 import { SoundToggle } from '../features/audio/SoundToggle'
 import { AdministratorToast } from '../components/AdministratorToast'
 import { useAdministratorInteractions } from '../features/onlineGame/hooks/useAdministratorInteractions'
+import { useMatchSource } from '../features/onlineGame/hooks/useMatchSource'
 
 interface MatchProps { currentUserId: string }
 
@@ -24,14 +25,15 @@ export function Match({ currentUserId }: MatchProps) {
 
 function AdministratorMatchExperience({ matchId, currentUserId }: { matchId: string; currentUserId: string }) {
   const { toast, notifyResultVisible } = useAdministratorInteractions(matchId, currentUserId)
-  return <><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} onAdministratorResultVisible={notifyResultVisible} />{toast && <AdministratorToast key={toast.context} message={toast} />}</>
+  const directChallenge = useMatchSource(matchId) === 'direct_challenge'
+  return <><LoadedOnlineMatch matchId={matchId} currentUserId={currentUserId} directChallenge={directChallenge} onAdministratorResultVisible={notifyResultVisible} />{toast && <AdministratorToast key={toast.context} message={toast} />}</>
 }
 
-function LoadedOnlineMatch({ matchId, currentUserId, onAdministratorResultVisible }: { matchId: string; currentUserId: string; onAdministratorResultVisible: () => void }) {
+function LoadedOnlineMatch({ matchId, currentUserId, directChallenge, onAdministratorResultVisible }: { matchId: string; currentUserId: string; directChallenge: boolean; onAdministratorResultVisible: () => void }) {
   const { state, initiative, ocSelection, loadState, loading, error, message, pendingAction, lockInitiative, lockOcSelection, bid, pass, fold, retry } = useOnlineDraft(matchId, currentUserId)
 
-  if (loadState === 'initiative' && initiative) return <InitiativeScreen key={initiative.initiativeRound} initiative={initiative} message={message} onLock={lockInitiative} />
-  if (loadState === 'oc-selection' && ocSelection) return <OcSelectionScreen state={ocSelection} message={message} pending={pendingAction === 'oc-lock'} onLock={lockOcSelection} />
+  if (loadState === 'initiative' && initiative) return <><DirectChallengeLabel visible={directChallenge}/><InitiativeScreen key={initiative.initiativeRound} initiative={initiative} message={message} onLock={lockInitiative} /></>
+  if (loadState === 'oc-selection' && ocSelection) return <><DirectChallengeLabel visible={directChallenge}/><OcSelectionScreen state={ocSelection} message={message} pending={pendingAction === 'oc-lock'} onLock={lockOcSelection} /></>
 
   if (loading && !state) {
     const loadingMessage = loadState === 'loading-match' ? 'Loading online match...'
@@ -44,13 +46,13 @@ function LoadedOnlineMatch({ matchId, currentUserId, onAdministratorResultVisibl
   if (error || !state) return <MatchError message={error ?? 'This match is unavailable.'} onRetry={() => void retry()} />
 
   if (state.match.status === 'battle' || state.match.status === 'completed') {
-    return <LoadedOnlineBattle matchId={matchId} onAdministratorResultVisible={onAdministratorResultVisible} />
+    return <LoadedOnlineBattle matchId={matchId} directChallenge={directChallenge} onAdministratorResultVisible={onAdministratorResultVisible} />
   }
-  if (state.match.status === 'oc_preparation') return <LoadedOcPreparation matchId={matchId} onAdministratorResultVisible={onAdministratorResultVisible} />
+  if (state.match.status === 'oc_preparation') return <LoadedOcPreparation matchId={matchId} directChallenge={directChallenge} onAdministratorResultVisible={onAdministratorResultVisible} />
 
   return (
     <main className="game-page">
-      <header className="game-header"><span className="brand-link">ANIME ARENA</span><span>Server-Authoritative Draft</span><span className="nav-link">Match {matchId.slice(0, 8)}</span></header>
+      <header className="game-header"><span className="brand-link">ANIME ARENA</span><span>{directChallenge ? 'Direct Challenge · Unranked' : 'Server-Authoritative Draft'}</span><span className="nav-link">Match {matchId.slice(0, 8)}</span></header>
       <OnlineDraftBoard
         key={state.match.current_draft_position}
         state={state} currentUserId={currentUserId} pendingAction={pendingAction} message={message}
@@ -60,22 +62,26 @@ function LoadedOnlineMatch({ matchId, currentUserId, onAdministratorResultVisibl
   )
 }
 
-function LoadedOcPreparation({ matchId, onAdministratorResultVisible }: { matchId: string; onAdministratorResultVisible: () => void }) {
+function LoadedOcPreparation({ matchId, directChallenge, onAdministratorResultVisible }: { matchId: string; directChallenge: boolean; onAdministratorResultVisible: () => void }) {
   const { state, loading, pending, error, lock, retry } = useOcPreparation(matchId)
   if (loading && !state) return <LoadingScreen message="Preparing your OC strategy..." />
   if (!state) return <MatchError message={error ?? 'OC preparation is unavailable.'} onRetry={() => void retry()} />
-  if (state.status === 'battle' || state.status === 'completed') return <LoadedOnlineBattle matchId={matchId} onAdministratorResultVisible={onAdministratorResultVisible} />
-  return <OcPreparationScreen state={state} pending={pending} error={error} onLock={lock} />
+  if (state.status === 'battle' || state.status === 'completed') return <LoadedOnlineBattle matchId={matchId} directChallenge={directChallenge} onAdministratorResultVisible={onAdministratorResultVisible} />
+  return <><DirectChallengeLabel visible={directChallenge}/><OcPreparationScreen state={state} pending={pending} error={error} onLock={lock} /></>
 }
 
-function LoadedOnlineBattle({ matchId, onAdministratorResultVisible }: { matchId: string; onAdministratorResultVisible: () => void }) {
+function LoadedOnlineBattle({ matchId, directChallenge, onAdministratorResultVisible }: { matchId: string; directChallenge: boolean; onAdministratorResultVisible: () => void }) {
   const { state, loading, error, message, pendingAction, lock, advance, retry } = useOnlineBattle(matchId)
   if (loading && !state) return <LoadingScreen message="Preparing authoritative battle..." />
   if (error || !state) return <MatchError message={error ?? 'This battle is unavailable.'} onRetry={() => void retry()} />
   return <main className="game-page">
-    <header className="game-header"><span className="brand-link">ANIME ARENA</span><span>Server-Authoritative Battle</span><span className="nav-link">Match {matchId.slice(0, 8)}</span></header>
-    <OnlineBattleBoard key={`${state.roundNumber}:${state.battleState}`} state={state} pendingAction={pendingAction} message={message} onLock={lock} onAdvance={advance} onFinalResultVisible={onAdministratorResultVisible} />
+    <header className="game-header"><span className="brand-link">ANIME ARENA</span><span>{directChallenge ? 'Direct Challenge · Unranked' : 'Server-Authoritative Battle'}</span><span className="nav-link">Match {matchId.slice(0, 8)}</span></header>
+    <OnlineBattleBoard key={`${state.roundNumber}:${state.battleState}`} state={state} unranked={directChallenge} pendingAction={pendingAction} message={message} onLock={lock} onAdvance={advance} onFinalResultVisible={onAdministratorResultVisible} />
   </main>
+}
+
+function DirectChallengeLabel({ visible }: { visible: boolean }) {
+  return visible ? <div className="direct-challenge-mode" role="status"><strong>Direct Challenge</strong><span>Unranked</span></div> : null
 }
 
 function MatchError({ message, onRetry }: { message: string; onRetry?: () => void }) {

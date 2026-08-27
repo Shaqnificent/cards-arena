@@ -9,6 +9,7 @@ import { FamilyLogo } from '../features/social/components/FamilyLogo'
 import { EditProfileDialog } from '../features/profile/components/EditProfileDialog'
 import type { AvatarMode } from '../types/profile'
 import type { ProfileIdentityUpdate } from '../features/profile/avatarIdentity'
+import { ChallengeButton } from '../features/challenges/ChallengeButton'
 
 interface PublicPlayerProfileProps {
   currentUserId: string
@@ -46,7 +47,10 @@ export function PublicPlayerProfile({ currentUserId, username, avatarUrl, avatar
                 {profile.playerId === currentUserId && <span className="public-profile-you">Your profile</span>}
                 <span>Joined {formatJoinedDate(profile.joinedAt)}</span>
               </div>
-              {profile.playerId === currentUserId && <button ref={editButtonRef} type="button" className="public-profile-edit" onClick={() => setEditorOpen(true)}><span aria-hidden="true">&#9998;</span>Edit Profile</button>}
+              <div className="public-profile-actions">
+                {profile.playerId === currentUserId && <button ref={editButtonRef} type="button" className="public-profile-edit" onClick={() => setEditorOpen(true)}><span aria-hidden="true">&#9998;</span>Edit Profile</button>}
+                {profile.playerId !== currentUserId && <ChallengeButton currentUserId={currentUserId} player={{id:profile.playerId,username:profile.displayName,avatarUrl:profile.avatarUrl,avatarMode:profile.avatarMode,avatarBgColor:profile.avatarBgColor,avatarTextColor:profile.avatarTextColor}}/>}
+              </div>
             </div>
           </div>
           <div className="public-profile-record" aria-label="Competitive record">

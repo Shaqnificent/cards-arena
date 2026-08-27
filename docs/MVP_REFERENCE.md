@@ -165,6 +165,14 @@ Supabase Realtime is expected to synchronize relevant multiplayer state.
 
 ---
 
+### 5.4 Direct Challenges
+
+Persistent authenticated players can invite another eligible real player from the Players leaderboard or that player's public profile. An invitation is private to its two participants, expires after 60 seconds, and can be accepted, declined, or cancelled. Realtime delivers the invite globally while an initial authenticated read restores a pending invitation after refresh.
+
+Accepted invitations create one match with the authoritative `direct_challenge` source and reuse the standard Initiative, OC Selection, Draft, OC Preparation, Battle, and Result flow. Direct Challenges are unranked in V1: they do not change ranked wins/losses, leaderboard standings, or Boon Points. They never enter the matchmaking queue and never invoke the Administrator fallback.
+
+---
+
 ## 6. Character and Verse System
 
 ### Verse

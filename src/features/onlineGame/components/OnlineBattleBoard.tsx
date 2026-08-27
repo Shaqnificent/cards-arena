@@ -15,6 +15,7 @@ interface Props {
   onLock: (selectionType: 'canon' | 'oc', fighterId: string) => Promise<void>
   onAdvance: () => Promise<void>
   onFinalResultVisible?: () => void
+  unranked?: boolean
 }
 
 function boonBonusText(fighter: Pick<ResolvedBattleFighter, 'boonOverallBonus' | 'boonPowerBonus'>) {
@@ -67,7 +68,7 @@ function ResolvedCard({ fighter, character, oc, imageUrl, side, winner }: { figh
   </article>
 }
 
-export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdvance, onFinalResultVisible }: Props) {
+export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdvance, onFinalResultVisible, unranked = false }: Props) {
   const [selection, setSelection] = useState<{ type: 'canon' | 'oc'; id: string } | null>(null)
   const [showFinalResult, setShowFinalResult] = useState(false)
   const sounds = useGameSounds()
@@ -126,10 +127,10 @@ export function OnlineBattleBoard({ state, pendingAction, message, onLock, onAdv
 
   if (finalResultVisible) {
     return <section className="match-result">
-      <p className="eyebrow">Match Complete</p><h1>{draw ? 'Draw' : victory ? 'Victory' : 'Defeat'}</h1>
+      <p className="eyebrow">{unranked ? 'Challenge Complete' : 'Match Complete'}</p><h1>{draw ? 'Draw' : victory ? 'Victory' : 'Defeat'}</h1>
       <div className="final-score"><span>{state.yourProfile.username} <b>{state.yourScore}</b></span><i>—</i><span><b>{state.opponentScore}</b> {state.opponentProfile.username} <SystemBadge visible={state.opponentProfile.is_system_player} /></span></div>
-      <p>Your Record: {state.yourProfile.wins} Wins • {state.yourProfile.losses} Losses</p>
-      {state.boonPointsEarned > 0 && <div className="boon-match-reward"><span>Boon Points Earned</span><strong>+{state.boonPointsEarned.toLocaleString()} BP</strong><small>Balance: {state.boonPointBalance.toLocaleString()} BP</small></div>}
+      {unranked ? <p className="unranked-result-label">Direct Challenge &middot; Unranked Match</p> : <p>Your Record: {state.yourProfile.wins} Wins • {state.yourProfile.losses} Losses</p>}
+      {!unranked && state.boonPointsEarned > 0 && <div className="boon-match-reward"><span>Boon Points Earned</span><strong>+{state.boonPointsEarned.toLocaleString()} BP</strong><small>Balance: {state.boonPointBalance.toLocaleString()} BP</small></div>}
       <Link className="button button-primary" to="/">Return to Lobby</Link>
     </section>
   }

@@ -3,6 +3,7 @@ import type { MatchStatus } from '../../matchmaking/types'
 
 export interface MatchExitState {
   status: MatchStatus
+  match_source: 'matchmaking' | 'direct_challenge' | 'administrator'
   winner_id: string | null
   forfeited_by: string | null
   boon_points_earned: number
@@ -11,7 +12,7 @@ export interface MatchExitState {
 
 export async function loadMatchExitState(matchId: string): Promise<MatchExitState> {
   const [detailed, boon] = await Promise.all([
-    supabase.from('matches').select('status,winner_id,forfeited_by').eq('id', matchId).single(),
+    supabase.from('matches').select('status,winner_id,forfeited_by,match_source').eq('id', matchId).single(),
     supabase.rpc('get_my_match_boon_result', { p_match_id: matchId }),
   ])
   const reward = !boon.error && boon.data && typeof boon.data === 'object'
@@ -28,7 +29,8 @@ export async function loadMatchExitState(matchId: string): Promise<MatchExitStat
   const fallback = await supabase.from('matches').select('status,winner_id').eq('id', matchId).single()
   if (fallback.error) throw fallback.error
   return {
-    ...(fallback.data as Omit<MatchExitState, 'forfeited_by' | 'boon_points_earned' | 'boon_point_balance'>),
+    ...(fallback.data as Omit<MatchExitState, 'match_source' | 'forfeited_by' | 'boon_points_earned' | 'boon_point_balance'>),
+    match_source: 'matchmaking',
     forfeited_by: null,
     boon_points_earned: reward?.boonPointsEarned ?? 0,
     boon_point_balance: reward?.boonPointBalance ?? 0,

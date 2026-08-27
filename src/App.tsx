@@ -18,6 +18,8 @@ import { MatchmakingToast } from './components/MatchmakingToast'
 import { useMatchmaking } from './features/matchmaking/hooks/useMatchmaking'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from './types/profile'
+import { PlayerChallengeProvider } from './features/challenges/PlayerChallengeProvider'
+import { ChallengeToast } from './features/challenges/ChallengeToast'
 
 function App() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -52,7 +54,9 @@ function AuthenticatedApp({ user, profile, profileLoading, profileError, applyId
     avatarTextColor: profile?.avatar_text_color ?? '#FFFFFF',
   }
 
-  return <SoundProvider>
+  const challengeEligible = Boolean(profile && !profile.is_guest && !profile.is_system_player)
+
+  return <SoundProvider><PlayerChallengeProvider userId={user.id} eligible={challengeEligible}>
     <Routes>
       <Route
         path="/"
@@ -79,7 +83,8 @@ function AuthenticatedApp({ user, profile, profileLoading, profileError, applyId
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     <MatchmakingToast matchmaking={matchmaking} />
-  </SoundProvider>
+    <ChallengeToast />
+  </PlayerChallengeProvider></SoundProvider>
 }
 
 export default App
