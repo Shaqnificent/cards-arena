@@ -1,7 +1,7 @@
 import type { CharacterVerse } from './verse'
 
 export interface Character {
-  id: string
+  id: number
   name: string
   slug: string
   version: string | null
@@ -9,6 +9,6 @@ export interface Character {
   overall: number
   power_score: number
   active: boolean
-  verse_id: string
+  verse_id: number
   verses: CharacterVerse | null
 }

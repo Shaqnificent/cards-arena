@@ -34,9 +34,9 @@ export interface BattleState {
   round: number
   playerScore: number
   opponentScore: number
-  selectedPlayerId: string | null
-  playerUsedIds: string[]
-  opponentUsedIds: string[]
+  selectedPlayerId: number | null
+  playerUsedIds: number[]
+  opponentUsedIds: number[]
   reveal: BattleReveal | null
 }
 

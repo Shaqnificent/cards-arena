@@ -6,7 +6,7 @@
 create table if not exists public.player_characters (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete restrict,
-  verse_id uuid not null references public.verses(id) on delete restrict,
+  verse_id bigint not null references public.verses(id) on delete restrict,
   name text not null,
   image_url text,
   starting_overall integer not null,
@@ -71,7 +71,7 @@ create policy "Owners can read their OCs"
   on public.player_characters for select to authenticated
   using ((select auth.uid()) = owner_id);
 
-create or replace function public.create_player_character(p_name text, p_verse_id uuid)
+create or replace function public.create_player_character(p_name text, p_verse_id bigint)
 returns public.player_characters
 language plpgsql
 security definer
@@ -205,10 +205,10 @@ $$;
 revoke all on public.player_characters from public, anon, authenticated;
 grant select on public.player_characters to authenticated;
 
-revoke all on function public.create_player_character(text, uuid) from public;
+revoke all on function public.create_player_character(text, bigint) from public;
 revoke all on function public.set_player_character_equipped(uuid, boolean) from public;
 revoke all on function public.retire_player_character(uuid) from public;
-grant execute on function public.create_player_character(text, uuid) to authenticated;
+grant execute on function public.create_player_character(text, bigint) to authenticated;
 grant execute on function public.set_player_character_equipped(uuid, boolean) to authenticated;
 grant execute on function public.retire_player_character(uuid) to authenticated;
 

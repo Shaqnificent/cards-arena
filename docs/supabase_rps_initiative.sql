@@ -112,8 +112,14 @@ begin
   return jsonb_build_object(
     'matchId', match_row.id, 'status', match_row.status, 'initiativeRound', match_row.initiative_round,
     'initiativeState', match_row.initiative_state, 'yourPlayerId', caller_id, 'opponentPlayerId', opponent_id,
-    'yourProfile', (select to_jsonb(p) from public.profiles p where p.id = caller_id),
-    'opponentProfile', (select to_jsonb(p) from public.profiles p where p.id = opponent_id),
+    'yourProfile', (select jsonb_build_object(
+      'id', p.id, 'username', p.username, 'avatar_url', p.avatar_url,
+      'is_system_player', p.is_system_player
+    ) from public.profiles p where p.id = caller_id),
+    'opponentProfile', (select jsonb_build_object(
+      'id', p.id, 'username', p.username, 'avatar_url', p.avatar_url,
+      'is_system_player', p.is_system_player
+    ) from public.profiles p where p.id = opponent_id),
     'yourChoice', case when match_row.initiative_state = 'revealed' then case when caller_id = match_row.player_one_id then resolved.player_one_choice else resolved.player_two_choice end
       else (select c.choice from public.match_initiative_choices c where c.match_id = p_match_id and c.initiative_round = match_row.initiative_round and c.player_id = caller_id) end,
     'opponentLocked', case when match_row.initiative_state = 'revealed' then true else exists(select 1 from public.match_initiative_choices c where c.match_id = p_match_id and c.initiative_round = match_row.initiative_round and c.player_id = opponent_id) end,

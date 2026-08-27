@@ -13,7 +13,7 @@ export function aiMaximumBid(character: Character, balance: number, slotsRemaini
   return Math.min(balance, ratingBudget + urgencyBonus)
 }
 
-export function chooseOpponentCard(team: Character[], usedIds: string[]): Character {
+export function chooseOpponentCard(team: Character[], usedIds: number[]): Character {
   const available = team.filter((character) => !usedIds.includes(character.id))
   if (available.length === 0) throw new Error('Opponent has no unused battle cards.')
 

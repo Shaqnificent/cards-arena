@@ -174,9 +174,9 @@ begin
     'yourPlayerId',caller_id,'opponentPlayerId',opponent_id,
     'yourScore',case when caller_id=match_row.player_one_id then match_row.player_one_score else match_row.player_two_score end,
     'opponentScore',case when caller_id=match_row.player_one_id then match_row.player_two_score else match_row.player_one_score end,'matchWinnerId',match_row.winner_id,
-    'yourProfile',(select jsonb_build_object('id',p.id,'username',p.username,'wins',p.wins,'losses',p.losses)
+    'yourProfile',(select jsonb_build_object('id',p.id,'username',p.username,'wins',p.wins,'losses',p.losses,'is_system_player',p.is_system_player)
       from public.profiles p where p.id=caller_id),
-    'opponentProfile',(select jsonb_build_object('id',p.id,'username',p.username)
+    'opponentProfile',(select jsonb_build_object('id',p.id,'username',p.username,'is_system_player',p.is_system_player)
       from public.profiles p where p.id=opponent_id),
     'yourTeam',coalesce((select jsonb_agg(jsonb_build_object('id',mc.id,'used',mc.used_in_battle,
       'sacrificed',exists(select 1 from public.match_oc_preparations prep where prep.match_id=p_match_id and prep.player_id=caller_id and prep.sacrificed_match_character_id=mc.id),

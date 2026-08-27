@@ -13,7 +13,7 @@ type CharacterSort = 'overall-desc' | 'overall-asc' | 'power-desc' | 'power-asc'
 const characterSorts: CharacterSort[] = ['overall-desc', 'overall-asc', 'power-desc', 'power-asc']
 const pageSize = 24
 
-const getLegacyVerseFilterKey = (verse: { id: string; slug: string | null }) =>
+const getLegacyVerseFilterKey = (verse: { id: number; slug: string | null }) =>
   verse.slug?.trim() || `verse-${verse.id}`
 
 interface CharactersProps { username: string; avatarUrl: string | null; avatarMode: AvatarMode; avatarBgColor: string; avatarTextColor: string; profileId?: string }

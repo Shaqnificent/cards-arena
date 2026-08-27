@@ -8,9 +8,11 @@ The application currently includes online multiplayer, a local prototype mode, a
 
 - Server-authoritative online matchmaking, draft, OC preparation, battle, and match results
 - Human-first matchmaking with an Administrator system-opponent fallback
+- Unranked direct player challenges with accept, decline, cancel, expiry, and reconnect handling
 - Local prototype draft and battle mode against a client-side opponent
 - Searchable, sortable, paginated anime character catalogue with dynamic verse filters
 - Persistent OCs with portraits, progression, retirement, permanent fighter types, and a three-slot OC Family
+- Persistent Boon Point economy, two-item inventory, one-slot loadout, rolling, and data-driven match effects
 - Player, individual OC, and OC Family leaderboards
 - Google OAuth and anonymous guest sign-in
 - Community area with How to Play, FAQ, suggestions, voting, and suggestion statuses
@@ -261,6 +263,16 @@ entry. Both dedicated management URLs remain available and share lightweight
 page-level Loadout navigation. `/suggestions` is retained as a redirect to
 `/community`; unknown client routes return to the Lobby after the SPA loads.
 
+## Security model
+
+- Supabase Auth establishes player identity; sensitive RPCs derive ownership from `auth.uid()` rather than a client-supplied owner ID.
+- Row Level Security and narrow grants protect player-owned OCs, Boons, Family identity, challenges, and competitive match state.
+- SECURITY DEFINER functions use qualified relations and a restricted `search_path` for server-authoritative mutations.
+- Pending initiative, OC, preparation, Boon-target, and battle choices are returned from the caller's perspective and reveal only at the intended match phase.
+- Match snapshots keep OC, Boon, and fighter values stable when persistent data changes in another tab.
+
+The SQL files are reviewed source artifacts, but deployed security is determined by the definitions actually installed in Supabase. Use the staging checks in [`docs/release-checklist.md`](docs/release-checklist.md) before each release.
+
 ## Project structure
 
 ```text
@@ -295,7 +307,15 @@ cd cards-arena
 npm install
 ```
 
-Create `.env.local` in the project root:
+Copy the tracked environment template and fill in the public client values:
+
+```bash
+cp .env.example .env.local
+```
+
+On PowerShell, use `Copy-Item .env.example .env.local`.
+
+`.env.local` should contain:
 
 ```dotenv
 VITE_SUPABASE_URL=
@@ -319,6 +339,8 @@ Google users receive persistent profile/stat data through their account. Guest u
 ## Supabase setup
 
 The SQL under `docs/` covers profiles, verses and characters, suggestions, matchmaking, initiative, online draft/battle, OC foundation/progression/types/portraits/leaderboards, match exit behavior, and the Administrator.
+
+Read [`docs/DATABASE_SETUP.md`](docs/DATABASE_SETUP.md) before applying database changes. It records the confirmed UUID/BIGINT identifiers, subsystem dependency order, and safe policy for the existing live project.
 
 These files are cumulative, dependency-sensitive migration and patch artifacts—not a single fresh-database script. Do **not** blindly execute every SQL file. Before applying one:
 
@@ -355,6 +377,8 @@ Because later files replace functions from earlier phases, preserving the latest
 
 The current `package.json` does not define an automated test script.
 
+The practical pre-deployment smoke test is documented in [`docs/release-checklist.md`](docs/release-checklist.md), and the latest static release findings are in [`docs/final-audit.md`](docs/final-audit.md).
+
 ## Deployment
 
 The project is configured for Vercel:
@@ -374,4 +398,4 @@ Current product screenshots are not tracked in the repository. Add verified imag
 
 Anime Arena has a working end-to-end online match path, local prototype mode, persistent OC management/progression, Administrator fallback opponent, rankings, catalogue, community guide, responsive UI, and Vercel SPA configuration.
 
-The main operational caveat is database installation: the repository contains an evolving sequence of SQL migrations and corrective patches rather than one consolidated bootstrap migration. Local prototype gameplay is client-simulated, and its progression endpoint should receive additional anti-farming validation before production use.
+The main operational caveat is database installation: the repository contains an evolving sequence of SQL migrations and corrective patches rather than one consolidated, clean-install migration chain. Local prototype gameplay is client-simulated, and its progression endpoint should receive additional anti-farming validation before production use. Complete the release checklist against staging before presenting a deployment as release-certified.

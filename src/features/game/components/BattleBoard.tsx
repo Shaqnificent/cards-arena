@@ -7,7 +7,7 @@ import { useGameSounds } from '../../audio/useGameSounds'
 
 interface BattleBoardProps {
   state: LocalGameState
-  onSelect: (id: string) => void
+  onSelect: (id: number) => void
   onLock: () => void
   onContinue: () => void
 }
@@ -68,7 +68,7 @@ export function BattleBoard({ state, onSelect, onLock, onContinue }: BattleBoard
     })
   }, [battle.selectedPlayerId, state.player.team])
 
-  const selectCard = (id: string) => {
+  const selectCard = (id: number) => {
     if (battle.selectedPlayerId === id) return
     onSelect(id)
     sounds.playCardSelect()

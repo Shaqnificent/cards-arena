@@ -187,8 +187,13 @@ begin
     'yourScore', case when caller_id = match_row.player_one_id then match_row.player_one_score else match_row.player_two_score end,
     'opponentScore', case when caller_id = match_row.player_one_id then match_row.player_two_score else match_row.player_one_score end,
     'matchWinnerId', match_row.winner_id,
-    'yourProfile', (select to_jsonb(p) from public.profiles p where p.id = caller_id),
-    'opponentProfile', (select to_jsonb(p) from public.profiles p where p.id = opponent_id),
+    'yourProfile', (select jsonb_build_object(
+      'id', p.id, 'username', p.username, 'wins', p.wins, 'losses', p.losses,
+      'is_system_player', p.is_system_player
+    ) from public.profiles p where p.id = caller_id),
+    'opponentProfile', (select jsonb_build_object(
+      'id', p.id, 'username', p.username, 'is_system_player', p.is_system_player
+    ) from public.profiles p where p.id = opponent_id),
     'yourTeam', coalesce((select jsonb_agg(jsonb_build_object('id', mc.id, 'used', mc.used_in_battle,
       'character', to_jsonb(c) || jsonb_build_object('verses', (select to_jsonb(v) from public.verses v where v.id = c.verse_id))) order by mc.draft_position)
       from public.match_characters mc join public.characters c on c.id = mc.character_id where mc.match_id = p_match_id and mc.owner_player_id = caller_id), '[]'::jsonb),

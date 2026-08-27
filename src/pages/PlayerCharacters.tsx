@@ -132,7 +132,7 @@ export function PlayerCharacters({ currentUserId, username, avatarUrl, avatarMod
   const openCreation = () => {
     if (collectionAtCapacity) return setActionError('Your OC collection is full. Retire one fighter before creating another.')
     if (ocSelectableVerses.length === 0) return setActionError('No OC-selectable verses are currently available.')
-    setActionError(null); setCreated(null); setName(''); setVerseId(ocSelectableVerses[0]?.id ?? ''); setOcType(null); setFormOpen(true)
+    setActionError(null); setCreated(null); setName(''); setVerseId(String(ocSelectableVerses[0]?.id ?? '')); setOcType(null); setFormOpen(true)
   }
 
   const submitCreation = async () => {

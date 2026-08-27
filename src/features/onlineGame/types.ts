@@ -34,7 +34,7 @@ export interface OnlineMatchPlayer {
 export interface OnlineMatchCharacter {
   id: string
   match_id: string
-  character_id: string
+  character_id: number
   draft_position: number
   owner_player_id: string | null
   purchase_price: number | null

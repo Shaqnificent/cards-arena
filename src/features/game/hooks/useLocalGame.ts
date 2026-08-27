@@ -181,7 +181,7 @@ export function useLocalGame(characters: Character[], playerName: string) {
     return () => window.clearTimeout(timer)
   }, [resolveCard, state])
 
-  const selectBattleCard = useCallback((id: string) => {
+  const selectBattleCard = useCallback((id: number) => {
     setState((current) => {
       if (current.phase !== 'battle' || current.battle.reveal || current.battle.playerUsedIds.includes(id)) return current
       return { ...current, battle: { ...current.battle, selectedPlayerId: id } }

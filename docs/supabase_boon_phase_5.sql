@@ -831,10 +831,11 @@ begin
       then match_row.player_two_score else match_row.player_one_score end,
     'matchWinnerId', match_row.winner_id,
     'yourProfile', (select jsonb_build_object(
-      'id', p.id, 'username', p.username, 'wins', p.wins, 'losses', p.losses
+      'id', p.id, 'username', p.username, 'wins', p.wins, 'losses', p.losses,
+      'is_system_player', p.is_system_player
     ) from public.profiles p where p.id = caller_id),
     'opponentProfile', (select jsonb_build_object(
-      'id', p.id, 'username', p.username
+      'id', p.id, 'username', p.username, 'is_system_player', p.is_system_player
     ) from public.profiles p where p.id = opponent_id),
     'yourBoonResolution', (select jsonb_build_object(
       'boonKey', resolution.boon_key_snapshot,
