@@ -15,5 +15,5 @@ export function ChallengeButton({ player, currentUserId, disabled = false }: { p
     className="player-challenge-button"
     disabled={disabled || busy || sending || Boolean(ownChallenge)}
     onClick={() => void challenges.send(player)}
-  ><span aria-hidden="true">&#9876;</span>{label}</button>
+  ><span aria-hidden="true">&#9876;</span><span className="challengeText">{label}</span></button>
 }

@@ -83,10 +83,78 @@
 .unranked-result-label { color: #c4b5fd !important; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 
 @include respond-down(handheld-wide) {
+  .challengeText{display: none;}
   .challenge-toast, .challenge-notice { right: 14px; bottom: 14px; width: calc(100vw - 28px); }
   .leaderboard-player-actions { padding-left: 4px !important; padding-right: 12px !important; }
   .leaderboard-player-actions .player-challenge-button { width: 38px; min-height: 36px; overflow: hidden; gap: 14px; padding: 0 10px; color: transparent; }
   .leaderboard-player-actions .player-challenge-button span { flex: 0 0 auto; color: #6d28d9; font-size: .9rem; }
   .public-profile-actions { margin-top: 12px; }
   .direct-challenge-mode { top: 9px; max-width: calc(100vw - 110px); white-space: nowrap; }
+}
+
+@include respond-down(mobile-wide) {
+  .leaderboard-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .leaderboard-page .leaderboard-content {
+    width: calc(100% - 24px);
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .leaderboard-page .leaderboard-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .leaderboard-page .leaderboard-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .leaderboard-page .leaderboard-table th,
+  .leaderboard-page .leaderboard-table td {
+    padding: 11px 5px;
+  }
+
+  .leaderboard-page .leaderboard-table th:nth-child(1),
+  .leaderboard-page .leaderboard-table td:nth-child(1) { width: 46px; padding-left: 8px; }
+  .leaderboard-page .leaderboard-table th:nth-child(3),
+  .leaderboard-page .leaderboard-table td:nth-child(3) { width: 36px; text-align: center; }
+  .leaderboard-page .leaderboard-table th:nth-child(7),
+  .leaderboard-page .leaderboard-table td:nth-child(7) { width: 46px; }
+
+  .leaderboard-page .leaderboard-table th:nth-child(4),
+  .leaderboard-page .leaderboard-table td:nth-child(4),
+  .leaderboard-page .leaderboard-table th:nth-child(5),
+  .leaderboard-page .leaderboard-table td:nth-child(5),
+  .leaderboard-page .leaderboard-table th:nth-child(6),
+  .leaderboard-page .leaderboard-table td:nth-child(6) { display: none; }
+
+  .leaderboard-page .leaderboard-player {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .leaderboard-page .leaderboard-player > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .leaderboard-page .leaderboard-player .avatar {
+    flex: 0 0 auto;
+  }
+
+  .leaderboard-page .leaderboard-player-actions {
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+  }
 }
