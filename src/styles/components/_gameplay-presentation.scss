@@ -103,7 +103,7 @@
 
 .battle-hand {
   display: grid !important;
-  grid-template-columns: repeat(5,minmax(0,1fr));
+  grid-template-columns: repeat(6,minmax(0,1fr));
   gap: 14px;
   width: 100%;
   max-width: 1180px;
@@ -199,6 +199,13 @@
 
   .battle-hand-card:nth-child(5) {
     --hand-accent: #9c55d9;
+    --hand-lift: 12px;
+    --hand-rotation: 3.5deg;
+    --hand-z: 2;
+  }
+
+  .battle-hand-card:nth-child(6) {
+    --hand-accent: #b65cff;
     --hand-lift: 30px;
     --hand-rotation: 7deg;
     --hand-z: 1;
@@ -224,6 +231,51 @@
   .battle-hand-card:has(.game-card.used) {
     filter: grayscale(.6) drop-shadow(0 10px 16px rgba(0,0,0,.2));
   }
+}
+
+.oc-deck-card .game-card-image {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 42%,rgba(126,63,190,.3),transparent 38%),linear-gradient(145deg,#101728,#171021);
+}
+
+.oc-deck-card .game-card-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.oc-deck-fallback {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  aspect-ratio: 1;
+  border: 2px solid #9273bc;
+  border-radius: 50%;
+  color: #c4b5db;
+  background: rgba(83,56,120,.35);
+  box-shadow: 0 0 24px rgba(168,85,247,.2);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.oc-deck-card.empty {
+  border-color: #66517f !important;
+  cursor: default;
+  opacity: .78;
+}
+
+.oc-deck-card.empty .game-card-content {
+  text-align: center;
+}
+
+.oc-deck-boost,
+.oc-deck-card .oc-boon-effect {
+  display: block;
+  margin-top: 5px;
+  color: #e9a8ff;
+  font-size: .68rem;
+  font-weight: 800;
 }
 
 .game-card.selected {
