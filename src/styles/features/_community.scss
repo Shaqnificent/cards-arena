@@ -197,6 +197,10 @@
 .battle-example>div {
   display: grid;
   gap: 6px;
+  background-color: #f8f8f8;
+  border-radius: 10px;
+  padding: 13px;
+  border: 1px solid rgb(190, 190, 190);
 }
 
 .battle-example b {
@@ -232,11 +236,11 @@
 }
 
 .stat-explainer article:first-child {
-  border-top: 3px solid $color-purple;
+  //border-top: 3px solid $color-purple;
 }
 
 .stat-explainer article:nth-child(2) {
-  border-top: 3px solid #ec4899;
+  // border-top: 3px solid #ec4899;
 }
 
 .guide-table {
