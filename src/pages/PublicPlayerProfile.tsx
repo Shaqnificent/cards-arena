@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { PlayerAvatar } from '../components/PlayerAvatar'
@@ -74,7 +74,7 @@ export function PublicPlayerProfile({ currentUserId, username, avatarUrl, avatar
           {profile.ocFamily.description && <div className="public-family-description"><p className={descriptionExpanded ? 'expanded' : undefined}>{profile.ocFamily.description}</p>{profile.ocFamily.description.length > 240 && <button type="button" onClick={() => setDescriptionExpanded((value) => !value)} aria-expanded={descriptionExpanded}>{descriptionExpanded ? 'Show less' : 'Read more'}</button>}</div>}
           {familyMembers.length === 0
             ? <div className="public-family-empty"><span aria-hidden="true">&#9823;</span><h3>No public OC Family equipped yet.</h3><p>This player&apos;s active fighters will appear here once equipped.</p></div>
-            : <div className="public-family-grid">{familyMembers.map((member) => <PublicFamilyCard key={member.characterId} member={member} onReadLore={setLoreMember} />)}</div>}
+            : <div className="public-family-grid" style={{ '--profile-card-accent': profile.avatarBgColor, '--profile-card-contrast': profile.avatarTextColor } as CSSProperties}>{familyMembers.map((member) => <PublicFamilyCard key={member.characterId} member={member} onReadLore={setLoreMember} />)}</div>}
         </section>
       </>}
     </section>
