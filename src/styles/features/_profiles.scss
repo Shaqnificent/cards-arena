@@ -273,6 +273,9 @@
 }
 
 .public-family-section {
+  --profile-card-accent: #7c3aed;
+  --profile-card-contrast: #fff;
+  --profile-card-highlight: color-mix(in srgb,var(--profile-card-accent) 72%,white);
   margin-top: 46px;
 }
 
@@ -308,9 +311,6 @@
 }
 
 .public-family-grid {
-  --profile-card-accent: #7c3aed;
-  --profile-card-contrast: #fff;
-  --profile-card-highlight: color-mix(in srgb,var(--profile-card-accent) 72%,white);
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
   gap: 22px;

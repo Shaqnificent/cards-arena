@@ -62,20 +62,22 @@ export function PublicPlayerProfile({ currentUserId, username, avatarUrl, avatar
           </div>
         </header>
 
-        <section className="public-family-section">
-          <div className="public-family-brand">
-            <FamilyLogo logoPath={profile.ocFamily.logoPath} updatedAt={profile.ocFamily.updatedAt} name={familyName} className="public-family-logo" />
-            <div>
-              <p className="eyebrow">Active OC Family</p>
-              <h2>{familyName}</h2>
-              {profile.ocFamily.tagline && <p className="public-family-tagline">{profile.ocFamily.tagline}</p>}
+        <section className="public-family-section" style={{ '--profile-card-accent': profile.avatarBgColor, '--profile-card-contrast': profile.avatarTextColor } as CSSProperties}>
+          <div className="public-family-showcase">
+            <div className="public-family-brand">
+              <div className="public-family-logo-orbit"><FamilyLogo logoPath={profile.ocFamily.logoPath} updatedAt={profile.ocFamily.updatedAt} name={familyName} className="public-family-logo" /></div>
+              <div className="public-family-identity-copy">
+                <p className="eyebrow public-family-kicker"><span aria-hidden="true">✦</span>Active OC Family</p>
+                <h2>{familyName}</h2>
+                {profile.ocFamily.tagline && <p className="public-family-tagline">{profile.ocFamily.tagline}</p>}
+              </div>
+              <strong className="public-family-equipped"><span aria-hidden="true"><i>✦</i></span>{familyMembers.length} / 3 Equipped</strong>
             </div>
-            <strong>{familyMembers.length} / 3 Equipped</strong>
+            {profile.ocFamily.description && <button className="public-family-description" type="button" onClick={() => setDescriptionExpanded((value) => !value)} aria-expanded={descriptionExpanded} aria-controls="public-family-description-copy"><span className="public-family-description-mark" aria-hidden="true"><i>✦</i></span><span id="public-family-description-copy" className={descriptionExpanded ? 'expanded' : undefined}>{profile.ocFamily.description}</span><i className="public-family-description-chevron" aria-hidden="true" /></button>}
           </div>
-          {profile.ocFamily.description && <div className="public-family-description"><p className={descriptionExpanded ? 'expanded' : undefined}>{profile.ocFamily.description}</p>{profile.ocFamily.description.length > 240 && <button type="button" onClick={() => setDescriptionExpanded((value) => !value)} aria-expanded={descriptionExpanded}>{descriptionExpanded ? 'Show less' : 'Read more'}</button>}</div>}
           {familyMembers.length === 0
             ? <div className="public-family-empty"><span aria-hidden="true">&#9823;</span><h3>No public OC Family equipped yet.</h3><p>This player&apos;s active fighters will appear here once equipped.</p></div>
-            : <div className="public-family-grid" style={{ '--profile-card-accent': profile.avatarBgColor, '--profile-card-contrast': profile.avatarTextColor } as CSSProperties}>{familyMembers.map((member) => <PublicFamilyCard key={member.characterId} member={member} onReadLore={setLoreMember} />)}</div>}
+            : <div className="public-family-grid">{familyMembers.map((member) => <PublicFamilyCard key={member.characterId} member={member} onReadLore={setLoreMember} />)}</div>}
         </section>
       </>}
     </section>
