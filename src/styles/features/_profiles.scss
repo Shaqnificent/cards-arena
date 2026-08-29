@@ -514,7 +514,7 @@
   border: 1px solid color-mix(in srgb,var(--profile-card-highlight) 74%,transparent);
   border-radius: 99px;
   color: var(--profile-card-contrast);
-  background: color-mix(in srgb,var(--profile-card-accent) 78%,rgba(12,9,23,.88));
+  background: black;
   font-size: .62rem;
   font-weight: 900;
   letter-spacing: .1em;
@@ -532,7 +532,7 @@
 .public-oc-type.sacrificial {
   border-color: color-mix(in srgb,var(--profile-card-highlight) 74%,transparent);
   color: var(--profile-card-contrast);
-  background: color-mix(in srgb,var(--profile-card-accent) 78%,rgba(12,9,23,.88));
+  background: black;
 }
 
 .public-family-empty, .public-profile-state {
