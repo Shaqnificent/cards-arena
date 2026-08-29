@@ -51,17 +51,23 @@
     gap: 12px;
   }
   .character-details {
-    min-height: 134px;
-    padding: 12px;
+    min-height: 46%;
+    padding: 22px 12px 14px;
   }
   .character-details h2 {
     font-size: 1rem;
   }
   .character-power {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 3px;
-    margin-top: 12px;
+    align-items: baseline;
+    flex-direction: row;
+    gap: 6px;
+    margin-top: 13px;
+  }
+  .character-power span {
+    font-size: .52rem;
+  }
+  .character-power strong {
+    font-size: .88rem;
   }
   .catalogue-pagination {
     gap: 4px;
@@ -95,7 +101,7 @@
     grid-column: 1 / -1;
   }
   .character-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
   }
   .catalogue-pagination {
     gap: 6px;

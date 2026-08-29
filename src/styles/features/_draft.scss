@@ -150,6 +150,15 @@
   gap: 18px;
 }
 
+.auction-character-card {
+  width: min(100%, 320px);
+  justify-self: center;
+}
+
+.auction-character-card .character-card {
+  width: 100%;
+}
+
 .game-card {
   position: relative;
   overflow: hidden;

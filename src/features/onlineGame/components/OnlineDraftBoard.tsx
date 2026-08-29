@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { GameCard } from '../../game/components/GameCard'
+import { CharacterCard } from '../../../components/CharacterCard'
 import type { OnlineDraftAction, OnlineDraftState } from '../types'
 import { OnlineAuctionControls } from './OnlineAuctionControls'
 import { OnlineTeamPanel } from './OnlineTeamPanel'
@@ -61,7 +61,9 @@ export function OnlineDraftBoard({ state, currentUserId, pendingAction, message,
       <div className="draft-layout">
         <OnlineTeamPanel label="Your Team" profile={yourProfile} player={you} team={yourTeam} />
         <div className="auction-stage">
-          <GameCard character={state.currentCharacter.character} />
+          <div className="auction-character-card">
+            <CharacterCard character={state.currentCharacter.character} />
+          </div>
           <OnlineAuctionControls
             match={match} you={you} userId={currentUserId} pendingAction={pendingAction}
             onBid={onBid} onPass={onPass} onFold={onFold}

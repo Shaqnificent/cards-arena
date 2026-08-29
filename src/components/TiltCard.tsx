@@ -1,21 +1,13 @@
-import { useEffect, useRef, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useRef, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 
-interface TiltCardProps {
-  children: ReactNode
-  className?: string
-}
-
-interface PointerPosition {
-  x: number
-  y: number
-}
+interface TiltCardProps { children: ReactNode; className?: string; style?: CSSProperties }
+interface PointerPosition { x: number; y: number }
 
 const MAX_ROTATE_X = 4
 const MAX_ROTATE_Y = 5
-
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 
-export function TiltCard({ children, className = '' }: TiltCardProps) {
+export function TiltCard({ children, className = '', style }: TiltCardProps) {
   const cardRef = useRef<HTMLElement>(null)
   const frameRef = useRef<number | null>(null)
   const pointerRef = useRef<PointerPosition>({ x: .5, y: .5 })
@@ -42,10 +34,7 @@ export function TiltCard({ children, className = '' }: TiltCardProps) {
     disabledInteractionQueryRef.current ??= window.matchMedia('(prefers-reduced-motion: reduce), (pointer: coarse), (hover: none)')
     if (event.pointerType !== 'mouse' || disabledInteractionQueryRef.current.matches) return
     const bounds = event.currentTarget.getBoundingClientRect()
-    pointerRef.current = {
-      x: clamp((event.clientX - bounds.left) / bounds.width),
-      y: clamp((event.clientY - bounds.top) / bounds.height),
-    }
+    pointerRef.current = { x: clamp((event.clientX - bounds.left) / bounds.width), y: clamp((event.clientY - bounds.top) / bounds.height) }
     if (frameRef.current === null) frameRef.current = window.requestAnimationFrame(updateTilt)
   }
 
@@ -65,5 +54,5 @@ export function TiltCard({ children, className = '' }: TiltCardProps) {
     card.style.setProperty('--card-tilt-duration', '220ms')
   }
 
-  return <article ref={cardRef} className={className} onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave} onPointerCancel={handlePointerLeave}>{children}</article>
+  return <article ref={cardRef} className={className} style={style} onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave} onPointerCancel={handlePointerLeave}>{children}</article>
 }

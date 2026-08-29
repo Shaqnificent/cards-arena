@@ -1,7 +1,7 @@
 import type { Character } from '../../../types/character'
+import { CharacterCard } from '../../../components/CharacterCard'
 import type { LocalGameState } from '../types'
 import { AuctionControls } from './AuctionControls'
-import { GameCard } from './GameCard'
 import { TeamPanel } from './TeamPanel'
 
 interface DraftBoardProps {
@@ -24,7 +24,9 @@ export function DraftBoard({ state, currentCharacter, actions }: DraftBoardProps
       <div className="draft-layout">
         <TeamPanel player={state.player} label="Your Team" />
         <div className="auction-stage">
-          <GameCard character={currentCharacter} />
+          <div className="auction-character-card">
+            <CharacterCard character={currentCharacter} />
+          </div>
           <AuctionControls
             draft={state.draft} player={state.player}
             onBidStart={actions.startPlayerBid} onPass={actions.playerPass}

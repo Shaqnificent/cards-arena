@@ -10,7 +10,7 @@ import { EditProfileDialog } from '../features/profile/components/EditProfileDia
 import type { AvatarMode } from '../types/profile'
 import type { ProfileIdentityUpdate } from '../features/profile/avatarIdentity'
 import { ChallengeButton } from '../features/challenges/ChallengeButton'
-import { TiltCard } from '../features/social/components/TiltCard'
+import { TiltCard } from '../components/TiltCard'
 
 interface PublicPlayerProfileProps {
   currentUserId: string

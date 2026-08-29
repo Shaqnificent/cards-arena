@@ -113,11 +113,7 @@ export function Characters({ username, avatarUrl, avatarMode, avatarBgColor, ava
       <AppHeader active="characters" username={username} avatarUrl={avatarUrl} avatarMode={avatarMode} avatarBgColor={avatarBgColor} avatarTextColor={avatarTextColor} profileId={profileId} />
 
       <section className="catalogue-content" aria-labelledby="characters-heading">
-        <div className="catalogue-hero">
-          <div><p className="eyebrow">Playable Roster</p><h1 id="characters-heading">Characters</h1>
-            <p className="catalogue-intro">Browse all fighters currently available in Anime Arena.</p></div>
-          <div className="fighter-count" aria-label={`${characters.length} active fighters`}><span aria-hidden="true">♟</span><strong>{characters.length}</strong><small>Fighters</small></div>
-        </div>
+        <h1 id="characters-heading" className="sr-only">Characters</h1>
 
         <div className="catalogue-controls">
           <label className="field">
