@@ -22,11 +22,16 @@ export function DraftBoard({ state, currentCharacter, actions }: DraftBoardProps
         <div><span>Current Bid</span><strong>{state.draft.currentBid === null ? '—' : `$${state.draft.currentBid}`}</strong></div>
       </header>
       <div className="draft-layout">
-        <TeamPanel player={state.player} label="Your Team" />
-        <div className="auction-stage">
-          <div className="auction-character-card">
-            <CharacterCard character={currentCharacter} />
-          </div>
+        <div className="draft-team-slot draft-team-slot-player">
+          <TeamPanel player={state.player} label="Your Team" helperText="Build your team wisely." />
+        </div>
+        <div className="auction-character-card">
+          <CharacterCard character={currentCharacter} />
+        </div>
+        <div className="draft-team-slot draft-team-slot-opponent">
+          <TeamPanel player={state.opponent} label="Opponent Team" helperText="Opponent is building their team..." />
+        </div>
+        <div className="auction-controls-slot">
           <AuctionControls
             draft={state.draft} player={state.player}
             onBidStart={actions.startPlayerBid} onPass={actions.playerPass}
@@ -34,7 +39,6 @@ export function DraftBoard({ state, currentCharacter, actions }: DraftBoardProps
             onFold={actions.playerFold} onContinue={actions.advanceDraft}
           />
         </div>
-        <TeamPanel player={state.opponent} label="Opponent Team" />
       </div>
     </section>
   )

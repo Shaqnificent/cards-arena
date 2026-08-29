@@ -351,12 +351,14 @@
     grid-template-columns: 1fr;
   }
   .draft-layout {
+    grid-template-areas:
+      'auction-card auction-card'
+      'auction-controls auction-controls'
+      'player-team opponent-team';
     grid-template-columns: 1fr 1fr;
   }
-  .auction-stage {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    max-width: 390px;
+  .auction-character-card {
+    width: min(100%,clamp(270px,calc(73svh - 365px),320px));
     margin: 0 auto;
   }
   .battle-hand {
@@ -369,6 +371,13 @@
 }
 
 @include respond-down(handheld) {
+  .auction-controls-slot .bid-controls {
+    grid-template-columns: 1fr;
+  }
+  .auction-controls-slot .bid-controls > p,
+  .auction-controls-slot .bid-controls > small {
+    grid-column: 1;
+  }
   .oc-selection-content {
     width: calc(100% - 24px);
     padding-top: 28px;

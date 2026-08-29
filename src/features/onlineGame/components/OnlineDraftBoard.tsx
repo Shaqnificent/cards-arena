@@ -59,17 +59,21 @@ export function OnlineDraftBoard({ state, currentUserId, pendingAction, message,
       </header>
       {message && <p className="online-draft-message" role="status">{message}</p>}
       <div className="draft-layout">
-        <OnlineTeamPanel label="Your Team" profile={yourProfile} player={you} team={yourTeam} />
-        <div className="auction-stage">
-          <div className="auction-character-card">
-            <CharacterCard character={state.currentCharacter.character} />
-          </div>
+        <div className="draft-team-slot draft-team-slot-player">
+          <OnlineTeamPanel label="Your Team" profile={yourProfile} player={you} team={yourTeam} helperText="Build your team wisely." />
+        </div>
+        <div className="auction-character-card">
+          <CharacterCard character={state.currentCharacter.character} />
+        </div>
+        <div className="draft-team-slot draft-team-slot-opponent">
+          <OnlineTeamPanel label="Opponent Team" profile={opponentProfile} player={opponent} team={opponentTeam} helperText="Opponent is building their team..." />
+        </div>
+        <div className="auction-controls-slot">
           <OnlineAuctionControls
             match={match} you={you} userId={currentUserId} pendingAction={pendingAction}
             onBid={onBid} onPass={onPass} onFold={onFold}
           />
         </div>
-        <OnlineTeamPanel label="Opponent Team" profile={opponentProfile} player={opponent} team={opponentTeam} />
       </div>
     </section>
   )

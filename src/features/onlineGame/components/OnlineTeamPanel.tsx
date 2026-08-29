@@ -7,9 +7,10 @@ interface OnlineTeamPanelProps {
   profile: PublicGameProfile
   player: OnlineMatchPlayer
   team: OnlineMatchCharacter[]
+  helperText?: string
 }
 
-export function OnlineTeamPanel({ label, profile, player, team }: OnlineTeamPanelProps) {
+export function OnlineTeamPanel({ label, profile, player, team, helperText }: OnlineTeamPanelProps) {
   return (
     <aside className="team-panel online-team-panel">
       <div className="team-panel-heading"><span>{label}</span><b>${player.balance}</b></div>
@@ -21,8 +22,11 @@ export function OnlineTeamPanel({ label, profile, player, team }: OnlineTeamPane
             <b>{card.character.overall}</b>
           </li>
         ))}
-        {Array.from({ length: 5 - team.length }, (_, index) => <li className="empty-slot" key={index}>Empty slot</li>)}
+        {Array.from({ length: 5 - team.length }, (_, index) => (
+          <li className="empty-slot" key={index}><i aria-hidden="true">+</i><span>Empty slot</span></li>
+        ))}
       </ol>
+      {helperText && <div className="team-panel-helper"><i aria-hidden="true">i</i><span>{helperText}</span></div>}
     </aside>
   )
 }

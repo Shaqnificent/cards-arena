@@ -27,7 +27,13 @@
   text-transform: uppercase;
 }
 
-.draft-board, .battle-board {
+.draft-board {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 34px 28px;
+}
+
+.battle-board {
   max-width: 1280px;
   margin: 0 auto;
   padding: 34px 28px;
@@ -78,16 +84,41 @@
 
 .draft-layout {
   display: grid;
-  grid-template-columns: minmax(190px, 1fr) minmax(280px, 400px) minmax(190px, 1fr);
-  gap: 24px;
-  align-items: start;
+  grid-template-areas:
+    'player-team auction-card opponent-team'
+    '. auction-controls .';
+  grid-template-columns: minmax(240px, 1fr) minmax(280px, 360px) minmax(240px, 1fr);
+  align-items: stretch;
+  column-gap: 30px;
+  row-gap: 14px;
+}
+
+.draft-team-slot-player {
+  grid-area: player-team;
+}
+
+.draft-team-slot-opponent {
+  grid-area: opponent-team;
+}
+
+.draft-team-slot {
+  min-width: 0;
+}
+
+.draft-team-slot .team-panel {
+  height: 100%;
 }
 
 .team-panel {
+  position: relative;
+  display: flex;
+  min-width: 0;
   padding: 20px;
+  flex-direction: column;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: var(--panel-bg);
+  background: linear-gradient(145deg,rgba(20,21,36,.96),rgba(13,13,27,.94));
+  box-shadow: inset 0 0 28px rgba(124,58,237,.035),0 16px 34px rgba(0,0,0,.12);
 }
 
 .team-panel-heading {
@@ -119,6 +150,8 @@
 }
 
 .team-panel li {
+  min-height: 46px;
+  align-items: center;
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -140,23 +173,79 @@
 }
 
 .team-panel .empty-slot {
+  justify-content: flex-start;
+  gap: 12px;
   color: #5f6070;
   border: 1px dashed var(--border);
   background: transparent;
 }
 
-.auction-stage {
+.team-panel .empty-slot i,
+.team-panel-helper > i {
   display: grid;
-  gap: 18px;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  place-items: center;
+  border: 1px solid #56586f;
+  border-radius: 50%;
+  color: #8d8fa7;
+  font-size: .9rem;
+  font-style: normal;
+  line-height: 1;
+}
+
+.team-panel-helper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 20px 4px 0;
+  color: var(--text-muted);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.team-panel-helper > i {
+  color: #c4b5fd;
+  border-color: rgba(139,92,246,.65);
+  font-family: Georgia,serif;
+}
+
+.team-panel-helper span {
+  // max-width: 23ch;
 }
 
 .auction-character-card {
-  width: min(100%, 320px);
+  grid-area: auction-card;
+  width: min(100%,clamp(270px,calc(73svh - 365px),320px));
   justify-self: center;
 }
 
 .auction-character-card .character-card {
   width: 100%;
+}
+
+.auction-controls-slot {
+  grid-area: auction-controls;
+  width: min(440px,calc(100vw - 24px));
+  justify-self: center;
+}
+
+.auction-controls-slot .bid-controls {
+  grid-template-columns: minmax(150px,1.25fr) 1fr 1fr;
+  align-items: stretch;
+}
+
+.auction-controls-slot .bid-controls > p,
+.auction-controls-slot .bid-controls > small {
+  grid-column: 1 / -1;
+}
+
+.auction-controls-slot .bid-controls > .button {
+  min-width: 0;
+  padding-right: 12px;
+  padding-left: 12px;
 }
 
 .game-card {
