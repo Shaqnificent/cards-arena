@@ -168,7 +168,7 @@
 }
 
 .match-result .button {
-  display: inline-flex;
+  // display: inline-flex;
   // margin-top: 22px;
 }
 
@@ -177,7 +177,7 @@
   justify-items: center;
   gap: 5px;
   width: min(100%, 280px);
-  margin: 22px 0 2px;
+  margin: 25px 0;
   padding: 16px 22px;
   border: 1px solid rgba(167, 139, 250, .4);
   border-radius: 14px;

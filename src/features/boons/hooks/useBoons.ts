@@ -122,7 +122,10 @@ export function useBoons(enabled: boolean) {
   }
 
   const closeReveal = () => setRollResult(null)
-  const closePendingDecision = () => setPendingDecisionOpen(false)
+  const closePendingDecision = () => {
+    setPendingDecisionOpen(false)
+    setRollResult(null)
+  }
   const openPendingDecision = () => setPendingDecisionOpen(true)
 
   return {

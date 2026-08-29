@@ -57,6 +57,8 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
   const busy = boons.pendingId !== null || boons.rolling || boons.resolvingId !== null
   const pendingRoll = boons.dashboard.pendingRoll
   const addedRoll = boons.rollResult?.status === 'added' ? boons.rollResult.roll : null
+  const dialogRoll = addedRoll ?? (pendingRoll && boons.pendingDecisionOpen ? pendingRoll : null)
+  const dialogMode = boons.rollResult?.status ?? 'pending'
   const needsMorePoints = boons.dashboard.boonPoints < boons.dashboard.rollCost
   const poolExhausted = !needsMorePoints && !pendingRoll && !boons.dashboard.canRoll
   const [searchQuery, setSearchQuery] = useState('')
@@ -138,7 +140,7 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
               <div className="boon-section-heading"><div><p className="eyebrow">Active Catalogue</p><h2 id="boon-catalogue-heading">Discover Boons</h2></div><small aria-live="polite">{filtersActive ? `${filteredCatalogue.length} of ${boons.catalogue.length}` : `${boons.catalogue.length} Available`}</small></div>
               <div className="boon-catalogue-toolbar" role="search" aria-label="Filter the Boon catalogue">
                 <label className="boon-search-control"><span>Search</span><input type="search" value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setCataloguePage(1) }} placeholder="Search Boons..." /></label>
-                <label className="boon-filter-control"><span>Rarity</span><select value={rarityFilter} onChange={(event) => { setRarityFilter(event.target.value as RarityFilter); setCataloguePage(1) }}><option value="all">All Rarities</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option></select></label>
+                <label className="boon-filter-control"><span>Rarity</span><select value={rarityFilter} onChange={(event) => { setRarityFilter(event.target.value as RarityFilter); setCataloguePage(1) }}><option value="all">All Rarities</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option><option value="mythic">Mythic</option></select></label>
                 <label className="boon-filter-control"><span>Effect</span><select value={effectFilter} onChange={(event) => { setEffectFilter(event.target.value as EffectFilter); setCataloguePage(1) }}>{effectFilterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
                 {filtersActive && <button type="button" className="boon-clear-filters" onClick={clearFilters}>Clear Filters</button>}
               </div>
@@ -157,7 +159,6 @@ export function Boons({ profile, avatarUrl }: BoonsProps) {
             </section>
           </>}
     </div>
-    {addedRoll && <BoonRollDialog roll={addedRoll} mode="added" ownedBoons={boons.dashboard.boons} resolvingId={boons.resolvingId} onClose={boons.closeReveal} onReplace={() => undefined} onDiscard={() => undefined} />}
-    {pendingRoll && boons.pendingDecisionOpen && <BoonRollDialog roll={pendingRoll} mode="pending" ownedBoons={boons.dashboard.boons} resolvingId={boons.resolvingId} onClose={boons.closePendingDecision} onReplace={(id) => void boons.resolve('replace', id)} onDiscard={() => void boons.resolve('discard')} />}
+    {(boons.rolling || dialogRoll) && <BoonRollDialog roll={dialogRoll} mode={dialogMode} animateReveal={boons.rolling || Boolean(boons.rollResult)} ownedBoons={boons.dashboard.boons} resolvingId={boons.resolvingId} onClose={dialogMode === 'added' ? boons.closeReveal : boons.closePendingDecision} onReplace={(id) => void boons.resolve('replace', id)} onDiscard={() => void boons.resolve('discard')} />}
   </main>
 }
