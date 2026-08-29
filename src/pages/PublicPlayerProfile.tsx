@@ -10,6 +10,7 @@ import { EditProfileDialog } from '../features/profile/components/EditProfileDia
 import type { AvatarMode } from '../types/profile'
 import type { ProfileIdentityUpdate } from '../features/profile/avatarIdentity'
 import { ChallengeButton } from '../features/challenges/ChallengeButton'
+import { TiltCard } from '../features/social/components/TiltCard'
 
 interface PublicPlayerProfileProps {
   currentUserId: string
@@ -102,7 +103,7 @@ function ProfileStat({ label, value }: { label: string; value: string }) {
 }
 
 function PublicFamilyCard({ member, onReadLore }: { member: PublicOcFamilyMember; onReadLore: (member: PublicOcFamilyMember) => void }) {
-  return <article className="public-family-card">
+  return <TiltCard className="public-family-card">
     <div className="public-family-media">
       <OCImage src={member.imageUrl} name={member.name} />
       <span className="public-family-slot">Slot {member.slot}</span>
@@ -116,7 +117,7 @@ function PublicFamilyCard({ member, onReadLore }: { member: PublicOcFamilyMember
       </div>
       {member.lore && <div className="public-family-lore"><p>{member.lore}</p><button type="button" onClick={() => onReadLore(member)}>Read full background <span aria-hidden="true">›</span></button></div>}
     </div>
-  </article>
+  </TiltCard>
 }
 
 function PublicProfileLoading() {

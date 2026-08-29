@@ -237,7 +237,7 @@
 .public-profile-record {
   display: grid;
   grid-template-columns: repeat(4,minmax(0,1fr));
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #ddd6fe;
   border-radius: 15px;
   background: rgba(255,255,255,.82);
@@ -317,35 +317,48 @@
 }
 
 .public-family-card {
+  --card-tilt-x: 0deg;
+  --card-tilt-y: 0deg;
+  --card-tilt-scale: 1;
+  --card-tilt-duration: 220ms;
+  --card-pointer-x: 50%;
+  --card-pointer-y: 50%;
   position: relative;
   isolation: isolate;
   display: grid;
   min-height: 620px;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid color-mix(in srgb,var(--profile-card-accent) 72%,white);
   border-radius: 28px;
   color: #fff;
   background: #09070f;
   box-shadow: 0 18px 42px color-mix(in srgb,var(--profile-card-accent) 22%,transparent), inset 0 0 0 1px rgba(255,255,255,.14);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform var(--card-tilt-duration) ease-out;
 }
 
 .public-family-card::before {
   position: absolute;
   inset: 10px;
-  z-index: 2;
+  z-index: 3;
   border: 1px solid color-mix(in srgb,var(--profile-card-highlight) 48%,transparent);
   border-radius: 22px;
   content: '';
   box-shadow: inset 0 0 18px color-mix(in srgb,var(--profile-card-accent) 24%,transparent);
   pointer-events: none;
+  transition: border-color 180ms ease,box-shadow 180ms ease,opacity 180ms ease,transform 220ms ease-out;
 }
 
-.public-family-card:hover {
-  border-color: var(--profile-card-highlight);
-  box-shadow: 0 24px 54px color-mix(in srgb,var(--profile-card-accent) 34%,transparent), 0 0 0 1px color-mix(in srgb,var(--profile-card-accent) 36%,transparent);
-  transform: translateY(-3px);
+.public-family-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  content: '';
+  background: radial-gradient(circle at var(--card-pointer-x) var(--card-pointer-y),color-mix(in srgb,var(--profile-card-highlight) 11%,transparent),transparent 45%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
 }
 
 .public-family-media {
@@ -354,7 +367,9 @@
   z-index: 0;
   height: 100%;
   overflow: hidden;
+  border-radius: inherit;
   background: $color-header;
+  transition: transform 220ms ease-out;
 }
 
 .public-family-media::after {
@@ -382,11 +397,6 @@
   transition: filter 220ms ease, transform 500ms cubic-bezier(.2,.7,.2,1);
 }
 
-.public-family-card:hover .public-family-media .oc-image img {
-  filter: saturate(.95) contrast(1.08);
-  transform: scale(1.025);
-}
-
 .public-family-media .oc-image>span {
   display: grid;
   width: 100%;
@@ -396,6 +406,71 @@
   background: radial-gradient(circle at 50% 30%,#55318b,$color-header 72%);
   font-size: 5rem;
   font-weight: 900;
+}
+
+@media (hover:hover) and (pointer:fine) {
+  .public-family-card {
+    transform: perspective(1100px) rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y)) scale(var(--card-tilt-scale));
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .public-family-card:hover {
+    border-color: var(--profile-card-highlight);
+    box-shadow: 0 24px 54px color-mix(in srgb,var(--profile-card-accent) 34%,transparent),0 0 0 1px color-mix(in srgb,var(--profile-card-accent) 36%,transparent);
+  }
+  .public-family-card:hover::before {
+    border-color: color-mix(in srgb,var(--profile-card-highlight) 66%,transparent);
+    box-shadow: inset 0 0 22px color-mix(in srgb,var(--profile-card-accent) 32%,transparent),0 0 14px color-mix(in srgb,var(--profile-card-accent) 18%,transparent);
+    opacity: 1;
+    transform: translateZ(12px);
+  }
+  .public-family-card:hover::after {
+    opacity: 1;
+  }
+  .public-family-card:hover .public-family-media {
+    transform: translateZ(6px);
+  }
+  .public-family-card:hover .public-family-card-body {
+    transform: translateZ(10px);
+  }
+  .public-family-card:hover .public-family-slot,
+  .public-family-card:hover .public-family-overall {
+    transform: translateZ(14px);
+  }
+  .public-family-card:hover .public-family-media .oc-image img {
+    filter: saturate(.95) contrast(1.08);
+    transform: scale(1.025);
+  }
+}
+
+@include reduced-motion {
+  .public-family-card,
+  .public-family-card:hover {
+    border-color: color-mix(in srgb,var(--profile-card-accent) 72%,white);
+    box-shadow: 0 18px 42px color-mix(in srgb,var(--profile-card-accent) 22%,transparent),inset 0 0 0 1px rgba(255,255,255,.14);
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
+  .public-family-card::after {
+    display: none;
+  }
+  .public-family-card:hover::before {
+    border-color: color-mix(in srgb,var(--profile-card-highlight) 48%,transparent);
+    box-shadow: inset 0 0 18px color-mix(in srgb,var(--profile-card-accent) 24%,transparent);
+    transform: none;
+  }
+  .public-family-card:hover .public-family-media,
+  .public-family-card:hover .public-family-card-body,
+  .public-family-card:hover .public-family-slot,
+  .public-family-card:hover .public-family-overall,
+  .public-family-card:hover .public-family-media .oc-image img {
+    transform: none;
+    transition: none;
+  }
+  .public-family-card:hover .public-family-media .oc-image img {
+    filter: saturate(.82) contrast(1.06);
+  }
 }
 
 .public-family-slot {
@@ -414,6 +489,7 @@
   letter-spacing: .11em;
   text-transform: uppercase;
   backdrop-filter: blur(10px);
+  transition: transform 220ms ease-out;
 }
 
 .public-family-overall {
@@ -436,6 +512,7 @@
   font-size: 2.1rem;
   line-height: 1;
   backdrop-filter: blur(10px);
+  transition: transform 220ms ease-out;
 }
 
 .public-family-overall::after {
@@ -474,6 +551,7 @@
   padding: 300px 30px 34px;
   flex-direction: column;
   justify-content: flex-end;
+  transition: transform 220ms ease-out;
 }
 
 .public-family-card-heading {
